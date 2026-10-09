@@ -1,0 +1,48 @@
+{
+  "project": "cellgame",
+  "kind": "generate",
+  "core": "cellgame",
+  "profile": "biological-unit",
+  "items": [
+    {
+      "id": "white-cell",
+      "seed": 9000,
+      "intent": "白细胞生物单位，具有明确的上部感知膜冠与下部运动膜裙；表面分布随机大小、疏密不均的柔软鼓包和浅凹，形成有辨识度的生物结构",
+      "entities": [
+        {
+          "id": "cell",
+          "kind": "cell",
+          "appearance": "上下分区的厚实软体白细胞；上部为隆起膜冠，沿顶部不规则聚集几个大小不同的柔软感知突起；中部膜体分布大小、间距不均的鼓包与浅凹，局部轮廓起伏；下部为较宽扁的运动膜裙，向前伸出宽短伪足，两侧及后方短伪足支撑；上下通过较窄膜褶过渡，全部结构由连续细胞膜形成，不是孔洞、机械镶嵌或规则颗粒",
+          "color": "上部乳白色，中部暖灰白色，下部浅蓝灰色；内层细胞核为蓝灰色",
+          "role": "primary",
+          "count": 1
+        }
+      ],
+      "effects": [],
+      "composition": {
+        "preset": "centered",
+        "focalTarget": "cell",
+        "view": "等距视角",
+        "occupancy": 0.7,
+        "effectIntensity": "弱",
+        "background": {
+          "type": "solid",
+          "color": "#FFFFFF"
+        },
+        "direction": "无方向"
+      },
+      "mustRead": [
+        "上部隆起感知膜冠与随机大小的柔软突起",
+        "中部膜体随机鼓包和浅凹，疏密不均",
+        "下部宽扁运动膜裙与短伪足",
+        "上下部位轮廓与功能分工明确，保持连续细胞膜",
+        "无孔洞、机械镶嵌、规则颗粒或五官"
+      ],
+      "variants": [
+        {
+          "id": "base"
+        }
+      ]
+    }
+  ]
+}

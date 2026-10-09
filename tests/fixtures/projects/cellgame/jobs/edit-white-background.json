@@ -1,0 +1,39 @@
+{
+  "project": "cellgame",
+  "kind": "edit",
+  "core": null,
+  "items": [
+    {
+      "id": "skill-01-white",
+      "source": "out/skills-cellgame-2026-10-08T09-20-14-355Z-12102e00/skill-01--base.png",
+      "changes": [
+        {
+          "target": "background",
+          "value": {
+            "type": "solid",
+            "color": "#FFFFFF"
+          }
+        }
+      ],
+      "preserve": [
+        {
+          "target": "content",
+          "instruction": "保留红细胞与青色速度残影及向左疾冲语义"
+        },
+        {
+          "target": "style",
+          "instruction": "保留原图主体的渲染风格"
+        },
+        {
+          "target": "composition",
+          "instruction": "保留主体位置、尺寸与方向"
+        }
+      ],
+      "mustRead": [
+        "纯白背景",
+        "主体与速度残影保持原样"
+      ],
+      "seed": 1000
+    }
+  ]
+}

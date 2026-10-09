@@ -1,0 +1,140 @@
+{
+  "project": "cellgame",
+  "kind": "generate",
+  "core": "cellgame",
+  "profile": "unit-concept",
+  "items": [
+    {
+      "id": "unit-01",
+      "seed": 5000,
+      "intent": "ATP 工厂：环形能量转换装置，中央一座圆柱形发光核心，外圈八个反应舱由环形管道串联，两侧向外延伸出能量导管",
+      "entities": [
+        {
+          "id": "device",
+          "kind": "device",
+          "appearance": "ATP 工厂：环形能量转换装置，中央一座圆柱形发光核心，外圈八个反应舱由环形管道串联，两侧向外延伸出能量导管",
+          "color": "低中饱和的深蓝、灰白与钢青结构色",
+          "role": "primary",
+          "count": 1
+        }
+      ],
+      "effects": [
+        {
+          "id": "energy",
+          "kind": "能量核心与结构端口发光",
+          "target": "device",
+          "color": "青绿色",
+          "relation": "位于装置声明的能量核心或能量端口",
+          "count": 1
+        }
+      ],
+      "composition": {
+        "focalTarget": "device"
+      },
+      "mustRead": [
+        "ATP 工厂",
+        "声明的装置结构",
+        "单个装置完整轮廓"
+      ]
+    },
+    {
+      "id": "unit-02",
+      "seed": 6000,
+      "intent": "线粒体电站：双层椭球外壳，内部为折叠的能量膜阵列，外壳表面有多组发光的能量出入口",
+      "entities": [
+        {
+          "id": "device",
+          "kind": "device",
+          "appearance": "线粒体电站：双层椭球外壳，内部为折叠的能量膜阵列，外壳表面有多组发光的能量出入口",
+          "color": "低中饱和的深蓝、灰白与钢青结构色",
+          "role": "primary",
+          "count": 1
+        }
+      ],
+      "effects": [
+        {
+          "id": "energy",
+          "kind": "能量核心与结构端口发光",
+          "target": "device",
+          "color": "青绿色",
+          "relation": "位于装置声明的能量核心或能量端口",
+          "count": 1
+        }
+      ],
+      "composition": {
+        "focalTarget": "device"
+      },
+      "mustRead": [
+        "线粒体电站",
+        "声明的装置结构",
+        "单个装置完整轮廓"
+      ]
+    },
+    {
+      "id": "unit-03",
+      "seed": 7000,
+      "intent": "细胞核指挥中心：球形核心被双层多孔外壳包裹，外壳上开有多组数据通道",
+      "entities": [
+        {
+          "id": "device",
+          "kind": "device",
+          "appearance": "细胞核指挥中心：球形核心被双层多孔外壳包裹，外壳上开有多组数据通道",
+          "color": "低中饱和的深蓝、灰白与钢青结构色",
+          "role": "primary",
+          "count": 1
+        }
+      ],
+      "effects": [
+        {
+          "id": "energy",
+          "kind": "能量核心与结构端口发光",
+          "target": "device",
+          "color": "青绿色",
+          "relation": "位于装置声明的能量核心或能量端口",
+          "count": 1
+        }
+      ],
+      "composition": {
+        "focalTarget": "device"
+      },
+      "mustRead": [
+        "细胞核指挥中心",
+        "声明的装置结构",
+        "单个装置完整轮廓"
+      ]
+    },
+    {
+      "id": "unit-04",
+      "seed": 8000,
+      "intent": "核糖体装配厂：大小两个半球体扣合而成，内部有旋转的装配环，表面有颗粒进料口",
+      "entities": [
+        {
+          "id": "device",
+          "kind": "device",
+          "appearance": "核糖体装配厂：大小两个半球体扣合而成，内部有旋转的装配环，表面有颗粒进料口",
+          "color": "低中饱和的深蓝、灰白与钢青结构色",
+          "role": "primary",
+          "count": 1
+        }
+      ],
+      "effects": [
+        {
+          "id": "energy",
+          "kind": "能量核心与结构端口发光",
+          "target": "device",
+          "color": "青绿色",
+          "relation": "位于装置声明的能量核心或能量端口",
+          "count": 1
+        }
+      ],
+      "composition": {
+        "focalTarget": "device"
+      },
+      "mustRead": [
+        "核糖体装配厂",
+        "声明的装置结构",
+        "单个装置完整轮廓"
+      ]
+    }
+  ]
+}

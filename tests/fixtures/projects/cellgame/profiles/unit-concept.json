@@ -1,0 +1,53 @@
+{
+  "project": "cellgame",
+  "id": "unit-concept",
+  "name": "游戏功能单位单体概念图",
+  "constraints": {
+    "text": false,
+    "frame": false,
+    "scene": false,
+    "crop": false,
+    "shadow": true
+  },
+  "defaults": {
+    "preset": "centered",
+    "view": "等距视角",
+    "direction": "无方向",
+    "occupancy": 0.7,
+    "effectIntensity": "中",
+    "background": {
+      "type": "solid",
+      "color": "#FFFFFF"
+    }
+  },
+  "allowedOverrides": {
+    "preset": [
+      "centered",
+      "radial"
+    ],
+    "view": [
+      "等距视角"
+    ],
+    "direction": [
+      "无方向"
+    ],
+    "occupancy": {
+      "min": 0.6,
+      "max": 0.8
+    },
+    "effectIntensity": [
+      "弱",
+      "中",
+      "强"
+    ]
+  },
+  "presets": {
+    "centered": "主体居中，完整展示装置结构",
+    "radial": "围绕装置核心展示放射状结构"
+  },
+  "checks": [
+    "等距视角",
+    "主体完整、正下方投影",
+    "无文字与场景"
+  ]
+}

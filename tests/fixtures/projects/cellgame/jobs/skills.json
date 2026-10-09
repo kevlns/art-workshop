@@ -1,0 +1,798 @@
+{
+  "project": "cellgame",
+  "kind": "generate",
+  "core": "cellgame",
+  "profile": "skill-icon",
+  "items": [
+    {
+      "id": "skill-01",
+      "seed": 1000,
+      "intent": "一颗红细胞拖着青色速度残影，向左疾冲",
+      "entities": [
+        {
+          "id": "cell",
+          "kind": "cell",
+          "appearance": "红细胞",
+          "color": "红色",
+          "role": "primary",
+          "count": 1,
+          "action": "向左疾冲"
+        }
+      ],
+      "effects": [
+        {
+          "id": "trail",
+          "kind": "速度残影",
+          "target": "cell",
+          "color": "亮青色",
+          "relation": "拖尾位于红细胞右后方",
+          "count": 1
+        }
+      ],
+      "composition": {
+        "focalTarget": "cell",
+        "preset": "directional",
+        "direction": "向左"
+      },
+      "mustRead": [
+        "一颗红细胞",
+        "向左疾冲",
+        "青色速度残影"
+      ],
+      "variants": [
+        {
+          "id": "base"
+        },
+        {
+          "id": "front",
+          "composition": {
+            "view": "正面"
+          }
+        },
+        {
+          "id": "dynamic",
+          "composition": {
+            "view": "三分之四视角",
+            "effectIntensity": "强"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill-02",
+      "seed": 2000,
+      "intent": "一颗红细胞被一圈蓝色水泡与水滴环绕包裹",
+      "entities": [
+        {
+          "id": "cell",
+          "kind": "cell",
+          "appearance": "红细胞",
+          "color": "红色",
+          "role": "primary",
+          "count": 1
+        }
+      ],
+      "effects": [
+        {
+          "id": "bubble",
+          "kind": "水泡",
+          "target": "cell",
+          "color": "浅蓝色",
+          "relation": "包裹红细胞，伴随少量水滴",
+          "count": 1
+        }
+      ],
+      "mustRead": [
+        "红细胞",
+        "蓝色水泡包裹关系"
+      ],
+      "composition": {
+        "focalTarget": "cell"
+      },
+      "variants": [
+        {
+          "id": "base"
+        },
+        {
+          "id": "front",
+          "composition": {
+            "view": "正面"
+          }
+        },
+        {
+          "id": "dynamic",
+          "composition": {
+            "view": "三分之四视角",
+            "effectIntensity": "强"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill-03",
+      "seed": 3000,
+      "intent": "一颗白细胞伸出伪足，包裹住一个紫色病毒",
+      "entities": [
+        {
+          "id": "cell",
+          "kind": "cell",
+          "appearance": "伸出伪足的白细胞",
+          "color": "白色",
+          "role": "primary",
+          "count": 1
+        },
+        {
+          "id": "virus",
+          "kind": "virus",
+          "appearance": "病毒",
+          "color": "紫色",
+          "role": "support",
+          "count": 1
+        }
+      ],
+      "effects": [
+        {
+          "id": "glow",
+          "kind": "交互微光",
+          "target": "cell",
+          "color": "荧光青色",
+          "relation": "点缀伪足与吞噬接触部位",
+          "count": 1
+        }
+      ],
+      "relations": [
+        {
+          "from": "cell",
+          "to": "virus",
+          "action": "伸出伪足包裹并吞噬病毒"
+        }
+      ],
+      "composition": {
+        "focalTarget": "cell",
+        "preset": "interaction"
+      },
+      "mustRead": [
+        "一颗白细胞",
+        "一个紫色病毒",
+        "伪足吞噬关系"
+      ],
+      "variants": [
+        {
+          "id": "base"
+        },
+        {
+          "id": "front",
+          "composition": {
+            "view": "正面"
+          }
+        },
+        {
+          "id": "dynamic",
+          "composition": {
+            "view": "三分之四视角",
+            "effectIntensity": "强"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill-04",
+      "seed": 4000,
+      "intent": "一面六边形能量护盾立在白细胞前方，挡住飞来的病毒",
+      "entities": [
+        {
+          "id": "cell",
+          "kind": "cell",
+          "appearance": "白细胞",
+          "color": "白色",
+          "role": "primary",
+          "count": 1
+        },
+        {
+          "id": "virus",
+          "kind": "virus",
+          "appearance": "飞来的病毒",
+          "color": "紫色",
+          "role": "support",
+          "count": 1
+        }
+      ],
+      "effects": [
+        {
+          "id": "shield",
+          "kind": "六边形能量护盾",
+          "target": "cell",
+          "color": "青绿色",
+          "relation": "位于白细胞前方，抵挡飞来的病毒",
+          "count": 1
+        }
+      ],
+      "composition": {
+        "focalTarget": "shield",
+        "preset": "defensive"
+      },
+      "mustRead": [
+        "六边形护盾",
+        "护盾后方白细胞",
+        "病毒被抵挡"
+      ],
+      "variants": [
+        {
+          "id": "base"
+        },
+        {
+          "id": "front",
+          "composition": {
+            "view": "正面"
+          }
+        },
+        {
+          "id": "dynamic",
+          "composition": {
+            "view": "三分之四视角",
+            "effectIntensity": "强"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill-05",
+      "seed": 5000,
+      "intent": "一颗青色能量球，外绕两圈同心轨道光环",
+      "entities": [
+        {
+          "id": "orb",
+          "kind": "energy",
+          "appearance": "发光能量球体",
+          "color": "青色",
+          "role": "primary",
+          "count": 1
+        }
+      ],
+      "effects": [
+        {
+          "id": "orbits",
+          "kind": "同心轨道光环",
+          "target": "orb",
+          "color": "荧光绿色",
+          "relation": "两圈轨道在球体前后交错环绕",
+          "count": 2
+        }
+      ],
+      "composition": {
+        "focalTarget": "orb",
+        "preset": "centered-orbit"
+      },
+      "mustRead": [
+        "青色能量球体",
+        "两圈绿色轨道",
+        "环绕关系"
+      ],
+      "variants": [
+        {
+          "id": "base"
+        },
+        {
+          "id": "front",
+          "composition": {
+            "view": "正面"
+          }
+        },
+        {
+          "id": "dynamic",
+          "composition": {
+            "view": "三分之四视角",
+            "effectIntensity": "强"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill-06",
+      "seed": 6000,
+      "intent": "一个浅绿色细胞正在柔软拉伸分裂，中部收腰形成两个仍相连的子细胞，突出膜的拉伸与分离过程",
+      "entities": [
+        {
+          "id": "cell",
+          "kind": "cell",
+          "appearance": "横向拉长的双叶软体细胞，左右子细胞大小略有差异，中部细胞膜收腰并由一小段柔软膜桥相连，外膜光滑而柔软；每个子细胞内部隐约可见简化细胞核",
+          "color": "浅绿色",
+          "role": "primary",
+          "count": 1
+        }
+      ],
+      "effects": [
+        {
+          "id": "split",
+          "kind": "分裂间隙微光",
+          "target": "cell",
+          "color": "白色",
+          "relation": "局限于正在分离的膜桥两侧，强调自然收腰拉伸；不是平直切面或刀切光缝",
+          "count": 1
+        }
+      ],
+      "mustRead": [
+        "柔软双叶细胞、两个子细胞",
+        "中部收腰拉伸与残留膜桥",
+        "自然分裂过程，无硬切面、孔洞或机械镶嵌"
+      ],
+      "composition": {
+        "focalTarget": "cell",
+        "preset": "group",
+        "view": "三分之四视角",
+        "effectIntensity": "弱"
+      },
+      "variants": [
+        {
+          "id": "base"
+        },
+        {
+          "id": "front",
+          "composition": {
+            "view": "正面"
+          }
+        },
+        {
+          "id": "dynamic",
+          "composition": {
+            "view": "三分之四视角",
+            "effectIntensity": "强"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill-07",
+      "seed": 7000,
+      "intent": "三条黄绿色柔软生物触须缠紧一个浅肉色不规则细胞，触须勒出深浅凹陷，细胞在缠绕间隙局部鼓胀",
+      "entities": [
+        {
+          "id": "cell",
+          "kind": "cell",
+          "appearance": "浅肉色不规则软体细胞，轮廓偏斜、柔软起伏，表面为完整细胞膜；触须接触处内凹，未受压部分向外鼓胀，形成受挤压的非球形剪影",
+          "color": "浅肉色",
+          "role": "primary",
+          "count": 1
+        }
+      ],
+      "effects": [
+        {
+          "id": "tendrils",
+          "kind": "柔软生物触须",
+          "target": "cell",
+          "color": "黄绿色",
+          "relation": "三条粗细有变化、末端渐细的触须前后交错勒紧细胞，压入膜表面形成明显凹陷；不采用规则同心环、金属管或分节硬壳",
+          "count": 3
+        }
+      ],
+      "mustRead": [
+        "肉色不规则软体细胞",
+        "三条生物触须勒紧",
+        "接触处凹陷、间隙组织鼓胀",
+        "无表面孔洞与机械镶嵌"
+      ],
+      "composition": {
+        "focalTarget": "cell",
+        "preset": "interaction",
+        "view": "三分之四视角",
+        "effectIntensity": "弱"
+      },
+      "variants": [
+        {
+          "id": "base"
+        },
+        {
+          "id": "front",
+          "composition": {
+            "view": "正面"
+          }
+        },
+        {
+          "id": "dynamic",
+          "composition": {
+            "view": "三分之四视角",
+            "effectIntensity": "强"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill-08",
+      "seed": 8000,
+      "intent": "一座具有细胞感的生物建筑，厚实肉质膜壳被撕开，两侧膜壳向外翻卷，露出内部绛红色发光核心",
+      "entities": [
+        {
+          "id": "building",
+          "kind": "cell",
+          "appearance": "单座纵向生长的生物建筑，整体为非球形的圆润厚实组织体，浅灰粉肉质膜壳包裹分层细胞组织，底部有一个简洁膜质功能入口；上部宽裂口边缘呈柔软撕裂，左右膜壳向外翻卷，内部为生物组织腔体",
+          "color": "浅灰粉肉色",
+          "role": "primary",
+          "count": 1
+        }
+      ],
+      "effects": [
+        {
+          "id": "core",
+          "kind": "内部生物能量核心",
+          "target": "building",
+          "color": "绛红色",
+          "relation": "一个核心悬于组织腔体中央，被少量柔软组织束连接；绛红微光局限于内部和撕裂口内缘；外壳不是石块、砖墙、城堡、金属板或机械装甲",
+          "count": 1
+        }
+      ],
+      "mustRead": [
+        "单座生物建筑，保留功能入口与内部层次",
+        "圆润肉质膜壳与生物组织感",
+        "膜壳撕裂、两侧翻卷，内部绛红核心显露",
+        "无砖石遗迹、机械镶嵌或满身孔洞"
+      ],
+      "composition": {
+        "focalTarget": "building",
+        "preset": "centered",
+        "view": "三分之四视角",
+        "effectIntensity": "中"
+      },
+      "variants": [
+        {
+          "id": "base"
+        },
+        {
+          "id": "front",
+          "composition": {
+            "view": "正面"
+          }
+        },
+        {
+          "id": "dynamic",
+          "composition": {
+            "view": "三分之四视角",
+            "effectIntensity": "强"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill-09",
+      "seed": 9000,
+      "intent": "一个紫色病毒被一道斜向青色光刃斩成两半",
+      "entities": [
+        {
+          "id": "virus",
+          "kind": "virus",
+          "appearance": "被斩成两半的病毒",
+          "color": "紫色",
+          "role": "primary",
+          "count": 1
+        }
+      ],
+      "effects": [
+        {
+          "id": "blade",
+          "kind": "光刃",
+          "target": "virus",
+          "color": "青白色",
+          "relation": "斜向穿过病毒，形成清楚切口",
+          "count": 1
+        }
+      ],
+      "composition": {
+        "focalTarget": "blade",
+        "preset": "directional",
+        "direction": "斜向"
+      },
+      "mustRead": [
+        "紫色病毒两半",
+        "斜向青色光刃"
+      ],
+      "variants": [
+        {
+          "id": "base"
+        },
+        {
+          "id": "front",
+          "composition": {
+            "view": "正面"
+          }
+        },
+        {
+          "id": "dynamic",
+          "composition": {
+            "view": "三分之四视角",
+            "effectIntensity": "强"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill-10",
+      "seed": 10000,
+      "intent": "一颗细胞拖着金色粒子拖尾向右飞行",
+      "entities": [
+        {
+          "id": "cell",
+          "kind": "cell",
+          "appearance": "飞行细胞",
+          "color": "灰白色",
+          "role": "primary",
+          "count": 1,
+          "action": "向右飞行"
+        }
+      ],
+      "effects": [
+        {
+          "id": "trail",
+          "kind": "粒子拖尾",
+          "target": "cell",
+          "color": "琥珀金色",
+          "relation": "位于细胞左后方",
+          "count": 1
+        }
+      ],
+      "composition": {
+        "focalTarget": "cell",
+        "preset": "directional",
+        "direction": "向右"
+      },
+      "mustRead": [
+        "细胞向右飞行",
+        "金色粒子拖尾"
+      ],
+      "variants": [
+        {
+          "id": "base"
+        },
+        {
+          "id": "front",
+          "composition": {
+            "view": "正面"
+          }
+        },
+        {
+          "id": "dynamic",
+          "composition": {
+            "view": "三分之四视角",
+            "effectIntensity": "强"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill-11",
+      "seed": 11000,
+      "intent": "一片橙色网状结构把三个紫色病毒连在一起",
+      "entities": [
+        {
+          "id": "viruses",
+          "kind": "virus",
+          "appearance": "病毒",
+          "color": "紫色",
+          "role": "primary",
+          "count": 3
+        }
+      ],
+      "effects": [
+        {
+          "id": "net",
+          "kind": "网状结构",
+          "target": "viruses",
+          "color": "橙色",
+          "relation": "将三个病毒连在一起",
+          "count": 1
+        }
+      ],
+      "composition": {
+        "focalTarget": "net",
+        "preset": "interaction"
+      },
+      "mustRead": [
+        "三个紫色病毒",
+        "橙色网状结构",
+        "网连接三个病毒"
+      ],
+      "variants": [
+        {
+          "id": "base"
+        },
+        {
+          "id": "front",
+          "composition": {
+            "view": "正面"
+          }
+        },
+        {
+          "id": "dynamic",
+          "composition": {
+            "view": "三分之四视角",
+            "effectIntensity": "强"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill-12",
+      "seed": 12000,
+      "intent": "一个绿色病毒向外喷溅腐蚀性液滴",
+      "entities": [
+        {
+          "id": "virus",
+          "kind": "virus",
+          "appearance": "喷溅腐蚀液体的病毒",
+          "color": "绿色",
+          "role": "primary",
+          "count": 1
+        }
+      ],
+      "effects": [
+        {
+          "id": "drops",
+          "kind": "腐蚀性液滴",
+          "target": "virus",
+          "color": "黄绿色",
+          "relation": "从病毒向外喷溅",
+          "count": 3
+        }
+      ],
+      "composition": {
+        "focalTarget": "virus",
+        "preset": "radial",
+        "direction": "向外"
+      },
+      "mustRead": [
+        "绿色病毒",
+        "向外喷溅腐蚀液滴"
+      ],
+      "variants": [
+        {
+          "id": "base"
+        },
+        {
+          "id": "front",
+          "composition": {
+            "view": "正面"
+          }
+        },
+        {
+          "id": "dynamic",
+          "composition": {
+            "view": "三分之四视角",
+            "effectIntensity": "强"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill-13",
+      "seed": 13000,
+      "intent": "一股金色能量流注入一颗红细胞内部",
+      "entities": [
+        {
+          "id": "cell",
+          "kind": "cell",
+          "appearance": "红细胞",
+          "color": "红色",
+          "role": "primary",
+          "count": 1
+        }
+      ],
+      "effects": [
+        {
+          "id": "flow",
+          "kind": "能量流",
+          "target": "cell",
+          "color": "琥珀金色",
+          "relation": "从外部注入红细胞内部",
+          "count": 1
+        }
+      ],
+      "mustRead": [
+        "红细胞",
+        "金色能量流",
+        "能量注入关系"
+      ],
+      "composition": {
+        "focalTarget": "cell"
+      },
+      "variants": [
+        {
+          "id": "base"
+        },
+        {
+          "id": "front",
+          "composition": {
+            "view": "正面"
+          }
+        },
+        {
+          "id": "dynamic",
+          "composition": {
+            "view": "三分之四视角",
+            "effectIntensity": "强"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill-14",
+      "seed": 14000,
+      "intent": "三颗彩色药丸状细胞并排悬浮",
+      "entities": [
+        {
+          "id": "pills",
+          "kind": "pill",
+          "appearance": "药丸状细胞，各自有清楚的双色分区",
+          "color": "红青、紫白、绿白三组颜色",
+          "role": "primary",
+          "count": 3
+        }
+      ],
+      "composition": {
+        "focalTarget": "pills",
+        "preset": "group"
+      },
+      "mustRead": [
+        "三颗药丸状细胞",
+        "并排悬浮",
+        "数量与个体轮廓清楚"
+      ],
+      "variants": [
+        {
+          "id": "base"
+        },
+        {
+          "id": "front",
+          "composition": {
+            "view": "正面"
+          }
+        },
+        {
+          "id": "dynamic",
+          "composition": {
+            "view": "三分之四视角",
+            "effectIntensity": "强"
+          }
+        }
+      ]
+    },
+    {
+      "id": "skill-15",
+      "seed": 15000,
+      "intent": "一个分子结构球体，由细青色键线连接而成",
+      "entities": [
+        {
+          "id": "molecule",
+          "kind": "molecule",
+          "appearance": "由节点和细键线连接成球形的分子结构",
+          "color": "青色",
+          "role": "primary",
+          "count": 1
+        }
+      ],
+      "mustRead": [
+        "球形分子结构",
+        "细青色键线",
+        "节点连接关系"
+      ],
+      "composition": {
+        "focalTarget": "molecule"
+      },
+      "variants": [
+        {
+          "id": "base"
+        },
+        {
+          "id": "front",
+          "composition": {
+            "view": "正面"
+          }
+        },
+        {
+          "id": "dynamic",
+          "composition": {
+            "view": "三分之四视角",
+            "effectIntensity": "强"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "name": "@kevlns/art-workshop",
+  "version": "0.1.0",
+  "private": false,
+  "description": "美术工坊：统一风格的多工程图片生成与编辑工具",
+  "type": "module",
+  "bin": {
+    "art-workshop": "art-workshop.mjs"
+  },
+  "files": [
+    "art-workshop.mjs",
+    "lib/",
+    "rules/",
+    "skills/",
+    "scripts/sync-skill.mjs",
+    "README.md",
+    "docs/core-guidance.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "postinstall": "node scripts/sync-skill.mjs",
+    "skill:sync": "node scripts/sync-skill.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "pack:guard": "node scripts/pack-guard.mjs",
+    "check": "npm test && npm run pack:guard",
+    "test:package": "node scripts/test-package-install.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kevlns/art-workshop.git"
+  },
+  "homepage": "https://github.com/kevlns/art-workshop#readme",
+  "bugs": {
+    "url": "https://github.com/kevlns/art-workshop/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "author": "kevlns"
+}

@@ -1,0 +1,53 @@
+{
+  "project": "cellgame",
+  "id": "biological-unit",
+  "name": "游戏生物单位单体概念图",
+  "constraints": {
+    "text": false,
+    "frame": false,
+    "scene": false,
+    "crop": false,
+    "shadow": true
+  },
+  "defaults": {
+    "preset": "centered",
+    "view": "等距视角",
+    "direction": "无方向",
+    "occupancy": 0.7,
+    "effectIntensity": "中",
+    "background": {
+      "type": "solid",
+      "color": "#FFFFFF"
+    }
+  },
+  "allowedOverrides": {
+    "preset": [
+      "centered",
+      "radial"
+    ],
+    "view": [
+      "等距视角"
+    ],
+    "direction": [
+      "无方向"
+    ],
+    "occupancy": {
+      "min": 0.6,
+      "max": 0.8
+    },
+    "effectIntensity": [
+      "弱",
+      "中",
+      "强"
+    ]
+  },
+  "presets": {
+    "centered": "主体居中，完整展示生物轮廓与身体结构",
+    "radial": "围绕生物主体的核心结构作放射构图"
+  },
+  "checks": [
+    "等距视角",
+    "生物主体完整、正下方简洁投影",
+    "无文字与场景"
+  ]
+}

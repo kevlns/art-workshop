@@ -1,0 +1,71 @@
+{
+  "project": "cellgame",
+  "id": "skill-icon",
+  "name": "方形游戏技能图案，64px/128px 下语义可读",
+  "constraints": {
+    "text": false,
+    "frame": false,
+    "scene": false,
+    "crop": false,
+    "shadow": false
+  },
+  "defaults": {
+    "preset": "centered",
+    "view": "三分之四视角",
+    "direction": "无方向",
+    "occupancy": 0.7,
+    "effectIntensity": "中",
+    "background": {
+      "type": "solid",
+      "color": "#FFFFFF"
+    }
+  },
+  "allowedOverrides": {
+    "preset": [
+      "centered",
+      "directional",
+      "defensive",
+      "radial",
+      "interaction",
+      "group",
+      "centered-orbit"
+    ],
+    "view": [
+      "正面",
+      "三分之四视角",
+      "侧面",
+      "俯视"
+    ],
+    "direction": [
+      "无方向",
+      "向左",
+      "向右",
+      "斜向",
+      "向外"
+    ],
+    "occupancy": {
+      "min": 0.6,
+      "max": 0.8
+    },
+    "effectIntensity": [
+      "弱",
+      "中",
+      "强"
+    ]
+  },
+  "presets": {
+    "centered": "整体居中，剪影完整，重点明确",
+    "directional": "偏心构图，沿声明方向保留动势空间，主体与已声明效果共同表达方向",
+    "defensive": "防护效果位于保护对象前方，清楚表达抵挡关系",
+    "radial": "围绕视觉焦点作放射构图，扩散方向清楚",
+    "interaction": "主要实体与辅助对象前后交错，动作和交互关系清楚",
+    "group": "实体组并排排列，个体数量清楚，组成一个整体视觉焦点",
+    "centered-orbit": "球体居中，轨道在前后穿插，环绕关系清楚"
+  },
+  "checks": [
+    "画幅无装饰外框",
+    "四周留白、边缘完整",
+    "无文字",
+    "64px/128px 下技能语义可读"
+  ]
+}

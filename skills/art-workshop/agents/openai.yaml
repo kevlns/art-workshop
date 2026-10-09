@@ -1,0 +1,4 @@
+interface:
+  display_name: "美术工坊"
+policy:
+  allow_implicit_invocation: true
