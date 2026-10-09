@@ -15,3 +15,5 @@
 本地配置位于用户配置目录，可用 config path/show/init 发现；冻结核心在 workspace/projects/工程/cores。工程、参考、报告、计划、缓存、原图和产物都在安装目录之外，不纳入工具 Git 或 npm 包。相对资源按 workspace 解析，参考图按 refs 解析，RUN 按 output 解析。每次配置生效会补齐 refs 分类目录，包括 dry，不覆盖素材。
 
 随包 skills/art-workshop 是使用规范源，agent init --directory DIR 同步到已有 Agent 技能目录，保留扩展文件；自动同步也可用 npm run skill:sync。v-cli 负责路由、清单与本指导发现，美术工坊负责实际任务、核心选择与模型请求。安装 v-cli 会安装此官方依赖。
+
+UI 尺寸：文生图 profile.design 声明 resolution 与 outputScale，item.design 声明控件 width/height 与可选 outputScale。单体实际出图尺寸为设计尺寸乘倍率；不能同时指定任务 execution.size。换算越界报错，不自动改变比例；完整约束见 agent docs。

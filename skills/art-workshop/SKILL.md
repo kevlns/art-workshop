@@ -26,3 +26,22 @@ plan 和 `--dry` 不产生图片、没有远程生图调用；真实分析或 ru
 随包 skill 是权威来源，`agent init --directory DIR` 同步到 DIR 下已有的 Agent 技能目录；保留项目扩展文件。修改随包源后重新同步，不直接改已同步的 SKILL.md。
 
 资源路径：工程、报告、计划、参考图、缓存、编辑原图与输出均放在工具目录之外。默认输出为系统下载目录/image.g。参考目录可用 --refs-dir 指定；其他路径用 --workspace、--output-dir、--cache-dir 覆盖。相对资源文件按 workspace 解析，参考图按 refs 目录解析；不要在安装目录创建工程或产物。本地配置位于用户配置目录，通过 config path/show/init 发现；不纳入 Git。
+## UI 设计分辨率与单体出图尺寸
+
+UI 设计基准属于资产规格，不写进冻结风格核心。文生图 profile 可声明：
+
+```json
+"design": { "resolution": { "width": 1920, "height": 1080 }, "outputScale": 2 }
+```
+
+任务 item 可声明独立控件尺寸与可选倍率：
+
+```json
+"design": { "width": 240, "height": 80, "outputScale": 4 }
+```
+
+该按钮实际请求 size 为 960*320。同一任务的其他控件可使用不同设计尺寸；单体没有 design 时按 profile 的整幅设计分辨率出图。未覆盖倍率时继承 profile.outputScale。倍率为 1～4 的整数，设计尺寸为正整数且不得超过基准分辨率；换算后的每条边必须在工具支持的 256～4096 像素范围内，越界报错，不自动拉伸、补边或更改倍率。模型可能有额外尺寸与比例限制，工具的通用范围不等于模型能力保证。
+
+启用设计尺寸时禁止同时设置任务 execution.size；工程和本地 execution.size 默认值被单体换算尺寸替代，模型等其他执行参数保留既有优先级。旧任务不声明 design 时保持原有行为。设计模式的提示词不再附加整体占画幅 75% 等比例要求，而声明设计宽高比和安全留白。
+
+编译计划的每项包含 design（resolution、size、outputScale、outputSize）与实际 execution。预演、真实请求、输入哈希与执行验收使用同一份单体参数。修改设计尺寸后必须重新 plan。此配置控制请求画布，不保证模型精确绘制控件边界、描边或圆角像素，也不自动生成九宫切片、裁切或透明底资源。

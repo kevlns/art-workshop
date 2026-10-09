@@ -1,6 +1,6 @@
 {
   "name": "@kevlns/art-workshop",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": false,
   "description": "美术工坊：统一风格的多工程图片生成与编辑工具",
   "type": "module",

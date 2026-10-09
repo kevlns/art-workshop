@@ -37,3 +37,71 @@ test('图编辑单独编译，不读取工程默认核心，原图内容锁定',
 test('编辑修改与保留范围冲突、核心风格重复负责被拒绝',()=>fixture(root=>{const {job,path}=editFixture(root);job.items[0].preserve.push({target:'background',instruction:'保留背景'});writeJson(path,job);assert.throws(()=>compileEdit({projectId:'cellgame',jobId:'edit-test',root}),/冲突/);job.items[0].preserve.pop();job.core='cellgame';job.items[0].preserve.push({target:'style',instruction:'保留原图风格'});writeJson(path,job);assert.throws(()=>compileEdit({projectId:'cellgame',jobId:'edit-test',root}),/风格由核心/);}));
 test('模拟执行、产物完整性、人工三维验收',()=>fixture(root=>{const p=generate(root);const result=executePlan(p,selectItems(p,{item:'skill-01',variant:'base'}),{outputRoot:join(root,'output'),log:()=>{},runner:args=>{writeFileSync(join(args[args.indexOf('--out-dir')+1],'image.png'),'mock');return {};}});let rows=checkRun(result.manifest,result.manifestPath);assert.equal(rows[0].accepted,false);const review=rows.map(x=>({...x,content:'pass',style:'pass',asset:'pass'}));rows=checkRun(result.manifest,result.manifestPath,review);assert.equal(rows[0].accepted,true);writeFileSync(rows[0].path,'tampered');assert.equal(checkRun(result.manifest,result.manifestPath,review)[0].accepted,false);}));
 test('旧计划与手工改变计划拒绝执行',()=>{assert.throws(()=>validatePlan({schemaVersion:2,items:[{}]}),/当前计划/);const p=generate(ROOT);p.items[0].prompt+='change';assert.throws(()=>validatePlan(p),/计划已改变/);});
+
+function uiDesignFixture(root) {
+  const profilePath=join(root,'projects/cellgame/profiles/skill-icon.json');
+  const profile=readJson(profilePath);
+  profile.design={resolution:{width:1920,height:1080},outputScale:2};
+  writeJson(profilePath,profile);
+  const job=readJson(jobPath(root));
+  job.items=job.items.slice(0,3);
+  job.items[0].design={width:240,height:80,outputScale:4};
+  job.items[1].design={width:480,height:64,outputScale:4};
+  job.items[2].design={width:640,height:480};
+  job.items.forEach(item=>item.variants=[{id:'base'}]);
+  writeJson(jobPath(root),job);
+  return {profile,profilePath,job};
+}
+
+test('UI 三控件从设计基准换算独立尺寸，dry 请求使用每项尺寸',()=>fixture(root=>{
+  uiDesignFixture(root);
+  const plan=generate(root);
+  validatePlan(plan);
+  assert.deepEqual(plan.items.map(item=>item.execution.size),['960*320','1920*256','1280*960']);
+  assert.deepEqual(plan.items[2].design.resolution,{width:1920,height:1080});
+  assert.match(plan.items[0].prompt,/设计尺寸 240×80/);
+  assert.doesNotMatch(plan.items[0].prompt,/整体占画幅约/);
+  const dry=executePlan(plan,plan.items,{dry:true,log:()=>{},runner:()=>assert.fail('dry 调用模型')});
+  assert.deepEqual(dry.requests.map(row=>row.args[row.args.indexOf('--size')+1]),['960*320','1920*256','1280*960']);
+  const changed=structuredClone(plan.items[0]);
+  changed.execution.size='1024*1024';
+  assert.notEqual(hash({...changed,execution:changed.execution}),plan.items[0].inputHash);
+  assert.throws(()=>executePlan(plan,[changed],{dry:true,log:()=>{}}),/内容已改变/);
+}));
+
+test('UI 全画布继承设计分辨率，设计尺寸排斥任务像素覆盖',()=>fixture(root=>{
+  const {job}=uiDesignFixture(root);
+  delete job.items[0].design;
+  writeJson(jobPath(root),job);
+  assert.equal(generate(root).items[0].execution.size,'3840*2160');
+  job.execution={size:'1024*1024'};
+  writeJson(jobPath(root),job);
+  assert.throws(()=>generate(root),/不能同时指定/);
+}));
+
+test('UI 拒绝缺少设计基准、不完整尺寸、越界尺寸及非法倍率',()=>fixture(root=>{
+  const {job,profile,profilePath}=uiDesignFixture(root);
+  const original=structuredClone(job.items[0].design);
+  for(const invalid of [{width:240},{width:240,height:80,outputScale:2},{width:1921,height:80},{width:240,height:80,outputScale:0},{width:240,height:80,outputScale:1.5},{width:1920,height:1080,outputScale:4}]) {
+    job.items[0].design=invalid;
+    writeJson(jobPath(root),job);
+    assert.throws(()=>generate(root));
+  }
+  job.items[0].design=original;
+  writeJson(jobPath(root),job);
+  delete profile.design;
+  writeJson(profilePath,profile);
+  assert.throws(()=>generate(root),/需要资产规格/);
+}));
+
+test('UI 执行记录的尺寸篡改不能通过产物验收',()=>fixture(root=>{
+  uiDesignFixture(root);
+  const plan=generate(root);
+  const run=executePlan(plan,[plan.items[0]],{outputRoot:join(root,'output'),log:()=>{},runner:args=>{
+    assert.equal(args[args.indexOf('--size')+1],'960*320');
+    writeFileSync(join(args[args.indexOf('--out-dir')+1],'image.png'),'mock');
+    return {};
+  }});
+  run.manifest.items[0].execution.size='1024*1024';
+  assert.throws(()=>checkRun(run.manifest,run.manifestPath),/执行记录已改变/);
+}));
