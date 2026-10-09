@@ -1,6 +1,6 @@
 {
   "name": "@kevlns/art-workshop",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "description": "美术工坊：统一风格的多工程图片生成与编辑工具",
   "type": "module",
@@ -20,7 +20,7 @@
   "scripts": {
     "postinstall": "node scripts/sync-skill.mjs",
     "skill:sync": "node scripts/sync-skill.mjs",
-    "test": "node --test tests/*.test.mjs",
+    "test": "node scripts/test.mjs",
     "pack:guard": "node scripts/pack-guard.mjs",
     "check": "npm test && npm run pack:guard",
     "test:package": "node scripts/test-package-install.mjs"
