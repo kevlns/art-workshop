@@ -5,7 +5,7 @@ if(!npm)throw new Error('通过 npm run pack:guard 执行');
 const packed=spawnSync(process.execPath,[npm,'pack','--dry-run','--json','--ignore-scripts'],{encoding:'utf8'});
 if(packed.status!==0)throw new Error(packed.stderr);
 const info=JSON.parse(packed.stdout)[0],files=info.files.map(x=>x.path);
-for(const required of ['art-workshop.mjs','lib/core.mjs','lib/settings.mjs','rules/core-guidance.json','skills/art-workshop/SKILL.md','scripts/sync-skill.mjs','README.md','LICENSE','docs/core-guidance.md'])if(!files.includes(required))throw new Error('包缺少 '+required);
+for(const required of ['v-cli.plugin.json','AGENTS.md','art-workshop.mjs','lib/core.mjs','lib/settings.mjs','rules/core-guidance.json','skills/art-workshop/SKILL.md','scripts/sync-skill.mjs','README.md','LICENSE','docs/core-guidance.md'])if(!files.includes(required))throw new Error('包缺少 '+required);
 for(const file of files)if(/(?:^|\/)(?:node_modules|tests|projects|refs|\.git)(?:\/|$)|(?:\.local\.json|config\.json|\.pem|\.tgz)$/.test(file))throw new Error('包包含外部资源或本地配置 '+file);
 const pkg=JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8'));
 if(info.name!==pkg.name||info.version!==pkg.version||pkg.private)throw new Error('包身份或可发布状态错误');

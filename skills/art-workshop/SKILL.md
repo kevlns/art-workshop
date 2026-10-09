@@ -5,7 +5,7 @@ description: 使用 美术工坊 分析并冻结视觉风格、在多工程中�
 
 # 美术工坊
 
-读取同目录 `runtime.json`，通过 `node <entry>` 调用工具；已安装全局命令时可用 `art-workshop`。随包直接使用时，在工具目录执行 `node art-workshop.mjs`。下文用 `art-workshop` 表示该入口。
+已安装 v-cli 时可用 `v-cli art` 调用全部命令，首次先读取 `v-cli agent docs art`，用 `v-cli agent describe art --json` 发现完整参数。独立调用时读取同目录 `runtime.json`，通过 `node <entry>` 调用工具；已安装全局命令时可用 `art-workshop`。随包直接使用时，在工具目录执行 `node art-workshop.mjs`。下文用 `art-workshop` 表示该入口。
 
 先用 `art-workshop config show` 读取本地配置与外部工作目录，再用 `art-workshop agent index` 发现模块、工程及核心；需要完整用法或配置结构时读取 `art-workshop agent docs`。查看实际任务用 `<generate|edit> show --project <工程> --job <任务>`，不要猜测任务或核心身份。
 

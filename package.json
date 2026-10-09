@@ -1,6 +1,6 @@
 {
   "name": "@kevlns/art-workshop",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": false,
   "description": "美术工坊：统一风格的多工程图片生成与编辑工具",
   "type": "module",
@@ -15,7 +15,9 @@
     "scripts/sync-skill.mjs",
     "README.md",
     "docs/core-guidance.md",
-    "LICENSE"
+    "LICENSE",
+    "v-cli.plugin.json",
+    "AGENTS.md"
   ],
   "scripts": {
     "postinstall": "node scripts/sync-skill.mjs",
@@ -40,5 +42,8 @@
     "access": "public"
   },
   "license": "MIT",
-  "author": "kevlns"
+  "author": "kevlns",
+  "vCli": {
+    "manifest": "v-cli.plugin.json"
+  }
 }

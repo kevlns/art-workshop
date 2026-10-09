@@ -125,3 +125,7 @@ node --test tests/art-workshop.test.mjs
 ```
 
 依赖 Node.js 与已配置的 bailian-cli。历史图片保留供对照，旧配置和旧计划接口不再支持。真实模型效果需另行实测。
+
+## v-cli 接入
+
+美术工坊是 v-cli 的随包官方插件，入口为 `v-cli art`。先运行 `v-cli agent docs art` 和 `v-cli agent describe art --json`，再运行 `v-cli art config show`、`v-cli art agent index` 选择正确工程。本文所有 `art-workshop` 命令都可将前缀替换为 `v-cli art`；参数、外部本地配置和冻结核心保持一致。`v-cli art --help` 查看入口，`v-cli art agent docs` 查看完整使用规范。

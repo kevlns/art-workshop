@@ -13,6 +13,10 @@ try{
   const root=process.platform==='win32'?join(prefix,'node_modules','@kevlns','art-workshop'):join(prefix,'lib','node_modules','@kevlns','art-workshop');
   const run=args=>process.platform==='win32'?execFileSync('cmd.exe',['/d','/c',join(prefix,'art-workshop.cmd'),...args],{encoding:'utf8'}):execFileSync(join(prefix,'bin','art-workshop'),args,{encoding:'utf8'});
   if(run(['--version']).trim()!==info.version)throw new Error('安装版本不符');
+  if(!run(['--help']).includes('v-cli art'))throw new Error('帮助缺少 v-cli 发现入口');
+  const manifest=JSON.parse(readFileSync(join(root,'v-cli.plugin.json'),'utf8'));
+  if(manifest.package!==info.name||manifest.command!=='art'||manifest.bin!=='art-workshop')throw new Error('随包插件身份不符');
+  if(!existsSync(join(root,'AGENTS.md')))throw new Error('v-cli 随包规范缺失');
   if(!run(['agent','docs']).includes('核心冻结指导规则'))throw new Error('随包文档缺失');
   if(!existsSync(join(root,'skills','art-workshop','SKILL.md')))throw new Error('随包 skill 缺失');
   const config=JSON.parse(run(['config','show']));

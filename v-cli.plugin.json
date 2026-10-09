@@ -1,0 +1,799 @@
+{
+  "schemaVersion": 1,
+  "package": "@kevlns/art-workshop",
+  "command": "art",
+  "bin": "art-workshop",
+  "description": "美术工坊：多工程风格分析与核心冻结、统一风格文生图及图编辑，支持计划预演与人工验收。",
+  "platforms": [
+    "win32",
+    "linux",
+    "darwin"
+  ],
+  "runtime": {
+    "node": ">=20",
+    "imageProvider": "bl CLI for remote analysis/generation"
+  },
+  "environment": [
+    {
+      "name": "ART_WORKSHOP_CONFIG",
+      "description": "外部本地配置文件路径；未指定时使用用户配置目录/art-workshop/config.json"
+    },
+    {
+      "name": "CODEX_HOME",
+      "description": "可选 Codex 配置目录，用于随包 skill 同步"
+    }
+  ],
+  "agent": {
+    "whenToUse": "视觉风格分析与冻结、基于正确工程核心生成统一风格图片、按修改与保留计划编辑现有图片，或查看 refs 分类、预演与验收。先 config show 和 agent index 选择工程，远程分析及生图须有任务授权。",
+    "globalOptions": [
+      {
+        "flags": "--config <file>",
+        "description": "外部本地配置文件"
+      },
+      {
+        "flags": "--workspace <dir>",
+        "description": "外部工程与任务根目录"
+      },
+      {
+        "flags": "--output-dir <dir>",
+        "description": "外部产物目录，默认系统下载目录/image.g"
+      },
+      {
+        "flags": "--refs-dir <dir>",
+        "description": "外部参考图目录"
+      },
+      {
+        "flags": "--cache-dir <dir>",
+        "description": "外部缓存目录"
+      },
+      {
+        "flags": "-V, --version",
+        "description": "单独使用，显示工具版本"
+      },
+      {
+        "flags": "-h, --help",
+        "description": "单独使用，显示入口帮助"
+      }
+    ],
+    "commands": [
+      {
+        "path": [
+          "help"
+        ],
+        "usage": "art-workshop help",
+        "description": "显示命令入口与 v-cli 发现方式",
+        "arguments": [],
+        "options": [],
+        "output": {
+          "format": "text",
+          "description": "显示命令入口与 v-cli 发现方式"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
+          "无网络调用"
+        ]
+      },
+      {
+        "path": [
+          "config",
+          "path"
+        ],
+        "usage": "art-workshop config path",
+        "description": "显示本地配置文件路径",
+        "arguments": [],
+        "options": [],
+        "output": {
+          "format": "text",
+          "description": "显示本地配置文件路径"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
+          "无网络调用"
+        ]
+      },
+      {
+        "path": [
+          "config",
+          "show"
+        ],
+        "usage": "art-workshop config show",
+        "description": "显示生效的本地配置和外部资源路径",
+        "arguments": [],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "显示生效的本地配置和外部资源路径"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
+          "无网络调用"
+        ]
+      },
+      {
+        "path": [
+          "config",
+          "init"
+        ],
+        "usage": "art-workshop config init",
+        "description": "配置不存在时创建本地模板；已存在时读取，不覆盖",
+        "arguments": [],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "配置不存在时创建本地模板；已存在时读取，不覆盖"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
+          "无网络调用",
+          "写入外部本地配置"
+        ]
+      },
+      {
+        "path": [
+          "refs",
+          "guide"
+        ],
+        "usage": "art-workshop refs guide [--project <id>]",
+        "description": "解释参考分类目录的用途与推荐图片样式",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程 ID；未指定时使用本地 defaultProject，不跨工程回退"
+          }
+        ],
+        "output": {
+          "format": "text",
+          "description": "解释参考分类目录的用途与推荐图片样式"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
+          "无网络调用"
+        ]
+      },
+      {
+        "path": [
+          "agent",
+          "index"
+        ],
+        "usage": "art-workshop agent index",
+        "description": "发现模块、工程、核心、任务与随包 skill",
+        "arguments": [],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "发现模块、工程、核心、任务与随包 skill"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
+          "无网络调用"
+        ]
+      },
+      {
+        "path": [
+          "agent",
+          "docs"
+        ],
+        "usage": "art-workshop agent docs",
+        "description": "输出完整使用规范与核心冻结指导",
+        "arguments": [],
+        "options": [],
+        "output": {
+          "format": "text",
+          "description": "输出完整使用规范与核心冻结指导"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
+          "无网络调用"
+        ]
+      },
+      {
+        "path": [
+          "agent",
+          "init"
+        ],
+        "usage": "art-workshop agent init [--directory <dir>] [--dry]",
+        "description": "将随包 skill 同步到目标下已有 Agent 技能目录",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--directory <dir>",
+            "description": "同步目标根目录，默认 cwd"
+          },
+          {
+            "flags": "--dry",
+            "description": "预演，不调用远程模型；仍补齐 refs 分类目录"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "将随包 skill 同步到目标下已有 Agent 技能目录"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
+          "无网络调用",
+          "覆盖同名随包 skill 和 runtime.json，保留扩展文件"
+        ]
+      },
+      {
+        "path": [
+          "list"
+        ],
+        "usage": "art-workshop list",
+        "description": "列出外部工作目录中的工程",
+        "arguments": [],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "列出外部工作目录中的工程"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
+          "无网络调用"
+        ]
+      },
+      {
+        "path": [
+          "style",
+          "analyze"
+        ],
+        "usage": "art-workshop style analyze [--project <id>] [--input <file>] [--out <file>] [--dry]",
+        "description": "通过具备视觉能力的模型生成风格报告与推荐配置",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程 ID；未指定时使用本地 defaultProject，不跨工程回退"
+          },
+          {
+            "flags": "--input <file>",
+            "description": "分析输入 JSON，引用图片按 refs 解析"
+          },
+          {
+            "flags": "--out <file>",
+            "description": "可选外部输出文件；相对路径基于 workspace"
+          },
+          {
+            "flags": "--dry",
+            "description": "预演，不调用远程模型；仍补齐 refs 分类目录"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "通过具备视觉能力的模型生成风格报告与推荐配置"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
+          "非 dry 会调用远程模型并产生费用",
+          "非 dry 可写入外部报告和分析缓存",
+          "不自动冻结核心"
+        ]
+      },
+      {
+        "path": [
+          "style",
+          "validate"
+        ],
+        "usage": "art-workshop style validate [--project <id>] [--report <file>]",
+        "description": "校验报告及核心规则的一致性",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程 ID；未指定时使用本地 defaultProject，不跨工程回退"
+          },
+          {
+            "flags": "--report <file>",
+            "description": "风格报告 JSON，相对路径基于 workspace"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "校验报告及核心规则的一致性"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
+          "无网络调用"
+        ]
+      },
+      {
+        "path": [
+          "style",
+          "freeze"
+        ],
+        "usage": "art-workshop style freeze [--project <id>] [--report <file>] [--note <text>]",
+        "description": "采用报告并冻结核心，将核心绑定到当前工程",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程 ID；未指定时使用本地 defaultProject，不跨工程回退"
+          },
+          {
+            "flags": "--report <file>",
+            "description": "风格报告 JSON，相对路径基于 workspace"
+          },
+          {
+            "flags": "--note <text>",
+            "description": "冻结备注"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "采用报告并冻结核心，将核心绑定到当前工程"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
+          "须有用户采用报告的授权",
+          "写入外部工程核心和 project.json，拒绝覆写已有核心",
+          "无网络调用"
+        ]
+      },
+      {
+        "path": [
+          "style",
+          "show"
+        ],
+        "usage": "art-workshop style show [--project <id>] [--core <id>]",
+        "description": "读取当前工程的指定冻结核心并验证完整性",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程 ID；未指定时使用本地 defaultProject，不跨工程回退"
+          },
+          {
+            "flags": "--core <id>",
+            "description": "工程内冻结核心 ID；显式选择与任务绑定冲突时拒绝执行"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "读取当前工程的指定冻结核心并验证完整性"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
+          "无网络调用"
+        ]
+      },
+      {
+        "path": [
+          "generate",
+          "show"
+        ],
+        "usage": "art-workshop generate show [--project <id>] [--job <id>]",
+        "description": "读取文生图任务",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程 ID；未指定时使用本地 defaultProject，不跨工程回退"
+          },
+          {
+            "flags": "--job <id>",
+            "description": "工程内任务 ID"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "读取文生图任务"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
+          "无网络调用"
+        ]
+      },
+      {
+        "path": [
+          "generate",
+          "plan"
+        ],
+        "usage": "art-workshop generate plan [--project <id>] [--job <id>] [--core <id>] [--out <file>]",
+        "description": "编译文生图计划，明确来源及真实请求",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程 ID；未指定时使用本地 defaultProject，不跨工程回退"
+          },
+          {
+            "flags": "--job <id>",
+            "description": "工程内任务 ID"
+          },
+          {
+            "flags": "--core <id>",
+            "description": "工程内冻结核心 ID；显式选择与任务绑定冲突时拒绝执行"
+          },
+          {
+            "flags": "--out <file>",
+            "description": "可选外部输出文件；相对路径基于 workspace"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "编译文生图计划，明确来源及真实请求"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
+          "无网络调用",
+          "指定 out 时写入外部计划文件"
+        ]
+      },
+      {
+        "path": [
+          "generate",
+          "run"
+        ],
+        "usage": "art-workshop generate run [--plan <file>] [--project <id>] [--job <id>] [--core <id>] [--item <id>] [--variant <id>] [--explore] [--offset <n>] [--limit <n>] [--dry]",
+        "description": "执行或预演文生图计划",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--plan <file>",
+            "description": "冻结计划文件；不能同时指定 project/job/core/explore"
+          },
+          {
+            "flags": "--project <id>",
+            "description": "工程 ID；未指定时使用本地 defaultProject，不跨工程回退"
+          },
+          {
+            "flags": "--job <id>",
+            "description": "工程内任务 ID"
+          },
+          {
+            "flags": "--core <id>",
+            "description": "工程内冻结核心 ID；显式选择与任务绑定冲突时拒绝执行"
+          },
+          {
+            "flags": "--item <id>",
+            "description": "选择单体"
+          },
+          {
+            "flags": "--variant <id>",
+            "description": "选择候选，默认 base"
+          },
+          {
+            "flags": "--explore",
+            "description": "执行全部候选；仅在从任务编译时使用"
+          },
+          {
+            "flags": "--offset <n>",
+            "description": "选择起始偏移，默认 0"
+          },
+          {
+            "flags": "--limit <n>",
+            "description": "执行数量上限"
+          },
+          {
+            "flags": "--dry",
+            "description": "预演，不调用远程模型；仍补齐 refs 分类目录"
+          }
+        ],
+        "output": {
+          "format": "stdout",
+          "description": "执行或预演文生图计划"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
+          "非 dry 调用远程模型并产生费用，需任务授权",
+          "真实执行写入外部图片及 manifest",
+          "预演展示请求，不生成图片"
+        ]
+      },
+      {
+        "path": [
+          "edit",
+          "show"
+        ],
+        "usage": "art-workshop edit show [--project <id>] [--job <id>]",
+        "description": "读取图编辑任务",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程 ID；未指定时使用本地 defaultProject，不跨工程回退"
+          },
+          {
+            "flags": "--job <id>",
+            "description": "工程内任务 ID"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "读取图编辑任务"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
+          "无网络调用"
+        ]
+      },
+      {
+        "path": [
+          "edit",
+          "plan"
+        ],
+        "usage": "art-workshop edit plan [--project <id>] [--job <id>] [--core <id>] [--out <file>]",
+        "description": "编译图编辑计划，明确来源及真实请求",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程 ID；未指定时使用本地 defaultProject，不跨工程回退"
+          },
+          {
+            "flags": "--job <id>",
+            "description": "工程内任务 ID"
+          },
+          {
+            "flags": "--core <id>",
+            "description": "工程内冻结核心 ID；显式选择与任务绑定冲突时拒绝执行"
+          },
+          {
+            "flags": "--out <file>",
+            "description": "可选外部输出文件；相对路径基于 workspace"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "编译图编辑计划，明确来源及真实请求"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
+          "无网络调用",
+          "指定 out 时写入外部计划文件"
+        ]
+      },
+      {
+        "path": [
+          "edit",
+          "run"
+        ],
+        "usage": "art-workshop edit run [--plan <file>] [--project <id>] [--job <id>] [--core <id>] [--item <id>] [--variant <id>] [--explore] [--offset <n>] [--limit <n>] [--dry]",
+        "description": "执行或预演图编辑计划",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--plan <file>",
+            "description": "冻结计划文件；不能同时指定 project/job/core/explore"
+          },
+          {
+            "flags": "--project <id>",
+            "description": "工程 ID；未指定时使用本地 defaultProject，不跨工程回退"
+          },
+          {
+            "flags": "--job <id>",
+            "description": "工程内任务 ID"
+          },
+          {
+            "flags": "--core <id>",
+            "description": "工程内冻结核心 ID；显式选择与任务绑定冲突时拒绝执行"
+          },
+          {
+            "flags": "--item <id>",
+            "description": "选择单体"
+          },
+          {
+            "flags": "--variant <id>",
+            "description": "选择候选，默认 base"
+          },
+          {
+            "flags": "--explore",
+            "description": "执行全部候选；仅在从任务编译时使用"
+          },
+          {
+            "flags": "--offset <n>",
+            "description": "选择起始偏移，默认 0"
+          },
+          {
+            "flags": "--limit <n>",
+            "description": "执行数量上限"
+          },
+          {
+            "flags": "--dry",
+            "description": "预演，不调用远程模型；仍补齐 refs 分类目录"
+          }
+        ],
+        "output": {
+          "format": "stdout",
+          "description": "执行或预演图编辑计划"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
+          "非 dry 调用远程模型并产生费用，需任务授权",
+          "真实执行写入外部图片及 manifest",
+          "预演展示请求，不生成图片"
+        ]
+      },
+      {
+        "path": [
+          "check"
+        ],
+        "usage": "art-workshop check RUN [--review <file>] [--out <file>]",
+        "description": "导出或汇总人工验收；不自动评价图片",
+        "arguments": [
+          {
+            "name": "RUN",
+            "description": "运行目录或 manifest 路径，按 output 解析",
+            "required": true
+          }
+        ],
+        "options": [
+          {
+            "flags": "--review <file>",
+            "description": "人工 review JSON"
+          },
+          {
+            "flags": "--out <file>",
+            "description": "可选外部输出文件；相对路径基于 workspace"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "导出或汇总人工验收；不自动评价图片"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
+          "无网络调用",
+          "指定 out 时写入外部验收文件"
+        ]
+      },
+      {
+        "path": [
+          "select"
+        ],
+        "usage": "art-workshop select RUN [--item <id>] [--variant <id>] [--review <file>] [--file <path>]",
+        "description": "选择完整性有效且 content/style/asset 全部通过的唯一产物",
+        "arguments": [
+          {
+            "name": "RUN",
+            "description": "运行目录或 manifest 路径，按 output 解析",
+            "required": true
+          }
+        ],
+        "options": [
+          {
+            "flags": "--item <id>",
+            "description": "必须指定单体"
+          },
+          {
+            "flags": "--variant <id>",
+            "description": "必须指定候选"
+          },
+          {
+            "flags": "--review <file>",
+            "description": "人工 review JSON"
+          },
+          {
+            "flags": "--file <path>",
+            "description": "选择记录内的图片文件"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "选择完整性有效且 content/style/asset 全部通过的唯一产物"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
+          "无网络调用",
+          "写回外部 manifest 的验收与选择记录"
+        ]
+      },
+      {
+        "path": [
+          "compare"
+        ],
+        "usage": "art-workshop compare BEFORE AFTER",
+        "description": "比较两份计划或执行记录的核心、执行配置和单体变更",
+        "arguments": [
+          {
+            "name": "BEFORE",
+            "description": "前一份计划/执行记录 JSON，按 workspace 解析",
+            "required": true
+          },
+          {
+            "name": "AFTER",
+            "description": "后一份计划/执行记录 JSON，按 workspace 解析",
+            "required": true
+          }
+        ],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "比较两份计划或执行记录的核心、执行配置和单体变更"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
+          "无网络调用"
+        ]
+      }
+    ]
+  }
+}

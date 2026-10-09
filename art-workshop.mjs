@@ -1,19 +1,21 @@
 #!/usr/bin/env node
 import {readdirSync,existsSync} from 'node:fs';
 import {join,resolve} from 'node:path';
-import {loadJob,loadProject} from './lib/project.mjs';
-import {referenceRoot,ensureReferenceDirectories,referenceGuide} from './lib/refs.mjs';
-import {loadSettings,initSettings,externalPath} from './lib/settings.mjs';
 import {readJson,writeJson} from './lib/shared.mjs';
-import {analyzeStyle} from './lib/analyze.mjs';
-import {validateReport,freezeCore,loadCore} from './lib/core.mjs';
-import {compileGenerate} from './lib/generate.mjs';
-import {compileEdit} from './lib/edit.mjs';
-import {validatePlan,selectItems} from './lib/plan.mjs';
-import {executePlan,checkRun} from './lib/executor.mjs';
-import {agentIndex,agentDocs,syncSkill,autoSync} from './lib/agent.mjs';
 const args=process.argv.slice(2),pos=[],options={};
 if(args.length===1&&['--version','-V'].includes(args[0])){console.log(readJson(new URL('./package.json',import.meta.url)).version);process.exit(0);}
+const help='art-workshop: config path/show/init | refs guide | agent index/docs/init | list | style analyze/validate/freeze/show | generate show/plan/run | edit show/plan/run | check/select RUN | compare PLAN PLAN\n也可用 v-cli art 调用；先 v-cli agent docs art，再 v-cli agent describe art --json 查看完整参数。';
+if(!args.length||args.length===1&&['--help','-h','help'].includes(args[0])){console.log(help);process.exit(0);}
+const {loadJob,loadProject}=await import('./lib/project.mjs');
+const {referenceRoot,ensureReferenceDirectories,referenceGuide}=await import('./lib/refs.mjs');
+const {loadSettings,initSettings,externalPath}=await import('./lib/settings.mjs');
+const {analyzeStyle}=await import('./lib/analyze.mjs');
+const {validateReport,freezeCore,loadCore}=await import('./lib/core.mjs');
+const {compileGenerate}=await import('./lib/generate.mjs');
+const {compileEdit}=await import('./lib/edit.mjs');
+const {validatePlan,selectItems}=await import('./lib/plan.mjs');
+const {executePlan,checkRun}=await import('./lib/executor.mjs');
+const {agentIndex,agentDocs,syncSkill,autoSync}=await import('./lib/agent.mjs');
 const flags=new Set(['dry','explore']);
 const allowed=new Set(['config','workspace','output-dir','refs-dir','cache-dir','directory','project','input','out','report','note','core','job','plan','item','variant','offset','limit','review','file',...flags]);
 for(let i=0;i<args.length;i++){if(args[i].startsWith('--')){const k=args[i].slice(2);if(!allowed.has(k)||k in options) throw new Error('未知或重复参数 '+k);options[k]=flags.has(k)?true:args[++i];if(options[k]===undefined) throw new Error('参数缺少值 '+k);}else pos.push(args[i]);}
@@ -70,6 +72,6 @@ try {
     if(module==='check'){if(options.out) writeJson(path(options.out),rows);print(rows);}
     else {const matched=rows.filter(x=>x.itemId===required('item')&&x.variantId===required('variant')&&(!options.file||x.file===options.file));if(matched.length!==1||!matched[0].accepted) throw new Error('只能选择唯一且全部验收通过的产物');manifest.review=rows;manifest.selections[options.item]=matched[0];writeJson(file,manifest);print(matched[0]);}
   }else if(module==='compare'){const read=value=>{const data=readJson(path(value));const plan=data.plan??data;validatePlan(plan);return plan;};const a=read(action),b=read(pos[2]);print({sameCore:a.sources.coreHash===b.sources.coreHash,execution:{before:a.execution,after:b.execution},items:b.items.map(x=>({itemId:x.itemId,variantId:x.variantId,changed:a.items.find(y=>y.itemId===x.itemId&&y.variantId===x.variantId)?.inputHash!==x.inputHash}))});}
-  else if(!module||module==='help') console.log('art-workshop: config path/show/init | refs guide | agent index/docs/init | list | style analyze/validate/freeze/show | generate show/plan/run | edit show/plan/run | check/select RUN | compare PLAN PLAN');
+  else if(!module||module==='help') console.log(help);
   else throw new Error('未知模块或旧入口：'+module);
 }catch(e){console.error(e.message);process.exitCode=1;}
