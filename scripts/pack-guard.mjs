@@ -8,5 +8,7 @@ const info=JSON.parse(packed.stdout)[0],files=info.files.map(x=>x.path);
 for(const required of ['v-cli.plugin.json','AGENTS.md','art-workshop.mjs','lib/core.mjs','lib/settings.mjs','rules/core-guidance.json','skills/art-workshop/SKILL.md','scripts/sync-skill.mjs','README.md','LICENSE','docs/core-guidance.md'])if(!files.includes(required))throw new Error('包缺少 '+required);
 for(const file of files)if(/(?:^|\/)(?:node_modules|tests|projects|refs|\.git)(?:\/|$)|(?:\.local\.json|config\.json|\.pem|\.tgz)$/.test(file))throw new Error('包包含外部资源或本地配置 '+file);
 const pkg=JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8'));
+for(const doc of ['modes','configuration','data-formats','commands','troubleshooting','core-guidance'])if(!files.includes('docs/'+doc+'.md'))throw new Error('包缺少指南 '+doc);
+for(const suffix of ['.api.json','.json'])if(!files.includes('workflows/vant-builtin-qwen-image-2.1-Q4-8GB'+suffix))throw new Error('包缺少内置工作流 '+suffix);
 if(info.name!==pkg.name||info.version!==pkg.version||pkg.private)throw new Error('包身份或可发布状态错误');
 console.log(`pack:guard OK — ${info.name}@${info.version}, ${files.length} files`);

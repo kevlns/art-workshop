@@ -1,6 +1,6 @@
 {
   "name": "@kevlns/art-workshop",
-  "version": "0.1.3",
+  "version": "0.2.1",
   "private": false,
   "description": "美术工坊：统一风格的多工程图片生成与编辑工具",
   "type": "module",
@@ -14,18 +14,20 @@
     "skills/",
     "scripts/sync-skill.mjs",
     "README.md",
-    "docs/core-guidance.md",
     "LICENSE",
     "v-cli.plugin.json",
-    "AGENTS.md"
+    "AGENTS.md",
+    "workflows/",
+    "docs/"
   ],
   "scripts": {
     "postinstall": "node scripts/sync-skill.mjs",
     "skill:sync": "node scripts/sync-skill.mjs",
     "test": "node scripts/test.mjs",
     "pack:guard": "node scripts/pack-guard.mjs",
-    "check": "npm test && npm run pack:guard",
-    "test:package": "node scripts/test-package-install.mjs"
+    "check": "npm run docs:check && npm test && npm run pack:guard",
+    "test:package": "node scripts/test-package-install.mjs",
+    "docs:check": "node scripts/check-docs.mjs"
   },
   "engines": {
     "node": ">=20"

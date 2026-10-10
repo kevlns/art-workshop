@@ -3,7 +3,7 @@
   "package": "@kevlns/art-workshop",
   "command": "art",
   "bin": "art-workshop",
-  "description": "美术工坊：多工程风格分析与核心冻结、统一风格文生图及图编辑，支持计划预演与人工验收。",
+  "description": "美术工坊：风格分析与冻结、远程百炼和本地 ComfyUI 生图/编辑、配置环境检查、任务控制及人工验收。",
   "platforms": [
     "win32",
     "linux",
@@ -11,7 +11,7 @@
   ],
   "runtime": {
     "node": ">=20",
-    "imageProvider": "bl CLI for remote analysis/generation"
+    "imageProvider": "bailian CLI or lazy ComfyUI backend; task lifecycle and shutdown"
   },
   "environment": [
     {
@@ -24,7 +24,7 @@
     }
   ],
   "agent": {
-    "whenToUse": "视觉风格分析与冻结、基于正确工程核心生成统一风格图片、按修改与保留计划编辑现有图片，或查看 refs 分类、预演与验收。先 config show 和 agent index 选择工程，远程分析及生图须有任务授权。",
+    "whenToUse": "风格分析/冻结、远程或本地生图/编辑、工作流检测及任务管理。先 config show、agent index、config validate；远程核对百炼入口与认证，本地核对 workflow/doctor，具体任务先 plan 和 run --dry；按已有授权执行，任务失败读取 diagnostic，产物人工验收。",
     "globalOptions": [
       {
         "flags": "--config <file>",
@@ -73,8 +73,7 @@
           "1": "参数、配置、计划或执行失败"
         },
         "safety": [
-          "配置生效时补齐外部 refs 分类目录，不覆盖素材",
-          "无网络调用"
+          "无配置读取、目录初始化、网络或模型调用"
         ]
       },
       {
@@ -199,12 +198,12 @@
           "docs"
         ],
         "usage": "art-workshop agent docs",
-        "description": "输出完整使用规范与核心冻结指导",
+        "description": "输出全部随包模式、配置、工程、命令、诊断与核心指南",
         "arguments": [],
         "options": [],
         "output": {
           "format": "text",
-          "description": "输出完整使用规范与核心冻结指导"
+          "description": "输出全部随包模式、配置、工程、命令、诊断与核心指南"
         },
         "exitCodes": {
           "0": "成功；验收状态以返回内容为准",
@@ -463,6 +462,10 @@
           {
             "flags": "--out <file>",
             "description": "可选外部输出文件；相对路径基于 workspace"
+          },
+          {
+            "flags": "--backend <id>",
+            "description": "新计划选择配置中的远程/本地后端 ID；冻结计划不能覆盖"
           }
         ],
         "output": {
@@ -526,7 +529,15 @@
           },
           {
             "flags": "--dry",
-            "description": "预演，不调用远程模型；仍补齐 refs 分类目录"
+            "description": "预演所选请求；不联网、启动服务或上传，仍可补齐 refs 分类"
+          },
+          {
+            "flags": "--backend <id>",
+            "description": "选择统一配置中的后端；冻结计划不允许覆盖"
+          },
+          {
+            "flags": "--background",
+            "description": "后台执行并返回 taskId"
           }
         ],
         "output": {
@@ -539,9 +550,10 @@
         },
         "safety": [
           "配置生效时补齐外部 refs 分类目录，不覆盖素材",
-          "非 dry 调用远程模型并产生费用，需任务授权",
-          "真实执行写入外部图片及 manifest",
-          "预演展示请求，不生成图片"
+          "远程非 dry 通过百炼调用模型，可能产生费用，按已有任务授权执行",
+          "本地非 dry 可启动任务和 ComfyUI 服务并采样，不调用百炼生图",
+          "真实执行写入外部图片、manifest、任务状态和诊断",
+          "dry 只展示请求，不启动或探测服务、不上传、不生成图片"
         ]
       },
       {
@@ -599,6 +611,10 @@
           {
             "flags": "--out <file>",
             "description": "可选外部输出文件；相对路径基于 workspace"
+          },
+          {
+            "flags": "--backend <id>",
+            "description": "新计划选择配置中的远程/本地后端 ID；冻结计划不能覆盖"
           }
         ],
         "output": {
@@ -662,7 +678,15 @@
           },
           {
             "flags": "--dry",
-            "description": "预演，不调用远程模型；仍补齐 refs 分类目录"
+            "description": "预演所选请求；不联网、启动服务或上传，仍可补齐 refs 分类"
+          },
+          {
+            "flags": "--backend <id>",
+            "description": "选择统一配置中的后端；冻结计划不允许覆盖"
+          },
+          {
+            "flags": "--background",
+            "description": "后台执行并返回 taskId"
           }
         ],
         "output": {
@@ -675,9 +699,10 @@
         },
         "safety": [
           "配置生效时补齐外部 refs 分类目录，不覆盖素材",
-          "非 dry 调用远程模型并产生费用，需任务授权",
-          "真实执行写入外部图片及 manifest",
-          "预演展示请求，不生成图片"
+          "远程非 dry 通过百炼调用模型，可能产生费用，按已有任务授权执行",
+          "本地非 dry 可启动任务和 ComfyUI 服务并采样，不调用百炼生图",
+          "真实执行写入外部图片、manifest、任务状态和诊断",
+          "dry 只展示请求，不启动或探测服务、不上传、不生成图片"
         ]
       },
       {
@@ -792,6 +817,216 @@
         "safety": [
           "配置生效时补齐外部 refs 分类目录，不覆盖素材",
           "无网络调用"
+        ]
+      },
+      {
+        "path": [
+          "task",
+          "list"
+        ],
+        "usage": "art-workshop task list",
+        "description": "列出任务状态",
+        "arguments": [],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "列出任务状态"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "失败；未确认停止时保留服务并报告"
+        },
+        "safety": [
+          "读取外部运行状态"
+        ]
+      },
+      {
+        "path": [
+          "task",
+          "status"
+        ],
+        "usage": "art-workshop task status TASK",
+        "description": "查看单次任务及后端 prompt_id",
+        "arguments": [
+          {
+            "name": "TASK",
+            "required": true,
+            "description": "art 任务 ID"
+          }
+        ],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "查看单次任务及后端 prompt_id"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "失败；未确认停止时保留服务并报告"
+        },
+        "safety": [
+          "读取外部运行状态"
+        ]
+      },
+      {
+        "path": [
+          "task",
+          "wait"
+        ],
+        "usage": "art-workshop task wait TASK",
+        "description": "等待任务结束；超时不取消任务",
+        "arguments": [
+          {
+            "name": "TASK",
+            "required": true,
+            "description": "art 任务 ID"
+          }
+        ],
+        "options": [
+          {
+            "flags": "--timeout <seconds>",
+            "description": "等待秒数，默认 3600"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "等待任务结束；超时不取消任务"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "失败；未确认停止时保留服务并报告"
+        },
+        "safety": [
+          "读取外部运行状态"
+        ]
+      },
+      {
+        "path": [
+          "task",
+          "cancel"
+        ],
+        "usage": "art-workshop task cancel TASK",
+        "description": "取消单次任务并等待停止",
+        "arguments": [
+          {
+            "name": "TASK",
+            "required": true,
+            "description": "art 任务 ID"
+          }
+        ],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "取消单次任务并等待停止"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "失败；未确认停止时保留服务并报告"
+        },
+        "safety": [
+          "取消单个任务",
+          "按 prompt_id 中断本地任务",
+          "保留服务进程"
+        ]
+      },
+      {
+        "path": [
+          "shutdown"
+        ],
+        "usage": "art-workshop shutdown",
+        "description": "停止所有任务、清空本地队列并关闭服务",
+        "arguments": [],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "停止所有任务、清空本地队列并关闭服务"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "失败；未确认停止时保留服务并报告"
+        },
+        "safety": [
+          "停止配置范围内所有任务",
+          "清空 ComfyUI 队列并中断执行",
+          "核验进程身份后关闭服务",
+          "阻止 shutdown 期间的新任务"
+        ]
+      },
+      {
+        "path": [
+          "config",
+          "validate"
+        ],
+        "usage": "art-workshop config validate",
+        "description": "校验配置和 API workflow 的结构、连接与参数绑定",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--backend <id>",
+            "description": "仅检查指定后端"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "校验配置和 API workflow 的结构、连接与参数绑定"
+        },
+        "exitCodes": {
+          "0": "检查通过",
+          "1": "检查失败"
+        },
+        "safety": [
+          "只读校验，不启动服务、不调用模型"
+        ]
+      },
+      {
+        "path": [
+          "doctor"
+        ],
+        "usage": "art-workshop doctor",
+        "description": "检测本地 ComfyUI 环境、节点与模型",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--backend <id>",
+            "description": "仅检查指定后端"
+          },
+          {
+            "flags": "--start",
+            "description": "无可用服务时按配置启动；不采样，检查后服务保留"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "检测本地 ComfyUI 环境、节点与模型"
+        },
+        "exitCodes": {
+          "0": "检查通过",
+          "1": "检查失败"
+        },
+        "safety": [
+          "默认读取本地环境，不启动、不采样、不补齐 refs",
+          "--start 可启动并保留服务，写状态与日志；不采样",
+          "远程后端只校验配置，不检查认证或云端连通性"
+        ]
+      },
+      {
+        "path": [
+          "workflow",
+          "list"
+        ],
+        "usage": "art-workshop workflow list",
+        "description": "列出默认内置工作流及 API/UI 文件位置",
+        "arguments": [],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "列出默认内置工作流及 API/UI 文件位置"
+        },
+        "exitCodes": {
+          "0": "检查通过",
+          "1": "检查失败"
+        },
+        "safety": [
+          "读取随包工作流清单，不依赖合法用户配置、不补 refs、不调用模型"
         ]
       }
     ]

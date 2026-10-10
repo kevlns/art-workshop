@@ -1,47 +1,74 @@
 ---
 name: art-workshop
-description: 使用 美术工坊 分析并冻结视觉风格、在多工程中按核心配置生成统一风格图片，或按修改与保留计划编辑现有图片。任务提到 美术工坊、核心冻结、风格报告、统一风格批量生图或本工具的图片编辑时使用。
+description: 使用美术工坊进行风格分析与核心冻结、远程或本地 ComfyUI 生图和编辑、工作流及环境检查、任务取消与服务关闭。任务提到美术工坊、art 工具、核心冻结、统一风格图片或其工作流时使用。
 ---
 
 # 美术工坊
 
-已安装 v-cli 时可用 `v-cli art` 调用全部命令，首次先读取 `v-cli agent docs art`，用 `v-cli agent describe art --json` 发现完整参数。独立调用时读取同目录 `runtime.json`，通过 `node <entry>` 调用工具；已安装全局命令时可用 `art-workshop`。随包直接使用时，在工具目录执行 `node art-workshop.mjs`。下文用 `art-workshop` 表示该入口。
+随包规范是权威来源。已安装 v-cli 时调用 v-cli art；首次先运行 v-cli agent docs art 和 v-cli agent describe art --json。独立使用读取同目录 runtime.json，通过 node <entry> 调用；全局安装也可用 art-workshop。以下前缀使用 v-cli art。
 
-先用 `art-workshop config show` 读取本地配置与外部工作目录，再用 `art-workshop agent index` 发现模块、工程及核心；需要完整用法或配置结构时读取 `art-workshop agent docs`。查看实际任务用 `<generate|edit> show --project <工程> --job <任务>`，不要猜测任务或核心身份。
+## 发现与模式选择
 
-用 `art-workshop refs guide [--project P] [--refs-dir DIR]` 查看实际参考目录、分类用途与推荐图片。每次 CLI 配置生效都会补齐缺少的参考分类目录，包括 --dry；不覆盖素材。分类不自动绑定图片，分析仍显式声明 path、scope、note，构图、文字和姿态的具体要求放入单体计划。
+先 config show、agent index、config validate，确认实际外部路径、后端、工程、任务、核心。完整规范用 agent docs 查看；generate/edit show 读取任务，不猜身份。
 
-- **风格分析与冻结**：`style analyze --project P --input FILE --out REPORT` 生成证据、推荐配置、冲突与未确定项；`style validate --project P --report REPORT` 校验；用户采用该报告后用 `style freeze --project P --report REPORT`。分析不会自动冻结，已有冻结核心不能覆写。
-- **文生图**：`generate plan --project P --job J --out PLAN`，再 `generate run --plan PLAN --item ID --dry` 查看真实请求，实际生成去掉 `--dry`。run 默认 base，`--variant ID` 选择候选，`--explore` 执行全部候选，`--limit N` 限制单体数。
-- **图编辑**：`edit plan --project P --job J --out PLAN`，再 `edit run --plan PLAN [--dry]`。任务必须明确原图、修改范围与保留范围；原图发生变化后重新预演。
+| 模式 | 执行前检查 |
+|---|---|
+| 远程生图 | 百炼真实入口及 bl auth status/config show；config validate；generate plan、run --dry |
+| 远程编辑 | 远程检查加原图与 changes/preserve；edit plan、run --dry |
+| 本地内置 | workflow list、config validate、doctor；generate plan、run --dry |
+| 本地自定义 | API JSON/bindings、插件与模型、单张输出；config validate、doctor、plan、dry |
+| 本地 Qwen 2.1 编辑 | 一张底图、image/vae 绑定与编码器、修改/保留不冲突；doctor、edit plan、dry |
+| 分析与冻结 | 百炼 analysisModel、参考 scope；analyze --dry、报告 validate；用户采用后 freeze |
 
-核心只定义可复用的视觉语言；主体、数量、颜色、动作归需求；背景和构图许可归资产配置；模型与尺寸归执行。语言精炼、用词准确、前后一致，各模块职责清楚。核心选择依次为显式 `--core`、任务绑定、工程默认；显式选择与任务绑定冲突时先修改任务，不跨工程回退。
+远程 doctor 只是配置检查，当前百炼 CLI 无 bl doctor。style analyze 仍使用远程百炼，不随本地生图后端切换。pure local run 不需要百炼凭证。
 
-文生图默认纯白背景；纯黑、其他纯色、渐变或场景须明确声明。编辑保留原图未要求修改的部分，不自动换背景或套工程默认核心。编辑绑定核心时，风格由核心负责，不能又声明保留原图风格。
+## 生图与编辑流程
 
-plan 和 `--dry` 不产生图片、没有远程生图调用；真实分析或 run 会调用模型，按用户已授权范围执行，不因预演请求擅自开始付费调用。修改需求后重新编译计划，不手改冻结计划。
-
-生成后用 `check RUN --out REVIEW` 导出人工验收，分别审查 content/style/asset，再用 `check RUN --review REVIEW` 汇总；只有三项全部 pass 才能 `select RUN --item ID --variant ID --review REVIEW`。check 不自动评价图片。
-
-随包 skill 是权威来源，`agent init --directory DIR` 同步到 DIR 下已有的 Agent 技能目录；保留项目扩展文件。修改随包源后重新同步，不直接改已同步的 SKILL.md。
-
-资源路径：工程、报告、计划、参考图、缓存、编辑原图与输出均放在工具目录之外。默认输出为系统下载目录/image.g。参考目录可用 --refs-dir 指定；其他路径用 --workspace、--output-dir、--cache-dir 覆盖。相对资源文件按 workspace 解析，参考图按 refs 目录解析；不要在安装目录创建工程或产物。本地配置位于用户配置目录，通过 config path/show/init 发现；不纳入 Git。
-## UI 设计分辨率与单体出图尺寸
-
-UI 设计基准属于资产规格，不写进冻结风格核心。文生图 profile 可声明：
-
-```json
-"design": { "resolution": { "width": 1920, "height": 1080 }, "outputScale": 2 }
+```powershell
+v-cli art config validate --backend local-qwen
+v-cli art doctor --backend local-qwen
+# 服务未运行时可按配置启动后检测，不采样。
+v-cli art doctor --backend local-qwen --start
+v-cli art generate show --project P --job J
+v-cli art generate plan --project P --job J --backend local-qwen --out .cache/plan.json
+v-cli art generate run --plan .cache/plan.json --item ITEM --dry
+v-cli art generate run --plan .cache/plan.json --item ITEM --background
 ```
 
-任务 item 可声明独立控件尺寸与可选倍率：
+P/J/ITEM 为需替换的真实身份，local-qwen 须已声明。编辑用 edit show/plan/run，选择有编辑能力的后端。未传 --backend 时由 generation.defaultBackend 选择；都未声明则仍走百炼默认。comfyui 后端省略 workflow 时选择 vant-builtin-qwen-image-2.1-Q4-8GB 内置文生图模板，默认 CPU 文本编码、512×512；权重和插件需已安装。
 
-```json
-"design": { "width": 240, "height": 80, "outputScale": 4 }
+新计划可以 --backend 选远程/本地 ID。冻结 --plan 不能同时传 backend/project/job/core/explore；只选 item/variant/offset/limit 等执行范围。修改需求、模板、参数或原图后重新 plan，不手改快照或哈希。
+
+variants 是构图/seed 候选，perValue 是每个组合的张数，limit 按 item 数。run 默认 base；新来源调用 --explore 展开候选。--timeout 只用于 task wait。本地要求每边为 32 的倍数、扩写和水印关闭；不自动改变设计尺寸。UI design 基于 profile 分辨率和单体尺寸/倍率换算，每边实际输出 256～4096，检查每项 execution。
+
+## 核心与原图
+
+核心只定义可复用视觉语言；实体、数量、身份色、动作和关系属于需求；背景、构图许可、设计基准属于资产；模型和尺寸属于执行。
+
+文生图核心依次选显式 --core、任务 core、工程 defaultCore。冲突需改任务，不跨工程回退。默认纯白背景，其他背景必须明确允许。编辑默认保留原图风格，不读 defaultCore；绑定 core 后不能重复声明 style 修改/保留。原图与分析参考图语义不同，不将参考图自动用作编辑底图。
+
+style analyze 只生成报告，不自动冻结；style validate 检查结构与冲突，人工审阅后由用户采用，再 style freeze。已有核心不可覆写。用户既有执行授权持续有效，不重复询问；仅预演或生成报告不能自行扩大到付费执行或冻结。
+
+## 任务、失败与验收
+
+```powershell
+v-cli art task status TASK
+v-cli art task wait TASK --timeout 60
+v-cli art task cancel TASK
+v-cli art shutdown
+v-cli art check RUN --out .cache/review.json
 ```
 
-该按钮实际请求 size 为 960*320。同一任务的其他控件可使用不同设计尺寸；单体没有 design 时按 profile 的整幅设计分辨率出图。未覆盖倍率时继承 profile.outputScale。倍率为 1～4 的整数，设计尺寸为正整数且不得超过基准分辨率；换算后的每条边必须在工具支持的 256～4096 像素范围内，越界报错，不自动拉伸、补边或更改倍率。模型可能有额外尺寸与比例限制，工具的通用范围不等于模型能力保证。
+前台和后台都创建 task。wait 超时不会取消；cancel 仅停止指定任务，保留服务。shutdown 停止当前配置范围全部生图/编辑任务，清空关联 ComfyUI 队列、中断执行并核验身份后关闭服务，也影响同后端浏览器任务。同步分析不在队列内。远程 cancel 不保证云端停止或费用撤销。
 
-启用设计尺寸时禁止同时设置任务 execution.size；工程和本地 execution.size 默认值被单体换算尺寸替代，模型等其他执行参数保留既有优先级。旧任务不声明 design 时保持原有行为。设计模式的提示词不再附加整体占画幅 75% 等比例要求，而声明设计宽高比和安全留白。
+失败读取 task status 的 diagnostic、error、manifest 与日志：环境/提交/执行阶段、workflow/backend、节点和原始错误、修复提示。failed/lost 不证明后端停止，unsettled 必须如实报告。不得擅自换模型、后端或设计尺寸；修复后重新 plan/dry。
 
-编译计划的每项包含 design（resolution、size、outputScale、outputSize）与实际 execution。预演、真实请求、输入哈希与执行验收使用同一份单体参数。修改设计尺寸后必须重新 plan。此配置控制请求画布，不保证模型精确绘制控件边界、描边或圆角像素，也不自动生成九宫切片、裁切或透明底资源。
+check 只核对完整性并汇总 content/style/asset 人工验收；全部 pass 才可 select。环境检查、mock 测试、模型输出都不等于实际图像或生产资产通过。
+
+## 路径与副作用
+
+资源放在安装目录之外。相对 input/report/plan/out/review/source 基于 workspace，RUN 基于 output，参考图基于实际 refs，workflow/launch 路径基于配置目录。目录覆盖建议绝对路径。
+
+plan/dry 不联网、启动服务、上传或采样；普通 CLI 仍可补 refs 分类，plan --out 写计划。config validate/doctor/workflow list 不补 refs；doctor --start 可启动并保留服务。检测通过不保证权重加载、显存或效果。
+
+用 refs guide 查实际分类；输入显式指定参考 path/scope/note。随包 SKILL.md 是源，agent init 同步到已有技能目录并保留扩展，不写工作区 AGENTS.md；避免直接改同步副本。

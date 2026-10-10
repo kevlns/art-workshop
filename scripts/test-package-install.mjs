@@ -17,8 +17,9 @@ try{
   const manifest=JSON.parse(readFileSync(join(root,'v-cli.plugin.json'),'utf8'));
   if(manifest.package!==info.name||manifest.command!=='art'||manifest.bin!=='art-workshop')throw new Error('随包插件身份不符');
   if(!existsSync(join(root,'AGENTS.md')))throw new Error('v-cli 随包规范缺失');
-  if(!run(['agent','docs']).includes('核心冻结指导规则'))throw new Error('随包文档缺失');
+  const docs=run(['agent','docs']);for(const title of ['核心冻结指导规则','art 模式与调用规范','art 统一配置','art 工程与输入结构','art 命令参考','art 诊断与任务控制'])if(!docs.includes(title))throw new Error('随包文档缺失 '+title);
   if(!existsSync(join(root,'skills','art-workshop','SKILL.md')))throw new Error('随包 skill 缺失');
+  const builtin=JSON.parse(run(['workflow','list']))[0];if(!builtin.default||!existsSync(builtin.api)||!existsSync(builtin.ui))throw new Error('内置工作流缺失');
   const config=JSON.parse(run(['config','show']));
   if(config.paths.workspace.startsWith(root))throw new Error('工作目录落入安装目录');
   if(JSON.parse(readFileSync(join(root,'package.json'),'utf8')).private)throw new Error('安装包仍为 private');
