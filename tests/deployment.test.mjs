@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {mkdtempSync,rmSync,existsSync,mkdirSync,writeFileSync,readFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import childProcess from 'node:child_process';
+import {syncBuiltinESMExports} from 'node:module';
 import {deploymentStatus,cancelDeployment,recoverDeployment,startDeployment,deploymentPlan,validateDeploymentPlan,LOCAL_RECIPE} from '../lib/deployment.mjs';
 import {runtimeRoot} from '../lib/runtime.mjs';
 import {writeJson,hash} from '../lib/shared.mjs';
@@ -17,10 +19,13 @@ test('lost deployment stays occupying; cancel only records a request and origina
 });
 test('deployment previews cannot authorize changed download sources or newly occupied model targets',{skip:process.platform!=='win32'},async()=>{
  const root=mkdtempSync(join(tmpdir(),'art-deploy-preflight-'));const settings={file:join(root,'settings.json'),paths:{workspace:root}};
+ const original=childProcess.execFileSync;
+ childProcess.execFileSync=(command,...args)=>command==='nvidia-smi'?'NVIDIA fixture, 8192, 999.0\n':original(command,...args);
+ syncBuiltinESMExports();
  try{const target=join(root,'install');mkdirSync(join(target,'python_embeded'),{recursive:true});writeFileSync(join(target,'python_embeded/python.exe'),'not executed');const plan=deploymentPlan(settings,{directory:target});assert.equal(existsSync(runtimeRoot(settings)),false);
  const changed=structuredClone(plan);changed.recipe.models[0].url='https://untrusted.invalid/model';const {planHash,...body}=changed;changed.planHash=hash(body);assert.throws(()=>validateDeploymentPlan(changed,settings),/固定方案/);
  const model=join(target,'ComfyUI/models',LOCAL_RECIPE.models[0].path);mkdirSync(join(model,'..'),{recursive:true});writeFileSync(model,'user file');assert.throws(()=>validateDeploymentPlan(plan,settings),/环境已变化/);assert.equal(readFileSync(model,'utf8'),'user file');
  await assert.rejects(startDeployment(settings,plan,{operationId:'rejected-before-dispatch'}),/环境已变化/);
  const rejected=await recoverDeployment(settings,'rejected-before-dispatch');assert.equal(rejected.status,'failed');assert.equal(rejected.stopConfirmed,true);assert.equal(rejected.workerPid,undefined);
- }finally{rmSync(root,{recursive:true,force:true});}
+ }finally{childProcess.execFileSync=original;syncBuiltinESMExports();rmSync(root,{recursive:true,force:true});}
 });
