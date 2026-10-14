@@ -1,74 +1,47 @@
 ---
 name: art-workshop
-description: 使用美术工坊进行风格分析与核心冻结、远程或本地 ComfyUI 生图和编辑、工作流及环境检查、任务取消与服务关闭。任务提到美术工坊、art 工具、核心冻结、统一风格图片或其工作流时使用。
+description: 美术工坊风格、任务、参考、预演、执行与定版管理。
 ---
 
-# 美术工坊
+# art Agent 调用规范
 
-随包规范是权威来源。已安装 v-cli 时调用 v-cli art；首次先运行 v-cli agent docs art 和 v-cli agent describe art --json。独立使用读取同目录 runtime.json，通过 node <entry> 调用；全局安装也可用 art-workshop。以下前缀使用 v-cli art。
+用户既有授权与偏好持续有效；查询和预演不授权生成或采用。规范与实时参数通过 v-cli agent docs art 和 v-cli agent describe art --json 获取。
 
-## 发现与模式选择
+## 对象与参考
 
-先 config show、agent index、config validate，确认实际外部路径、后端、工程、任务、核心。完整规范用 agent docs 查看；generate/edit show 读取任务，不猜身份。
+工程必须使用 schemaVersion 2。project upgrade 是显式一次性升级，备份和原子替换；混合旧参考必须明确映射，日常读写无旧格式回退。
+风格和任务都有稳定 id 与 revision。UI、聊天和 CLI 共用对象；写入、派生与清理提交预期 revision，冲突重新读取。正式风格只读，改动创建派生风格；派生不继承报告、核心、批次、授权与对话。
+风格静态参考只有 style、palette、shape-language、rendering，分析理解可复用视觉语言。任务动态参考只有 subject、composition、pose、identity-color、surface、scene-light、text；编辑底图另列。导入复制原图，不修改用户文件。未适配直接参考时拒绝，不隐式上传风格图片。
 
-| 模式 | 执行前检查 |
-|---|---|
-| 远程生图 | 百炼真实入口及 bl auth status/config show；config validate；generate plan、run --dry |
-| 远程编辑 | 远程检查加原图与 changes/preserve；edit plan、run --dry |
-| 本地内置 | workflow list、config validate、doctor；generate plan、run --dry |
-| 本地自定义 | API JSON/bindings、插件与模型、单张输出；config validate、doctor、plan、dry |
-| 本地 Qwen 2.1 编辑 | 一张底图、image/vae 绑定与编码器、修改/保留不冲突；doctor、edit plan、dry |
-| 分析与冻结 | 百炼 analysisModel、参考 scope；analyze --dry、报告 validate；用户采用后 freeze |
+## 风格生命周期
 
-远程 doctor 只是配置检查，当前百炼 CLI 无 bl doctor。style analyze 仍使用远程百炼，不随本地生图后端切换。pure local run 不需要百炼凭证。
+style create/read/update/derive/discard 管理草稿。style analyze --dry 只读编译，不联网、启动服务或创建参考目录。实际 analyze 创建 taskId 与独立参考证据；task status/wait/cancel 控制执行，recover 查原登记，resume 仅恢复远程查询与取回。
+报告绑定源配置、参考与模型。更新配置会清除当前报告，旧证据保留。style adopt 校验源版本、报告身份、冲突与未确定项，用户采用后冻结。采用中断通过 style recover 完成已授权事务，不能重新冻结另一份核心。
+退出风格配置先继续编辑、保存草稿或放弃；分析停止未确认时不能清理。
 
-## 生图与编辑流程
+## 计划与执行
 
-```powershell
-v-cli art config validate --backend local-qwen
-v-cli art doctor --backend local-qwen
-# 服务未运行时可按配置启动后检测，不采样。
-v-cli art doctor --backend local-qwen --start
-v-cli art generate show --project P --job J
-v-cli art generate plan --project P --job J --backend local-qwen --out .cache/plan.json
-v-cli art generate run --plan .cache/plan.json --item ITEM --dry
-v-cli art generate run --plan .cache/plan.json --item ITEM --background
-```
+先读取实际 job，再 generate/edit plan 和 run --plan --dry，展示有效核心、设计尺寸、预留缩放、请求与实际像素、模型后端、候选数量和编辑底图。后端尺寸由工具统一解析，超限或未对齐选最近合法尺寸，保留设计基准并明确实际值；不承诺显存或自动缩放导出。
+授权覆盖方案后使用 run --background；前台同样创建执行身份。配置、核心、规格、参考、底图和后端变化拒绝旧方案，重新编译。重启查 taskId，不重复提交。不自动换模型或重跑成功项。
+每个任务只能有一个未停止确认的执行；编辑、派生、删除与运行共用状态检查。切页面不取消。
 
-P/J/ITEM 为需替换的真实身份，local-qwen 须已声明。编辑用 edit show/plan/run，选择有编辑能力的后端。未传 --backend 时由 generation.defaultBackend 选择；都未声明则仍走百炼默认。comfyui 后端省略 workflow 时选择 vant-builtin-qwen-image-2.1-Q4-8GB 内置文生图模板，默认 CPU 文本编码、512×512；权重和插件需已安装。
+## 取消、异常和关闭
 
-新计划可以 --backend 选远程/本地 ID。冻结 --plan 不能同时传 backend/project/job/core/explore；只选 item/variant/offset/limit 等执行范围。修改需求、模板、参数或原图后重新 plan，不手改快照或哈希。
+任务状态与停止证据分开。queued/running/cancelling 仍占用资源；unknown 或 stopConfirmed=false 保留资源。failed/cancelled 也不能单凭状态释放资源；dispatching/accepted 远程回执尚未结清时继续占用。工作进程丢失标记 unknown，不推测停止。
+task cancel 只取消指定运行，保留服务。远程取消只停止本地客户端，上游停止未知如实报告，不允许清理。shutdown 阻止提交、停止关联任务、核验共享队列和进程身份后关闭本地服务，不清空共享队列；有其他任务或停止未确认时保留服务。不得广泛杀所有 Python。
 
-variants 是构图/seed 候选，perValue 是每个组合的张数，limit 按 item 数。run 默认 base；新来源调用 --explore 展开候选。--timeout 只用于 task wait。本地要求每边为 32 的倍数、扩写和水印关闭；不自动改变设计尺寸。UI design 基于 profile 分辨率和单体尺寸/倍率换算，每边实际输出 256～4096，检查每项 execution。
+## 生成与定版
 
-## 核心与原图
+只有生成与定版两个产品阶段。check 验证计划、执行身份、文件哈希和完成事实；不要求人工 content/style/asset 评分。candidate finalize 按资产选定候选，重复操作幂等；替换已有定版需要明确 replace，保留历史。
+candidate delete 先确认影响，拒绝运行中或被计划/底图引用的候选；先记删除事实，清理所属文件，并取消关联定版。定版不自动导入游戏或提交 Git。
 
-核心只定义可复用视觉语言；实体、数量、身份色、动作和关系属于需求；背景、构图许可、设计基准属于资产；模型和尺寸属于执行。
+## 验证和技能
 
-文生图核心依次选显式 --core、任务 core、工程 defaultCore。冲突需改任务，不跨工程回退。默认纯白背景，其他背景必须明确允许。编辑默认保留原图风格，不读 defaultCore；绑定 core 后不能重复声明 style 修改/保留。原图与分析参考图语义不同，不将参考图自动用作编辑底图。
+本地先 config validate、doctor、plan/dry，再按授权真实生成与编辑。配置有效、服务可连接与真实出图是不同证据。远程核对实际认证和模型入口；凭证不得写入项目、计划、日志或命令行。
+随包 skills/art-workshop 是技能源；通过 agent init 或 skill:sync 同步，保留项目扩展。查询和预演不自动同步。源码/单测/mock 不能代替真实模型、图像、桌面与安装验证。
 
-style analyze 只生成报告，不自动冻结；style validate 检查结构与冲突，人工审阅后由用户采用，再 style freeze。已有核心不可覆写。用户既有执行授权持续有效，不重复询问；仅预演或生成报告不能自行扩大到付费执行或冻结。
+任务动态参考先 `job analyze`，缺失、过期或职责越界的观察不能进入生成预案。分析与生成共用任务占用与停止确认。启动回执丢失只能 `task recover --project P --operation ID` 查询唯一原登记；没有唯一证据时保持未知，不能重发生成。
 
-## 任务、失败与验收
+模型、参数及支持状态只在 art 工具 model-catalog/model-registry 内维护，界面与 v-cli 不复制型号判断。远程图片由已注册协议适配器直接调用；视觉分析连接独立，未注入时使用百炼 CLI。Token Plan 是渠道，DashScope 是协议，不跨站点回退凭据。
 
-```powershell
-v-cli art task status TASK
-v-cli art task wait TASK --timeout 60
-v-cli art task cancel TASK
-v-cli art shutdown
-v-cli art check RUN --out .cache/review.json
-```
-
-前台和后台都创建 task。wait 超时不会取消；cancel 仅停止指定任务，保留服务。shutdown 停止当前配置范围全部生图/编辑任务，清空关联 ComfyUI 队列、中断执行并核验身份后关闭服务，也影响同后端浏览器任务。同步分析不在队列内。远程 cancel 不保证云端停止或费用撤销。
-
-失败读取 task status 的 diagnostic、error、manifest 与日志：环境/提交/执行阶段、workflow/backend、节点和原始错误、修复提示。failed/lost 不证明后端停止，unsettled 必须如实报告。不得擅自换模型、后端或设计尺寸；修复后重新 plan/dry。
-
-check 只核对完整性并汇总 content/style/asset 人工验收；全部 pass 才可 select。环境检查、mock 测试、模型输出都不等于实际图像或生产资产通过。
-
-## 路径与副作用
-
-资源放在安装目录之外。相对 input/report/plan/out/review/source 基于 workspace，RUN 基于 output，参考图基于实际 refs，workflow/launch 路径基于配置目录。目录覆盖建议绝对路径。
-
-plan/dry 不联网、启动服务、上传或采样；普通 CLI 仍可补 refs 分类，plan --out 写计划。config validate/doctor/workflow list 不补 refs；doctor --start 可启动并保留服务。检测通过不保证权重加载、显存或效果。
-
-用 refs guide 查实际分类；输入显式指定参考 path/scope/note。随包 SKILL.md 是源，agent init 同步到已有技能目录并保留扩展，不写工作区 AGENTS.md；避免直接改同步副本。
+远端上游身份持久化后才能轮询。`task resume TASK` 只恢复原身份查询与取回，不重发生成；无回执或仍处于 dispatching 的提交保持未知。界面与保存共用 modelEligibility，展示字段不进入执行契约。

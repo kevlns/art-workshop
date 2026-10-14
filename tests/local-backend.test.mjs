@@ -12,12 +12,13 @@ import {loadSettings} from '../lib/settings.mjs';
 import {compileGenerate} from '../lib/generate.mjs';
 import {compileEdit} from '../lib/edit.mjs';
 import {validatePlan} from '../lib/plan.mjs';
-import {ensureService,rememberedService,stopIdentity} from '../lib/service.mjs';
+import {ensureService,rememberedService,stopIdentity,shutdownOwnedServices} from '../lib/service.mjs';
 import {runtimeRoot,http,sleep} from '../lib/runtime.mjs';
-import {startTask,waitTask,cancelTask,taskStatus,shutdown} from '../lib/tasks.mjs';
+import {startTask,waitTask,cancelTask,taskStatus,shutdown,failedItems} from '../lib/tasks.mjs';
 import {checkRun} from '../lib/executor.mjs';
 import {BUILTIN_WORKFLOW,loadBackend} from '../lib/workflows.mjs';
 import {validateConfiguration,doctor,environmentIssues} from '../lib/diagnostics.mjs';
+import sharp from 'sharp';
 
 async function fixture(fn,delay=50){
   const root=mkdtempSync(join(tmpdir(),'art-local-'));
@@ -40,6 +41,29 @@ async function fixture(fn,delay=50){
   try{await fn({root,endpoint,settings,plan,b,template,runtime:runtimeRoot(settings)});}
   finally{const service=rememberedService(runtimeRoot(settings),endpoint);if(service?.identity)try{await stopIdentity(service.identity);}catch{};rmSync(root,{recursive:true,force:true});}
 }
+test('失败项重试保持原预案且排除已成功项，停止未知不能重试',async()=>fixture(async({plan,runtime})=>{
+  const runId='task-failed',manifestPath=join(runtime,'failed-manifest.json');
+  const rows=plan.items.map((item,index)=>({...item,ok:index!==0,status:index===0?'failed':'generated'}));
+  writeJson(manifestPath,{taskId:runId,planHash:plan.planHash,items:rows});
+  const file=join(runtime,'tasks',runId+'.json');
+  writeJson(file,{taskId:runId,status:'failed',stopConfirmed:true,plan,manifestPath});
+  assert.deepEqual(failedItems(runtime,runId,plan),[plan.items[0]]);
+  const retryManifest=join(runtime,'retry-manifest.json');writeJson(retryManifest,{taskId:'task-retry',planHash:plan.planHash,items:[{...plan.items[0],ok:true,status:'generated'}]});
+  const retryFile=join(runtime,'tasks/task-retry.json');writeJson(retryFile,{schema:'art-workshop/task',taskId:'task-retry',retryOf:runId,status:'succeeded',stopConfirmed:true,plan,manifestPath:retryManifest});
+  assert.throws(()=>failedItems(runtime,runId,plan),/可重试/);rmSync(retryFile);
+  assert.throws(()=>failedItems(runtime,runId,{...plan,planHash:'changed'}),/原批次预案/);
+  writeJson(file,{taskId:runId,status:'unknown',stopConfirmed:false,plan,manifestPath});
+  assert.throws(()=>failedItems(runtime,runId,plan),/停止尚未确认/);
+}));
+
+test('shutdown 保留共享服务中的外部任务，不清队列或全局中断',async()=>fixture(async({plan,runtime,settings,endpoint})=>{
+  await ensureService(plan.backend,runtime);
+  const foreign=await http(endpoint,'/prompt',{method:'POST',body:{prompt:{}}});
+  await assert.rejects(shutdown(settings),/其他任务/);
+  const queue=await http(endpoint,'/queue');
+  assert.ok(queue.queue_running.some(row=>row[1]===foreign.prompt_id));
+},10000));
+
 test('统一配置、动态尺寸、模板快照和不支持能力校验',async()=>fixture(async({plan,template,root})=>{
   validatePlan(plan);assert.equal(plan.execution.model,'local.gguf');
   const item={...plan.items[0],execution:{...plan.execution,size:'960*320'}};
@@ -55,6 +79,12 @@ test('默认内置工作流、只读配置校验与环境检测',async()=>fixtur
   const b=settings.generation.backends.local;delete b.workflow;delete b.bindings;delete b.execution;
   const invalid=join(root,'invalid.json');writeFileSync(invalid,'{"generation":{"defaultBackend":"missing"}}');const cli=spawnSync(process.execPath,[fileURLToPath(new URL('../art-workshop.mjs',import.meta.url)),'config','validate','--config',invalid],{encoding:'utf8'});assert.equal(cli.status,1);assert.equal(JSON.parse(cli.stdout).issues[0].code,'configuration');
   const builtin=loadBackend(settings,'local');assert.equal(builtin.workflow,BUILTIN_WORKFLOW);assert.equal(builtin.template['2'].inputs.device,'cpu');assert.equal(backendDefaults(settings).size,'512*512');
+  const builtinEdit=loadBackend(settings,'local','edit');
+  const editRequest=buildComfyRequest({module:'edit',backend:builtinEdit,execution:{...plan.execution,model:b.model}}, {...plan.items[0],imageArgs:['input.png'],execution:undefined},{image:'uploaded.png'});
+  assert.deepEqual(editRequest.prompt['6'].inputs.latent_image,['4',2]);
+  assert.deepEqual(editRequest.prompt['4'].inputs['images.image_1'],['5',0]);
+  assert.equal(editRequest.prompt['5'].class_type,'ImageScale');
+  assert.equal(editRequest.prompt['4'].inputs.resolution,0);
   assert.equal(validateConfiguration(settings).ok,true);assert.equal(existsSync(runtime),false);
   settings.execution.size='960*321';assert.equal(validateConfiguration(settings).backends[0].issues[0].code,'local_dimensions');delete settings.execution.size;
   const absent=await doctor(settings,{backend:'local'});assert.equal(absent.ok,false);assert.equal(existsSync(runtime),false);
@@ -85,10 +115,23 @@ test('懒启动并发去重，复用同一实例，shutdown 关闭进程',async(
   const result=await shutdown(settings);assert.equal(result.services[0].stopped,true);
   await assert.rejects(http(endpoint,'/system_stats'));
 }));
+test('应用启动的服务保存归属，退出只关闭受管实例并确认端口释放',async()=>fixture(async({plan,runtime,endpoint})=>{
+  const previous=process.env.VANT_SERVICE_INSTANCE;
+  process.env.VANT_SERVICE_INSTANCE='test-vant-exit';
+  try {
+    await ensureService(plan.backend,runtime);
+    assert.deepEqual(rememberedService(runtime,endpoint).owner,{application:'vant',instanceId:'test-vant-exit'});
+    await ensureService(plan.backend,runtime);
+    assert.equal(rememberedService(runtime,endpoint).owner.instanceId,'test-vant-exit');
+    const stopped=await shutdownOwnedServices();
+    assert.ok(stopped.some(s=>s.endpoint===endpoint&&s.stopped&&s.portReleased));
+    await assert.rejects(http(endpoint,'/system_stats'));
+  } finally {if(previous===undefined)delete process.env.VANT_SERVICE_INSTANCE;else process.env.VANT_SERVICE_INSTANCE=previous;}
+}));
 test('后台任务输出 manifest、哈希与验收，按数量串行采样',async()=>fixture(async({plan,settings,root,runtime,endpoint})=>{
   settings.execution.perValue=2;
   plan=bindBackend(compileGenerate({projectId:'cellgame',jobId:'skills',root,localExecution:backendDefaults(settings)}),settings);
-  const task=await startTask(plan,[plan.items[0]],settings);const done=await waitTask(runtime,task.taskId,{timeoutSeconds:20});assert.equal(done.status,'succeeded',done.error);
+  const task=await startTask(plan,[plan.items[0]],settings,{operationId:'art-one-generation'});const done=await waitTask(runtime,task.taskId,{timeoutSeconds:20});assert.equal(done.status,'succeeded',done.error);const duplicate=await startTask(plan,[plan.items[0]],settings,{operationId:'art-one-generation'});assert.equal(duplicate.taskId,task.taskId);await assert.rejects(startTask(plan,[plan.items[1]],settings,{operationId:'art-one-generation'}),/操作身份/);
   const manifest=JSON.parse(readFileSync(done.manifestPath));assert.equal(manifest.items[0].files.length,2);assert.equal(checkRun(manifest,done.manifestPath)[0].integrity,true);
   const history=await http(endpoint,'/history/prompt-1');assert.equal(history['prompt-1'].prompt['4'].inputs.prompt,plan.items[0].prompt);
   const second=await http(endpoint,'/history/prompt-2');assert.equal(second['prompt-2'].prompt['6'].inputs.seed,plan.items[0].seed+1);
@@ -98,15 +141,16 @@ test('单任务取消不停止服务，shutdown 同时取消多个任务并关�
   const first=await startTask(plan,[plan.items[0]],settings);
   for(let n=0;n<100&&!taskStatus(runtime,first.taskId).promptId;n++)await sleep(100);
   const cancelled=await cancelTask(runtime,first.taskId);assert.equal(cancelled.status,'cancelled');assert.ok(await http(endpoint,'/system_stats'));
-  const a=await startTask(plan,[plan.items[1]],settings),b=await startTask(plan,[plan.items[2]],settings);
+  const a=await startTask(plan,[plan.items[1]],settings);
+  await assert.rejects(startTask(plan,[plan.items[2]],settings),/任务/);
   await sleep(200);
-  const result=await shutdown(settings);assert.ok(result.cancelledTasks.includes(a.taskId));assert.ok(result.cancelledTasks.includes(b.taskId));
-  assert.equal(taskStatus(runtime,a.taskId).status,'cancelled');assert.equal(taskStatus(runtime,b.taskId).status,'cancelled');await assert.rejects(http(endpoint,'/system_stats'));
+  const result=await shutdown(settings);assert.ok(result.cancelledTasks.includes(a.taskId));
+  assert.equal(taskStatus(runtime,a.taskId).status,'cancelled');await assert.rejects(http(endpoint,'/system_stats'));
 },10000));
 
 test('本地图编辑上传原图并连接编码器，保留动态输出尺寸',async()=>fixture(async({root,settings,runtime,endpoint,template})=>{
   const source=join(root,'source.png');writeFileSync(source,Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aP3sAAAAASUVORK5CYII=','base64'));
-  const jobPath=join(root,'projects/cellgame/jobs/edit-white-background.json');const job=JSON.parse(readFileSync(jobPath));job.items[0].source=source;writeJson(jobPath,job);
+  const jobPath=join(root,'projects/cellgame/tasks/edit-white-background/task.json');const record=JSON.parse(readFileSync(jobPath));record.config.items[0].source=source;writeJson(jobPath,record);
   template['3']={class_type:'VAELoader',inputs:{vae_name:'vae.safetensors'}};
   template['10']={class_type:'LoadImage',inputs:{image:''}};writeJson(join(root,'workflow.json'),template);
   const b=settings.generation.backends.local;b.bindings.image={node:'10',input:'image'};b.bindings.vae={node:'3',input:'vae_name'};b.execution.size='768*512';
@@ -116,16 +160,4 @@ test('本地图编辑上传原图并连接编码器，保留动态输出尺寸',
   assert.equal(prompt['10'].inputs.image,'art/uploaded.png');assert.deepEqual(prompt['4'].inputs['images.image_1'],['10',0]);assert.deepEqual(prompt['4'].inputs.vae,['3',0]);assert.equal('images' in prompt['4'].inputs,false);assert.equal(prompt['5'].inputs.width,768);
   const info=Object.fromEntries(Object.values(plan.backend.template).map(n=>[n.class_type,{}]));info.LoadImage={input:{required:{image:[['existing.png']]}}};assert.deepEqual(environmentIssues(plan.backend,info),[]);
   await shutdown(settings);
-}));
-
-test('远程任务仍通过统一请求执行，取消记录云端状态未确认',async()=>fixture(async({root,settings,runtime})=>{
-  const script=join(root,'mock-bl.mjs');
-  writeFileSync(script,`import fs from 'node:fs';import path from 'node:path';const args=process.argv.slice(2);const value=k=>args[args.indexOf(k)+1];if(process.env.ART_TEST_DELAY)await new Promise(r=>setTimeout(r,Number(process.env.ART_TEST_DELAY)));fs.writeFileSync(path.join(value('--out-dir'),'image.png'),'mock image');console.log(JSON.stringify({urls:[]}));`);
-  const previous=process.env.BL_BIN;process.env.BL_BIN=script;
-  try {
-    const plan=compileGenerate({projectId:'cellgame',jobId:'skills',root});
-    const first=await startTask(plan,[plan.items[0]],settings);const done=await waitTask(runtime,first.taskId,{timeoutSeconds:20});assert.equal(done.status,'succeeded');assert.equal(checkRun(JSON.parse(readFileSync(done.manifestPath)),done.manifestPath)[0].integrity,true);
-    process.env.ART_TEST_DELAY='10000';
-    const second=await startTask(plan,[plan.items[1]],settings);await sleep(600);const cancelled=await cancelTask(runtime,second.taskId);assert.equal(cancelled.status,'cancelled');assert.match(cancelled.remoteCancellation,/upstream/);
-  }finally{if(previous===undefined)delete process.env.BL_BIN;else process.env.BL_BIN=previous;delete process.env.ART_TEST_DELAY;}
 }));

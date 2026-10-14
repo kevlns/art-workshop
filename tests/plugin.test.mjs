@@ -20,7 +20,7 @@ test('帮助和版本不加载用户配置，不触发资源目录或模型操�
 
 test('v-cli 清单包含完整三模块及预演副作用说明',()=>{
   const manifest=JSON.parse(readFileSync(new URL('../v-cli.plugin.json',import.meta.url),'utf8'));
-  for(const command of ['style analyze','style validate','style freeze','style show','generate show','generate plan','generate run','edit show','edit plan','edit run','refs guide','config show','check','select','compare']){
+  for(const command of ['style analyze','style validate','style adopt','style show','generate show','generate plan','generate run','edit show','edit plan','edit run','refs guide','config show','check','candidate finalize','compare']){
     const meta=manifest.agent.commands.find(c=>c.path.join(' ')===command);
     assert.ok(meta,command);
     for(const key of ['usage','description','arguments','options','output','exitCodes','safety'])assert.ok(meta[key],command+'.'+key);

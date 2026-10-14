@@ -12,5 +12,7 @@
   "cores": [
     "cellgame"
   ],
-  "defaultCore": "cellgame"
+  "defaultCore": "cellgame",
+  "schemaVersion": 2,
+  "revision": 1
 }

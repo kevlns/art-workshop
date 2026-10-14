@@ -1,84 +1,46 @@
-# art 诊断与任务控制
+# 任务控制与诊断
 
-检查分为全局配置、环境、任务编译、请求预演和真实执行五层。前一层通过不能代替后一层；HTTP 服务可达也不能证明 GPU 权重能加载或生成图片。
+## 先核对事实
 
-## 配置和环境
+先 config validate，再 doctor；远程 doctor 只核对配置，不验证认证、账号授权或云端连通性。本地 doctor 默认不启动、不采样；--start 可启动并保留服务。真实生成仍须 plan/dry 和任务授权。
 
-```powershell
-v-cli art config show
-v-cli art config validate
-v-cli art config validate --backend local-qwen
-v-cli art doctor --backend local-qwen
-v-cli art doctor --backend local-qwen --start
-```
+技术检查不证明画面质量；mock 不证明模型真实出图；服务可连接不证明显存足够；包构建不证明安装及桌面交互通过。
 
-config validate 检查字段、模板格式、连接、bindings 和共享执行限制；不遍历所有工程。doctor 检查启动路径、ComfyUI 版本、节点、枚举中的模型和选项及输出索引；不执行全部自定义节点的任意校验逻辑。使用当前配置检查时，冻结任务可能有不同快照，须同时查看其 plan/manifest。
+## 状态与占用
 
-仅指定本机 endpoints，不扫描局域网。doctor 不可达时默认退出 1 并提示 --start。--start 可能懒启动；启动失败看返回 issues、嵌套 diagnostic 和 .runtime 中服务日志，检查完可 shutdown。编辑图的 LoadImage 占位值跳过已有图片枚举检查，因为实际输入会上传。
+task status 返回原运行阶段、心跳、工作进程、后端身份、manifestPath、错误和停止证据。queued/running/cancelling 仍占用对象。释放必须是已知终态、stopConfirmed=true，且无 unsettled、promptId、remoteCancellation 或 dispatching/accepted 远程回执；unknown 一律保留占用。
 
-远程 doctor 只检查配置。检查百炼安装用 bl --help，认证用 bl auth status，生效区域/URL 用 bl config show；当前安装没有 bl doctor。只读检查不能保证云端联网、额度和模型实际可用，需在任务授权范围内验证真实调用。
+工作进程丢失且心跳过期标记 unknown，不能推测上游停止。task wait 超时不取消；切面板不取消；本地客户端退出不代表云端取消或费用撤销。
 
-## 工作流错误结构
+## 查询、恢复和重试
 
-```powershell
-v-cli art task status TASK
-v-cli art task wait TASK --timeout 60
-```
+| 情况 | 入口 | 行为 |
+| --- | --- | --- |
+| 已知 taskId | task status / task wait | 查询原运行 |
+| 启动回执丢失 | task recover --project P --operation ID | 唯一原登记查找；不启动进程 |
+| 已有 accepted/completed 远程回执 | task resume TASK | 原 taskId 继续查询与下载，不发生成 POST |
+| dispatching 中断但无上游 ID | 保留未知，核对原提供方记录 | 不允许猜测恢复或重发 |
+| 上游完成但下载失败 | task resume TASK | 取回原结果，不付费重生成 |
+| 明确失败且停止确认 | run --plan FILE --retry-run RUN | 新批次只重试明确失败项，记录 retryOf |
+| 风格采用事务中断 | style recover | 完成原事务，不重新冻结另一份核心 |
+| 部署启动回执丢失 | deployment recover --operation ID | 只读恢复唯一登记 |
 
-本地环境不兼容、工作流提交拒绝和采样异常分别记录 diagnostic.stage=environment/submission/execution。task 状态、前台等待结果和 manifest 提供错误；单体失败记录也保留 diagnostic。
+resume 要求原工作进程已退出、运行终态、回执和冻结请求哈希一致。跳过成功文件、上游失败或取消项，不补发未提交项。无回执、身份不符或无可查询/取回项目均拒绝。查询失败保留原 ID；当前不自动重发提交或自动重试查询。
 
-| 字段 | 读取方式 |
-|---|---|
-| kind/stage | 是否工作流相关，失败发生在哪一层 |
-| backend/workflow | 任务实际冻结的后端与模板身份 |
-| promptId | ComfyUI 已接受的执行 ID；提交前失败可能没有 |
-| nodes | 提交校验节点 ID/类型/title/errors，或执行异常节点、异常类型、信息和 traceback |
-| environments | 环境不兼容时的 endpoint、版本和缺失节点/模型 issues |
-| messages | ComfyUI 返回的历史执行消息 |
-| hint | 辅助修复建议，以原始错误为依据 |
-| unsettled | 无法确认后端已经停止；不能宣称回收完成 |
+retry-run 不能混用 dry/item/variant/offset/limit；原批次和先前重试必须停止确认，成功项不重复执行，远程完成待下载项不能走重生成。配置、模型契约、规格、核心、参考、底图或工作流变化后重编译，不能运行过期预案。
 
-启动入口、网络、上传或输出数量错误不一定有节点 diagnostic，应读取 error、logPath 和 manifestPath。ComfyUI 接受 promptId 同时报告节点错误时，art 先请求停止该 prompt，再记录失败，避免遗留执行。
+## 取消与关闭
 
-## 按原因处理
+task cancel 定向取消本工作区运行。本地按 promptId 处理自有请求，保留 ComfyUI 服务；远程无已适配上游取消能力时只停止本地等待，保留原身份与未知停止事实。
 
-| 现象 | 检查与处理 |
-|---|---|
-| configuration/workflow_format | 修复字段；导出 API JSON，而非画布 nodes/links |
-| workflow_link/workflow_binding | 对照节点 ID、input 名和输出索引；不要只看中文标题 |
-| missing_node | 安装或修复相关 ComfyUI 插件，重启服务后 doctor |
-| missing_model/invalid_node_value | 核对模型文件名、目录及节点实际可选值；检查执行 model 覆盖 |
-| comfyui_version | 升级到支持按 prompt_id 中断的版本，至少 0.39.0 |
-| launch_path/launch_entry/startup | 核对 executable/cwd/args、端口和服务日志；不能用端口占用证明服务兼容 |
-| CUDA OutOfMemory/内存不足 | 降低尺寸或候选工作负载，确认 lowvram 与 CPU 编码配置；重新 plan |
-| 只输出零张或多张图片 | 模板每次须恰好一张最终 output；检查 SaveImage 和 batch_size |
-| 原图或计划哈希变化 | 从当前任务和原图重新 plan，不手改哈希或 frozen plan |
-| 远程调用失败 | 检查百炼入口、凭证、区域、模型限制和任务日志；不自动换模型或后端 |
+CLI shutdown 阻止新提交，停止当前工作区关联任务，再核验共享队列及服务进程身份。它不清空共享队列；存在其他运行/排队请求、停止未知或身份不可验证时保留服务。不要广泛杀所有 Python。
 
-修复模板或配置后重新 plan、run --dry，再在授权范围内重试。检查结果不自动选择替代模型、不改设计尺寸、不下载权重。
+Vant 应用退出有独立所有权清理：关闭 Vant 启动并登记的后台进程和 ComfyUI，检查端口释放，不把外部用户服务收编为退出时终止目标。窗口关闭、CLI shutdown、应用退出三个入口的作用域不同。
 
-## 单次任务生命周期
+## 常见配置问题
 
-| 状态 | 含义与后续 |
-|---|---|
-| queued | 工作进程已提交，等待运行 |
-| running | 可能正在启动服务、等串行锁、加载或采样；查看 currentItem/promptId |
-| succeeded | 所选任务完成；进入人工审查 |
-| failed | 执行失败；读取 error/diagnostic/manifest；可能已有部分图片 |
-| cancelled | 当前任务已取消；查看已完成产物与远程取消说明 |
-| lost | worker 死亡且状态过期；后端可能仍在执行，需要 cancel/shutdown |
-
-后台任务不会因终端窗口关闭自动取消。task wait 只等待；--timeout 超时后仍可 status/wait/cancel。task cancel 请求指定任务停止，保留服务；已完成任务会返回原终态。部分图片保留，不自动删除。
-
-## shutdown 的完整语义
-
-```powershell
-v-cli art task cancel TASK
-v-cli art shutdown
-```
-
-cancel 针对一个 art 任务；shutdown 针对当前 --config 识别的全部 art 生图/编辑任务，以及配置和历史冻结任务引用的本地后端：阻止新提交、请求取消、清空队列、全局中断、等待停止、关闭核验后的服务进程。后端上浏览器或其他客户端的任务也会被清空/中断。同步 style analyze 不属于该队列。
-
-关闭前核对 PID、创建时间和命令身份。art 启动的服务保存身份；Windows 可定位与 launch.executable 和入口匹配的已有实例。其他平台无法核验的外部进程不能宣称已回收。未确认停止或关闭失败则返回错误；读取失败信息再处理，不广泛终止所有 Python 进程。
-
-远程取消终止本地 bl 调用，不保证云端请求停止或费用撤销。remoteCancellation 字段与 shutdown.remoteCancellationUnconfirmed 提供这个边界；不能把本地 cancelled 当作云端已取消。
+- 模型无法选择：依次核对实例/模型启用、目录可用、凭据、输出能力、图片协议、准确型号及模式支持。仅登记型号显示限制原因，不可执行；手工能力覆盖不能绕过缺失的协议适配。
+- 报告过期或 revision 冲突：重新读取对象及版本，不覆盖用户输入；更新后重新分析或预演。
+- 模型已存在仍提示部署：核对选择的是便携根目录、文件准确名称与大小，再做 SHA256 和能力接入；不以文件存在替代完整环境验证。
+- 端口被占：区分原环境和其他程序，修改端口后重新检测；自动选择端口不等于长期预约。
+- 候选删除清理失败：保留删除事实，仅重试所属文件清理，不恢复成可用候选。

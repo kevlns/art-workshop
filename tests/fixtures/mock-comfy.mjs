@@ -1,4 +1,5 @@
 import {createServer} from 'node:http';
+import sharp from 'sharp';
 const port=Number(process.argv[2]),delay=Number(process.argv[3]??50);
 const histories={},running=new Map();let count=0;
 const server=createServer(async(req,res)=>{
@@ -8,7 +9,7 @@ const server=createServer(async(req,res)=>{
   if(path==='/upload/image')return json({name:'uploaded.png',subfolder:'art',type:'input'});
   const body=text?JSON.parse(text):{};
   if(path==='/system_stats')return json({system:{comfyui_version:'0.39.0'}});
-  if(path==='/object_info')return json(Object.fromEntries(['UnetLoaderGGUF','CLIPLoader','VAELoader','TextEncodeQwenImage21','EmptyLatentImage','KSampler','VAEDecode','SaveImage','LoadImage'].map(x=>[x,{}])));
+  if(path==='/object_info')return json(Object.fromEntries(['UnetLoaderGGUF','CLIPLoader','VAELoader','TextEncodeQwenImage21','EmptyLatentImage','ImageScale','KSampler','VAEDecode','SaveImage','LoadImage'].map(x=>[x,{}])));
   if(path==='/queue'&&req.method==='GET')return json({queue_running:[...running.keys()].map(id=>[0,id]),queue_pending:[]});
   if(path==='/queue')return json({});
   if(path==='/prompt'){
@@ -22,7 +23,7 @@ const server=createServer(async(req,res)=>{
     for(const id of [...running.keys()])if(!body.prompt_id||body.prompt_id===id){running.delete(id);histories[id]={status:{completed:true,status_str:'error',messages:['interrupted']},outputs:{}};}
     res.end();return;
   }
-  if(path==='/view'){res.setHeader('Content-Type','image/png');res.end(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aP3sAAAAASUVORK5CYII=','base64'));return;}
+  if(path==='/view'){const filename=new URL(req.url,'http://localhost').searchParams.get('filename');const prompt=histories[filename?.replace(/\.png$/,'')]?.prompt;res.setHeader('Content-Type','image/png');res.end(await sharp({create:{width:prompt?.['5']?.inputs.width??512,height:prompt?.['5']?.inputs.height??512,channels:3,background:'#ffffff'}}).png().toBuffer());return;}
   res.statusCode=404;json({error:path});
 });
 server.listen(port,'127.0.0.1');

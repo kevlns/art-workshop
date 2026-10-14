@@ -1,166 +1,60 @@
-# art 统一配置
+# 配置与存储
 
-配置是用户级结构化 JSON，远程与本地后端共用一份文件。工具配置只定义执行与资源路径；工程任务和冻结核心保持独立文件，认证由百炼 CLI 管理。
+## 配置入口
 
-## 位置与覆盖
+`config path/show/init/validate` 分别查询位置、生效配置、创建模板和校验。`config init` 不覆盖已有文件。查询、发现和预演不创建参考目录；`config validate` 不联网、不启动服务。
 
-```powershell
-v-cli art config path
-v-cli art config init
-v-cli art config show
-v-cli art config validate
-```
+配置位置优先级为 CLI `--config`、`ART_WORKSHOP_CONFIG`、`<VANT_HOME 或 ~/.vant>/tools/art-workshop/config.json`。资源路径优先级为 CLI 路径选项、配置 paths、默认路径。配置文件和资源均须位于工具安装目录之外。
 
-config init 创建默认文件，已有文件不覆盖。默认位置：Windows 的 %APPDATA%/art-workshop/config.json；macOS 的 ~/Library/Application Support/art-workshop/config.json；Linux 的 $XDG_CONFIG_HOME/art-workshop/config.json，未设置时使用 ~/.config/art-workshop/config.json。
+| 字段 | 职责与默认值 |
+| --- | --- |
+| paths.workspace | 默认 ~/.vant/tools/art-workshop/workspace，保存 projects 和 .runtime |
+| paths.output | 默认与 workspace 相同；执行批次与候选产物根 |
+| paths.refs | 默认 workspace/refs，素材导入基准；不是对象的权威参考目录 |
+| paths.cache | 默认 workspace/.cache，分析等缓存 |
+| execution | 全局执行默认值，具体范围由所选模型策略校验 |
+| generation | defaultBackend、defaults、backends |
+| analysisModel | 分析模型默认值，连接仍需单独就绪 |
+| defaultProject | 未传 --project 时的工程 ID，不跨工程回退 |
+| autoSyncSkills | 默认 true；实际分析、采用、运行入口可刷新随包技能，查询与 dry 不刷新 |
 
---config FILE 优先于 ART_WORKSHOP_CONFIG；未指定则使用默认位置。工作流、launch.executable 与 launch.cwd 的相对路径基于配置文件目录。资源目录建议写绝对路径：paths 中相对值实际按当前工作目录解析，不按 config.json 目录解析。
+Vant 显式传入绑定，把工程对象、参考、批次及图片集中在工程 `.vant/art`。独立 CLI 默认 workspace 可以容纳多个工程，不自动绑定当前 Git 工程。普通输入、计划和报告相对路径以 workspace 为基准；`check RUN` 相对批次以 output 为基准。参考源文件建议提供绝对路径。
 
-## 一份远程与本地配置
+## 后端配置
 
-以下是合法结构示例；路径、模型和后端 ID 需与本机安装匹配。
+远程 provider 为后端类别标识；执行协议来自 credentialReference.api，缺省 DashScope。协议必须已注册，型号必须在该协议目录中精确登记且支持所需模式。provider 名称不是权限或协议兼容性的证明。
+
+下面仅示例结构，不含凭据。具体参数以 [适配目录](remote-models.md) 和生成预演为准。
 
 ```json
 {
-  "paths": {
-    "workspace": "C:/ArtWorkspace",
-    "output": "C:/ArtWorkspace/output",
-    "refs": "C:/ArtReferences",
-    "cache": "C:/ArtWorkspace/.cache"
-  },
-  "execution": {},
-  "analysisModel": null,
-  "defaultProject": null,
-  "autoSyncSkills": true,
   "generation": {
-    "defaultBackend": "local-qwen",
-    "defaults": { "perValue": 1, "promptExtend": false, "watermark": false },
+    "defaultBackend": "remote-image",
     "backends": {
-      "remote-qwen": {
+      "remote-image": {
         "provider": "bailian",
-        "model": "qwen-image-3.0-pro",
-        "execution": { "size": "1024*1024" }
-      },
-      "local-qwen": {
-        "provider": "comfyui",
-        "model": "qwen-image-2.1-UC-Q4_K_M.gguf",
-        "execution": { "size": "512*512" },
-        "endpoints": ["http://127.0.0.1:8188"],
-        "workflow": "vant-builtin-qwen-image-2.1-Q4-8GB",
-        "options": { "steps": 25, "cfg": 1, "sampler": "euler", "scheduler": "simple", "timeoutSeconds": 1800, "pollMilliseconds": 500 },
-        "launch": {
-          "executable": "C:/AI/ComfyUI_windows_portable/python_embeded/python.exe",
-          "cwd": "C:/AI/ComfyUI_windows_portable",
-          "args": ["-s", "ComfyUI/main.py", "--windows-standalone-build", "--disable-dynamic-vram", "--lowvram", "--disable-auto-launch"],
-          "startupTimeoutSeconds": 120
-        }
+        "model": "qwen-image-2.0-pro",
+        "execution": { "size": "1024*1024", "perValue": 1, "watermark": false }
       }
     }
   }
 }
 ```
 
-## 顶层字段
+ComfyUI 后端使用 provider=comfyui，声明 model、endpoints，以及可选 workflow、bindings、options、launch。省略 workflow 使用随包固定方案；自定义工作流必须是 API JSON，bindings 指向真实节点输入。endpoints 只允许本机 HTTP 根地址。launch 明确 executable/cwd/args；工具以 argv 启动，不拼接 shell。详情见 [本地部署](deployment.md)。
 
-| 字段 | 规范 |
-|---|---|
-| paths.workspace | 工程根目录，包含 projects |
-| paths.output | 运行文件夹、图片与 manifest 的根目录 |
-| paths.refs | 默认参考目录；--refs-dir 或工程 refsDir 可覆盖 |
-| paths.cache | 分析缓存目录 |
-| execution | 已有全局执行覆盖；建议新配置保持空，将模式参数放在各后端 |
-| generation | 默认后端、共享默认值、后端字典 |
-| analysisModel | 覆盖工程分析模型；null 使用工程值，与生图后端独立 |
-| defaultProject | 省略 --project 时使用的真实工程 ID，或 null |
-| autoSyncSkills | 自动同步随包 skill，默认 true；不影响手动 agent init |
+## 认证与实例
 
-默认资源根为系统下载目录/image.g；cache 默认其 .cache，refs 默认其 refs。Windows 尊重系统下载 Known Folder，Linux 尊重 XDG 下载配置。运行资源须在安装目录之外，禁止通过链接绕回安装目录。
+Vant 系统模型配置统一保存 Provider 实例及凭据，工程只引用实例身份、修订及不含密钥的连接信息。模板只负责预填新实例，不是独立可执行连接。模型目录发现、能力登记、启用与账号权限是不同事实。
 
-## 执行参数与优先级
+远程图片由组织层通过 ART_IMAGE_CONNECTION（api/baseUrl）和 ART_IMAGE_KEY 注入内存；明确连接缺少密钥时拒绝，不能回退另一份密钥或站点。独立 DashScope 使用固定版本百炼核心库的既有认证来源。
 
-最终参数按下列过程形成，后写入者覆盖前值：
+视觉分析独立使用 ART_VISION_CONFIG 与 ART_VISION_KEY，支持 openai-completions、openai-responses、anthropic-messages、google-generative-ai。未注入连接时分析走百炼 CLI。不要把图片输出模型当作视觉分析模型；分析要求图片输入和文字输出。
 
-1. 通用默认：qwen-image-3.0-pro、1024*1024、perValue=1、promptExtend=false、watermark=false。
-2. 工程 project.execution。
-3. 所选后端的默认层：内置本地模板先提供 size=512*512，再合并 generation.defaults、backend.execution、backend.model。
-4. 顶层 execution。
-5. job.execution。
-6. 使用 design 时，以每项换算的 outputSize 覆盖 size。
+凭据不进入工程、计划、运行回执、日志或命令行。Token Plan 与按量渠道保留各自实例地址和密钥，不跨渠道回退。配置校验不证明凭据有效、模型授权或实际出图。
 
-没有显式 --backend 和 generation.defaultBackend 时，不使用 generation.defaults，按已有顶层 execution 路径走百炼默认。冻结计划保留生成时的值，不会随配置变化更新。
+## 状态与共享环境
 
-| 参数 | 规范 |
-|---|---|
-| model | 顶层/工程/任务 execution 可指定；backend.model 必填，后端 execution 不接受 model |
-| size | 明确 W*H，不能写 1:1；每边 256～4096，本地额外要求 32 的倍数 |
-| perValue | 每个选中 item/variant 生成 1～4 张 |
-| promptExtend | 布尔值；本地只能 false |
-| watermark | 布尔值；本地只能 false |
+对象变更锁和执行登记归 workspace/.runtime；更换配置文件不产生另一套占用。共享服务登记归用户数据根的 state/art-services，环境索引、接入日志和证据归 state/art-environments。安装根保存模型、程序与 vant.art.config.json，不再新建 .vant-art 控制目录。
 
-generation.defaults 和 backend.execution 仅接受 size/perValue/promptExtend/watermark。后端 ID 为配置字典键，不是模型名。--backend 只在编译新计划时选后端。
-
-## ComfyUI 后端字段
-
-| 字段 | 规范 |
-|---|---|
-| provider | comfyui；远程为 bailian |
-| model | 工作流使用的生成模型文件名，与 model binding 对应 |
-| endpoints | 非空列表；仅 http、本机 127.0.0.1/localhost/[::1] 根地址；无认证、路径或查询参数 |
-| workflow | 省略或内置名称时使用内置模板；其他字符串为 API JSON 文件路径 |
-| bindings | 内置模板提供默认绑定；自定义模板必须声明 |
-| options | steps 1～10000；cfg 0～100；sampler/scheduler 按实际节点选项；timeoutSeconds 1～86400；pollMilliseconds 50～10000 |
-| launch | 可选；没有可用服务且未配置时，任务报错；不自动寻找安装目录 |
-
-launch 使用直接 executable 和 args 数组，不执行 shell 脚本。cwd 为启动工作目录。startupTimeoutSeconds 范围 1～600，默认 120。--start 和正常任务可触发启动；服务保留至 shutdown，没有闲置自动回收。多个 endpoint 按顺序探测；若需启动，则用同一 launch 启动并期待第一个 endpoint 可用，args 中的监听端口应与之匹配。
-
-## 自定义 workflow 与 bindings
-
-从 ComfyUI 导出 API 格式：顶层是节点 ID 字典，节点包含 class_type/inputs。普通画布 JSON 的 nodes/links 不能用于任务；workflow list 中的 UI JSON 用于导入画布，API JSON 用于 art。
-
-以下片段可作为后端条目，放入 generation.backends；指定文件须真实存在。
-
-```json
-{
-  "provider": "comfyui",
-  "model": "qwen-image-2.1-UC-Q4_K_M.gguf",
-  "execution": { "size": "512*512" },
-  "endpoints": ["http://127.0.0.1:8188"],
-  "workflow": "workflows/custom-api.json",
-  "bindings": {
-    "model": { "node": "1", "input": "unet_name" },
-    "prompt": { "node": "4", "input": "prompt" },
-    "negativePrompt": { "node": "4", "input": "negative_prompt" },
-    "width": { "node": "5", "input": "width" },
-    "height": { "node": "5", "input": "height" },
-    "count": { "node": "5", "input": "batch_size" },
-    "seed": { "node": "6", "input": "seed" }
-  }
-}
-```
-
-| Binding | 调用检查 |
-|---|---|
-| prompt/width/height/seed | 必需，指向实际已有输入 |
-| negativePrompt | 任务负向词非空时必需 |
-| count | 执行时写 1；未绑定时模板中 batch_size 必须已为 1 |
-| model | 写入最终 execution.model；未绑定时 GGUF 固定模型须与执行模型一致 |
-| image | 本地图编辑必需，指向 LoadImage.image |
-| vae | 本地图编辑必需，指向 VAELoader.vae_name；用于建立编码器 VAE 连接 |
-
-节点 ID 和 input 名是执行映射，中文 title 只用于展示。options 的采样参数写入 seed 所在节点，因此需要对应输入。每次请求复制模板，动态填提示词、尺寸、seed；不修改原模板。perValue 次请求串行执行，seed 依次为初始 seed+index，要求每次恰好输出一张最终图片。
-
-Qwen 2.1 编辑模板额外加入 LoadImage，并声明 image/vae bindings；编辑时适配器连接 TextEncodeQwenImage21 的 images.image_1 与 vae。模板编码器 resolution=1024 是参考编码参数，不是输出宽高；EmptyLatentImage 的动态 size 决定采样画布。
-
-## 路径与持久化检查
-
-| 对象 | 相对路径基准 |
-|---|---|
-| --input/--report/--plan/--out/--review、edit source | workspace |
-| check/select RUN | output |
-| 分析 refs[].path | 命令实际参考目录 |
-| project.refsDir | workspace |
-| workflow、launch.executable、launch.cwd | config.json 的目录 |
-| paths 字段、CLI 目录覆盖 | 当前工作目录；建议使用绝对路径 |
-
---workspace、--output-dir、--refs-dir、--cache-dir 临时覆盖目录。参考目录顺序为显式 --refs-dir、工程 refsDir、用户 paths.refs。任务状态、锁和服务日志存于 config.json 旁 .runtime/<配置路径哈希>；该目录不是 workspace 的分析缓存。
-
-config validate 不执行节点、不探测 HTTP，也不检查全部工程文件。doctor 检查环境；plan 校验具体任务和参数；run --dry 校对具体请求；真实运行验证模型可执行性。通过某一层不能省略后续层的模式要求。
+旧工程仅通过显式 project upgrade 备份转换；旧用户目录或环境状态不能靠文档重命名完成迁移。迁移与异常边界见 [数据结构](data-formats.md) 和 [诊断](troubleshooting.md)。

@@ -1,6 +1,6 @@
 {
   "name": "@kevlns/art-workshop",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": false,
   "description": "美术工坊：统一风格的多工程图片生成与编辑工具",
   "type": "module",
@@ -27,10 +27,11 @@
     "pack:guard": "node scripts/pack-guard.mjs",
     "check": "npm run docs:check && npm test && npm run pack:guard",
     "test:package": "node scripts/test-package-install.mjs",
-    "docs:check": "node scripts/check-docs.mjs"
+    "docs:check": "node scripts/check-docs.mjs",
+    "docs:generate": "node scripts/command-docs.mjs"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.9"
   },
   "repository": {
     "type": "git",
@@ -47,5 +48,10 @@
   "author": "kevlns",
   "vCli": {
     "manifest": "v-cli.plugin.json"
+  },
+  "dependencies": {
+    "bailian-cli": "2.2.1",
+    "bailian-cli-core": "2.2.1",
+    "sharp": "^0.35.5"
   }
 }

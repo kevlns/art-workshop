@@ -16,7 +16,7 @@
 
 1. 一条规则表达一个可执行判断，去掉同义重复和无助于生成的修辞。
 2. 视觉术语明确；强度、数量、颜色、范围有明确字段，避免互斥渲染机制。
-3. 推荐、冻结、正向提示词、负向约束与验收从同一结构生成，前后一致。
+3. 推荐、冻结、正向提示词、负向约束与定版时的审查依据来自同一结构，前后一致。
 4. 核心只拥有视觉语言；具体主体、布局、背景、模型、尺寸不得混入核心。
 5. 一个事实只有一个权威字段；不再追加另一段冻结 styleBlock 覆盖结构化核心。
 6. domains 规则明确作用于实体类别；表面科幻处理不等于给所有主体套同一结构。
@@ -29,11 +29,11 @@ style validate 检查结构、枚举、已定义语义矛盾、语言长度和�
 ```powershell
 v-cli art style validate --project P --report projects/P/reports/style.json
 # 已有用户采用报告的依据后执行。
-v-cli art style freeze --project P --report projects/P/reports/style.json --note "采用已审阅的推荐风格"
+v-cli art style adopt --project p --id style-id --revision 2 --note "采用已审阅的推荐风格"
 v-cli art style show --project P --core style
 ```
 
-freeze 会写核心并更新 project.cores；没有 defaultCore 时可设为新核心。需要第二套风格时使用新的报告/核心 ID，不复制冻结文件改身份。
+style adopt 校验当前报告后原子写核心并更新 project.cores；没有 defaultCore 时可设为新核心。需要第二套风格时派生新草稿，重新分析和采用，不复制冻结文件改身份。
 
 ## 生图时的核心检查
 
@@ -41,7 +41,7 @@ freeze 会写核心并更新 project.cores；没有 defaultCore 时可设为新�
 
 图编辑默认保留原图风格，不读取 defaultCore。明确绑定目标 core 时，style 的修改或保留由核心负责，任务不再重复声明。
 
-换远程/本地后端只改变执行能力，不自动改核心或需求。同一提示词在不同模型上的表现可能不同，必须按 content/style/asset 分别审查。
+换远程/本地后端只改变执行能力，不自动改核心或需求。同一提示词在不同模型上的表现可能不同，定版时需结合实际内容、风格和资产用途判断；工具不设置评分字段或人工验收门槛。
 
 ## 风格变化的对照
 
@@ -49,13 +49,13 @@ freeze 会写核心并更新 project.cores；没有 defaultCore 时可设为新�
 
 ```powershell
 v-cli art compare .cache/old-plan.json .cache/new-plan.json
-v-cli art check RUN --out .cache/review.json
+v-cli art check RUN
 ```
 
-只有产物完整、生成成功且 content/style/asset 全部 pass 才可 select。规则检查、模型成功返回或生成缩略图都不能单独作为生产资产验收。
+check 核验产物完整性、生成成功事实、文件哈希和计划归属。用户可通过 candidate finalize 定版；没有人工评分门槛。定版记录表示用户选择，不声称产物已经集成或符合游戏运行要求。
 ## 推荐核心结构示例
 
-以下是报告 recommendation 的合法结构示例，与 data-formats.md 的 energy 类别配套。它不是已冻结文件，仍需依据实际证据产生报告、审阅并 freeze；不要人为补 coreHash 绕过流程。
+以下是报告 recommendation 的合法结构示例，展示 energy 类别的风格处理。它不是已冻结文件，仍需依据实际证据产生报告、审阅并 style adopt；不要人为补 coreHash 绕过流程。
 
 ```json
 {

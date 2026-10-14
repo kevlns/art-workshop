@@ -3,6 +3,7 @@ import {resolve,dirname,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {generationConfig} from '../lib/backends.mjs';
 import {id} from '../lib/shared.mjs';
+import {commandDocs} from './command-docs.mjs';
 const root=dirname(dirname(fileURLToPath(import.meta.url)));
 const manifest=JSON.parse(readFileSync(join(root,'v-cli.plugin.json'),'utf8'));
 const commands=manifest.agent.commands.toSorted((a,b)=>b.path.length-a.path.length);
@@ -23,6 +24,14 @@ export function checkInvocation(line){
   return command;
 }
 export function checkDocs(){
+  // Validate every option, including commands not mentioned by a documentation example.
+  for(const command of commands){
+    if(!Array.isArray(command.path)||!command.path.length)throw new Error('清单命令路径缺失');
+    if(!command.usage||!command.description||!Array.isArray(command.arguments)||!Array.isArray(command.safety)||!command.exitCodes||typeof command.output!=='object')throw new Error('清单命令契约不完整：'+command.path.join(' '));
+    for(const option of command.options??[]){
+      if(typeof option.flags!=='string'||!option.flags.match(/--[a-z][a-z-]*/))throw new Error('清单选项缺少 flags：'+command.path.join(' '));
+    }
+  }
   const files=['README.md','AGENTS.md','skills/art-workshop/SKILL.md',...readdirSync(join(root,'docs')).filter(f=>f.endsWith('.md')).map(f=>'docs/'+f)];
   let invocations=0,jsonExamples=0;
   for(const file of files){
@@ -44,6 +53,7 @@ export function checkDocs(){
     }
   }
   const reference=readFileSync(join(root,'docs/commands.md'),'utf8');
+  if(reference!==commandDocs())throw new Error('命令参考与清单漂移，请运行 npm run docs:generate');
   for(const command of commands)if(!reference.includes(command.path.join(' ')))throw new Error('命令参考遗漏 '+command.path.join(' '));
   const modes=readFileSync(join(root,'docs/modes.md'),'utf8');
   for(const heading of ['远程文生图','本地内置文生图','本地自定义文生图','远程图编辑','本地 Qwen 2.1 图编辑','风格分析与核心冻结'])if(!modes.includes('## '+heading))throw new Error('缺少模式规范 '+heading);
