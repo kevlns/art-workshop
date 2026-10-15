@@ -29,10 +29,10 @@ test('analysis preview is read-only; real worker binds a report then adoption fr
   await assert.rejects(adoptStyle(settings,'cellgame',record.id,2),/版本|状态/);
  }finally{if(previous===undefined)delete process.env.BL_BIN;else process.env.BL_BIN=previous;delete process.env.ART_REPORT;}
 }));
-test('cancelled remote analysis preserves its draft and refuses resource cleanup',()=>fixture(async(root,settings)=>{
+test('cancelled read-only analysis releases its draft after its worker exits, retaining upstream uncertainty',()=>fixture(async(root,settings)=>{
  const record=await createObject(settings,'cellgame','style',{name:'style',config:{description:'rounded style'}});const mock=join(root,'mock-slow-bl.mjs');writeFileSync(mock,`await new Promise(r=>setTimeout(r,10000));console.log('{}');`);
  const previous=process.env.BL_BIN;process.env.BL_BIN=mock;
- try{const run=await startAnalysis(settings,'cellgame',record.id,1);for(let i=0;i<100&&!taskStatus(runtimeRoot(settings),run.taskId).currentItem;i++)await sleep(50);const done=await cancelTask(runtimeRoot(settings),run.taskId);assert.equal(done.stopConfirmed,false);assert.ok(done.remoteCancellation);await assert.rejects(discardObject(settings,'cellgame','style',record.id,1),/停止|执行/);}finally{if(previous===undefined)delete process.env.BL_BIN;else process.env.BL_BIN=previous;}
+ try{const run=await startAnalysis(settings,'cellgame',record.id,1);for(let i=0;i<100&&!taskStatus(runtimeRoot(settings),run.taskId).currentItem;i++)await sleep(50);const done=await cancelTask(runtimeRoot(settings),run.taskId);assert.ok(done.remoteCancellation);for(let i=0;i<100&&alive(done.workerPid);i++)await sleep(50);assert.equal(taskStatus(runtimeRoot(settings),run.taskId).stopConfirmed,true);assert.equal(readObject(root,'cellgame','style',record.id).report,null);await discardObject(settings,'cellgame','style',record.id,1);}finally{if(previous===undefined)delete process.env.BL_BIN;else process.env.BL_BIN=previous;}
 }));
 
 test('invalid report repairs once, retains both responses and leaves the editable draft intact',()=>fixture(async(root,settings)=>{

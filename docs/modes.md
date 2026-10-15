@@ -4,6 +4,8 @@
 
 创建风格草稿，按 style、palette、rendering 分类导入私有参考。style analyze --dry 只编译；实际 analyze 创建 taskId 和独立证据。报告绑定配置版本、图片哈希、分析模型和规则指纹；更新配置或参考后必须重新分析。冲突与未知项未处理时不能采用。
 
+讨论负责澄清分类观察焦点和编辑草稿，不等同于正式分析。正式分析按分类逐图观察，再生成包含 summary、observations、recommendation、conflicts、uncertainties 和 provenance 的结构化报告；只在报告通过职责与格式校验且源草稿未变化时回填。报告是待采用建议，不能声称已冻结风格或已生成图片。错误保留原草稿与证据，本地执行结束后允许编辑；云端计算不确定性单独提示，见 [状态与恢复](troubleshooting.md)。
+
 style adopt 冻结当前已审阅报告；style recover 只恢复原已授权采用事务。正式风格只读，修改使用 derive，不能复制文件改身份。任务动态参考用 job analyze，只转写指定内容用途，不替代静态风格。
 
 ## 远程文生图

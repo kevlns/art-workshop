@@ -23,7 +23,7 @@ style create/read/update/derive/discard 管理草稿。style analyze --dry 只�
 ## 取消、异常和关闭
 
 任务状态与停止证据分开。queued/running/cancelling 仍占用资源；unknown 或 stopConfirmed=false 保留资源。failed/cancelled 也不能单凭状态释放资源；dispatching/accepted 远程回执尚未结清时继续占用。工作进程丢失标记 unknown，不推测停止。
-task cancel 只取消指定运行，保留服务。远程取消只停止本地客户端，上游停止未知如实报告，不允许清理。shutdown 阻止提交、停止关联任务、核验共享队列和进程身份后关闭本地服务，不清空共享队列；有其他任务或停止未确认时保留服务。不得广泛杀所有 Python。
+task cancel 只取消指定运行，保留服务。生成任务远程取消只停止本地客户端，上游停止未知如实报告，不允许清理。只读分析有 finishedAt、已知终态且工作进程已退出，无生成计划与回执时释放本地占用；云端计算与计费停止未知独立保留，不自动重发。没有完成证据的进程丢失仍保持 unknown。shutdown 阻止提交、停止关联任务、核验共享队列和进程身份后关闭本地服务，不清空共享队列；有其他任务或停止未确认时保留服务。不得广泛杀所有 Python。
 
 ## 生成与定版
 

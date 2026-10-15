@@ -58,6 +58,22 @@ test('shutdown cannot release an uncertain remote execution or claim it stopped'
   }finally{rmSync(root,{recursive:true,force:true});}
 });
 
+test('finalized read-only analysis releases local ownership without erasing upstream uncertainty',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'art-analysis-stop-'));
+ try {
+  const settings={paths:{workspace:root}},runtime=join(root,'.runtime');
+  const task={schema:'art-workshop/task',taskId:'task-analysis',kind:'style-analysis',status:'failed',workerPid:2147483647,finishedAt:new Date().toISOString(),stopConfirmed:false,unsettled:true,remoteCancellation:'upstream unknown'};
+  writeJson(taskFile(runtime,task.taskId),task);
+  assert.equal(taskStatus(runtime,task.taskId).stopConfirmed,true);
+  assert.equal(taskView(task).upstreamExecutionUnknown,true);
+  assert.equal(taskView(task).lifecycle,'failed');
+  assert.doesNotThrow(()=>assertIdle([task]));
+  await shutdown(settings,{closeServices:false});
+  assert.equal(stateRead(taskFile(runtime,task.taskId)).stopConfirmed,false,'historical evidence remains unchanged');
+  for(const unsafe of [{...task,workerPid:process.pid},{...task,finishedAt:undefined},{...task,status:'unknown'},{...task,kind:'generation'},{...task,promptId:'prompt'},{...task,remoteExecutions:{one:{state:'accepted'}}}])assert.equal(executionSettled(unsafe),false);
+ } finally {rmSync(root,{recursive:true,force:true});}
+});
+
 test('recovery requires one exact original receipt and never chooses a recent task',()=>{
  const root=mkdtempSync(join(tmpdir(),'art-receipt-'));
  try{

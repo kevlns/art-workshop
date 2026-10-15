@@ -30,6 +30,6 @@ test('transport loss is uncertain, whereas rejection before dispatch is settled'
  const previousConfig=process.env.ART_VISION_CONFIG,previousKey=process.env.ART_VISION_KEY;process.env.ART_VISION_CONFIG=JSON.stringify({baseUrl:'https://example.test/v1',api:'openai-completions'});process.env.ART_VISION_KEY='PRIVATE';
  try{let uncertain=0,requests=0;const options={onRemoteCancel:()=>uncertain++,transport:async()=>{requests++;throw new TypeError('transport lost');}};
  await assert.rejects(callVision(['text','chat','--model','one','--message','style'],{...options,cancelled:()=>true}),/分析已取消/);assert.equal(requests,0);assert.equal(uncertain,0);
- await assert.rejects(callVision(['text','chat','--model','one','--message','style'],options),/未确认停止/);assert.equal(uncertain,1);
+ await assert.rejects(callVision(['text','chat','--model','one','--message','style'],options),/不会自动重发/);assert.equal(uncertain,1);
  }finally{if(previousConfig===undefined)delete process.env.ART_VISION_CONFIG;else process.env.ART_VISION_CONFIG=previousConfig;if(previousKey===undefined)delete process.env.ART_VISION_KEY;else process.env.ART_VISION_KEY=previousKey;}
 });

@@ -8,9 +8,13 @@
 
 ## 状态与占用
 
-task status 返回原运行阶段、心跳、工作进程、后端身份、manifestPath、错误和停止证据。queued/running/cancelling 仍占用对象。释放必须是已知终态、stopConfirmed=true，且无 unsettled、promptId、remoteCancellation 或 dispatching/accepted 远程回执；unknown 一律保留占用。
+task status 返回原运行阶段、心跳、工作进程、后端身份、manifestPath、错误和停止证据。queued/running/cancelling 仍占用对象。生成任务释放必须是已知终态、stopConfirmed=true，且无 unsettled、promptId、remoteCancellation 或 dispatching/accepted 远程回执；unknown 一律保留占用。
+
+只读风格分析与任务参考分析区分本地停止和云端计算状态：只有记录了 finishedAt、已知终态且工作进程已退出，且不存在生成计划、promptId 或远程生成回执时，才释放草稿占用并允许退出。上游超时或取消事实仍保留，task status 的 upstreamExecutionUnknown=true 表示云端计算及计费停止不可确认，不代表分析成功；没有完成记录的进程丢失继续保持 unknown。同步视觉接口没有可查询的任务身份，不提示查询不存在的云端任务，不自动重发。
 
 分析阶段记录 reference-analysis（当前图片与已完成数量）、synthesis（汇总）、report-repair（一次格式修正）和 report-validation（校验回填），不会用心跳推测完成比例。模型响应文字按调用保存在对象 reports/<taskId>/responses/，不保存凭据或请求图片编码。格式校验失败最多基于已有结果修正一次，不重复读取已完成的图片；仍失败则保留原响应和草稿，明确显示错误。
+
+多图风格分析将完整成功的分类观察缓存到配置的缓存目录 references/。缓存身份包含图片内容哈希、分类、说明、排除项、观察提示、规则及模型连接配置，不依赖每次运行变化的证据副本路径。明确重新发起分析时只重读未命中观察；汇总失败不会自动发起下一次分析。旧运行没有这种缓存时，原响应仍保留，不把缺少缓存身份的文字猜作可复用观察。
 
 工作进程丢失且心跳过期标记 unknown，不能推测上游停止。task wait 超时不取消；切面板不取消；本地客户端退出不代表云端取消或费用撤销。
 
