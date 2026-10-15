@@ -10,6 +10,8 @@
 
 task status 返回原运行阶段、心跳、工作进程、后端身份、manifestPath、错误和停止证据。queued/running/cancelling 仍占用对象。释放必须是已知终态、stopConfirmed=true，且无 unsettled、promptId、remoteCancellation 或 dispatching/accepted 远程回执；unknown 一律保留占用。
 
+分析阶段记录 reference-analysis（当前图片与已完成数量）、synthesis（汇总）、report-repair（一次格式修正）和 report-validation（校验回填），不会用心跳推测完成比例。模型响应文字按调用保存在对象 reports/<taskId>/responses/，不保存凭据或请求图片编码。格式校验失败最多基于已有结果修正一次，不重复读取已完成的图片；仍失败则保留原响应和草稿，明确显示错误。
+
 工作进程丢失且心跳过期标记 unknown，不能推测上游停止。task wait 超时不取消；切面板不取消；本地客户端退出不代表云端取消或费用撤销。
 
 ## 查询、恢复和重试

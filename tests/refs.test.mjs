@@ -14,7 +14,7 @@ const cli=(...args)=>spawnSync(process.execPath,[join(TOOL_ROOT,'art-workshop.mj
 test('配置与参考指南只读，不生成共享分类目录',()=>fixture(root=>{
   const config=join(root,'config.json');writeJson(config,{paths:{workspace:root,refs:join(root,'imports')},autoSyncSkills:false});
   const result=cli('refs','guide','--config',config,'--dry');assert.equal(result.status,0,result.stderr);
-  assert.match(result.stdout,/shape-language/);assert.match(result.stdout,/scene-light/);
+  assert.match(result.stdout,/rendering/);assert.match(result.stdout,/scene-light/);
   assert.equal(existsSync(join(root,'imports')),false);
   assert.equal(cli('config','show','--config',config).status,0);assert.equal(existsSync(join(root,'imports')),false);
 }));

@@ -2,7 +2,7 @@
 
 ## 风格分析与核心冻结
 
-创建风格草稿，按 style、palette、shape-language、rendering 分类导入私有参考。style analyze --dry 只编译；实际 analyze 创建 taskId 和独立证据。报告绑定配置版本、图片哈希、分析模型和规则指纹；更新配置或参考后必须重新分析。冲突与未知项未处理时不能采用。
+创建风格草稿，按 style、palette、rendering 分类导入私有参考。style analyze --dry 只编译；实际 analyze 创建 taskId 和独立证据。报告绑定配置版本、图片哈希、分析模型和规则指纹；更新配置或参考后必须重新分析。冲突与未知项未处理时不能采用。
 
 style adopt 冻结当前已审阅报告；style recover 只恢复原已授权采用事务。正式风格只读，修改使用 derive，不能复制文件改身份。任务动态参考用 job analyze，只转写指定内容用途，不替代静态风格。
 

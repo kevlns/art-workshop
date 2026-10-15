@@ -11,7 +11,7 @@ description: 美术工坊风格、任务、参考、预演、执行与定版管�
 
 工程必须使用 schemaVersion 2。project upgrade 是显式一次性升级，备份和原子替换；混合旧参考必须明确映射，日常读写无旧格式回退。
 风格和任务都有稳定 id 与 revision。UI、聊天和 CLI 共用对象；写入、派生与清理提交预期 revision，冲突重新读取。正式风格只读，改动创建派生风格；派生不继承报告、核心、批次、授权与对话。
-风格静态参考只有 style、palette、shape-language、rendering，分析理解可复用视觉语言。任务动态参考只有 subject、composition、pose、identity-color、surface、scene-light、text；编辑底图另列。导入复制原图，不修改用户文件。未适配直接参考时拒绝，不隐式上传风格图片。
+风格静态参考只有 style、palette、rendering，只分析媒介、描绘、明暗、描边、笔触和色彩关系。具体造型、比例、结构、部件、身份色、材质与光源属于任务。任务动态参考只有 subject、composition、pose、identity-color、surface、scene-light、text；编辑底图另列。导入复制原图，不修改用户文件。未适配直接参考时拒绝，不隐式上传风格图片。
 
 ## 风格生命周期
 
@@ -45,3 +45,5 @@ candidate delete 先确认影响，拒绝运行中或被计划/底图引用的�
 模型、参数及支持状态只在 art 工具 model-catalog/model-registry 内维护，界面与 v-cli 不复制型号判断。远程图片由已注册协议适配器直接调用；视觉分析连接独立，未注入时使用百炼 CLI。Token Plan 是渠道，DashScope 是协议，不跨站点回退凭据。
 
 远端上游身份持久化后才能轮询。`task resume TASK` 只恢复原身份查询与取回，不重发生成；无回执或仍处于 dispatching 的提交保持未知。界面与保存共用 modelEligibility，展示字段不进入执行契约。
+
+风格报告和核心职责版本 schemaVersion=2；不再包含 shape、lighting、domains，不限定主体题材。旧核心保留，只能派生后重新分析采用；旧分类参考必须明确重新分类，不能猜测搬到任务或渲染。低刻画密度不删任务结构，干净笔触不禁止物体纹理，高光画法不统一物理材质。

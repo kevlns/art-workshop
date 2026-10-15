@@ -10,57 +10,8 @@
   "updatedAt": "2026-10-13T00:00:00.000Z",
   "source": null,
   "config": {
-    "medium": "illustration",
-    "shape": {
-      "contour": "rounded",
-      "detail": "low"
-    },
-    "render": {
-      "shading": "cel",
-      "toneSteps": 2,
-      "outline": {
-        "enabled": true,
-        "color": "#34445C",
-        "width": 0.004
-      },
-      "highlights": "hard-edge",
-      "finish": "matte",
-      "texture": "none"
-    },
-    "lighting": {
-      "direction": "top-front",
-      "contrast": "medium"
-    },
-    "color": {
-      "preserveIdentity": true,
-      "shadowShift": "cool"
-    },
-    "domains": {
-      "cell": {
-        "treatment": "organic",
-        "signature": "圆润生物轮廓，表面使用少量科幻点缀。"
-      },
-      "virus": {
-        "treatment": "organic",
-        "signature": "规则尖刺与球体结构表达病毒身份。"
-      },
-      "energy": {
-        "treatment": "emissive",
-        "signature": "以清晰色块表现能量形态。"
-      },
-      "molecule": {
-        "treatment": "structure",
-        "signature": "以球体和连接杆表达分子结构。"
-      },
-      "pill": {
-        "treatment": "hard-surface",
-        "signature": "胶囊轮廓清楚，表面简洁。"
-      },
-      "device": {
-        "treatment": "hard-surface",
-        "signature": "以简化机械结构表达装置功能。"
-      }
-    }
+    "description": "数字插画，以干净描边、硬边色块和偏冷阴影表达；造型、材质、身份色与光源由任务定义。",
+    "constraints": []
   },
   "references": [],
   "report": {
@@ -134,6 +85,50 @@
     "uncertainties": [],
     "provenance": {
       "source": "既有项目要求整理；未重新调用视觉模型"
-    }
-  }
+    },
+    "data": {
+      "schema": "art-workshop/style-report",
+      "project": "cellgame",
+      "id": "cellgame",
+      "summary": "数字插画，以干净描边、硬边色块和偏冷阴影表达；造型、材质、身份色与光源由任务定义。",
+      "observations": [
+        {
+          "source": "已确认的项目美术要求",
+          "scope": "style",
+          "feature": "简洁硬边明暗与干净描边",
+          "evidence": "沿用本工程已采用的风格要求。",
+          "confidence": 1
+        }
+      ],
+      "recommendation": {
+        "medium": "illustration",
+        "render": {
+          "shading": "cel",
+          "toneSteps": 2,
+          "detail": "low",
+          "outline": {
+            "enabled": true,
+            "color": "#34445C",
+            "width": 0.004
+          },
+          "highlights": "hard-edge",
+          "brushwork": "clean",
+          "valueContrast": "medium"
+        },
+        "color": {
+          "saturation": "medium",
+          "contrast": "medium",
+          "shadowShift": "cool"
+        }
+      },
+      "conflicts": [],
+      "uncertainties": [],
+      "provenance": {
+        "source": "既有项目要求整理；未重新调用视觉模型"
+      },
+      "schemaVersion": 2
+    },
+    "sourceHash": "7e1e1a64b22477e808465d0ced2f316e106153e87691f4e68002be91e20aba7b"
+  },
+  "coreHash": "c98f5201d49184a8b5e341904f03df5b7df9a8ed407ef6ccfa014ce3e143ca6f"
 }

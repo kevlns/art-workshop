@@ -1,7 +1,7 @@
 {
   "project": "cellgame",
   "id": "new-style",
-  "description": "圆润、低细节的细胞科幻游戏插画，以少量硬边色块表达明暗。",
+  "description": "数字插画，以少量硬边色块、干净描边和偏冷阴影表达；具体造型由任务定义。",
   "refs": [],
   "constraints": [
     "核心仅定义可复用的视觉规律，背景与资产规格另行配置。"

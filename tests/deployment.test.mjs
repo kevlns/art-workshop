@@ -8,6 +8,29 @@ import {syncBuiltinESMExports} from 'node:module';
 import {deploymentStatus,cancelDeployment,recoverDeployment,startDeployment,deploymentPlan,validateDeploymentPlan,LOCAL_RECIPE} from '../lib/deployment.mjs';
 import {runtimeRoot} from '../lib/runtime.mjs';
 import {writeJson,hash} from '../lib/shared.mjs';
+test('preflight rejects missing deployment commands before installation; start rechecks dependencies',{skip:process.platform!=='win32'},async()=>{
+ const root=mkdtempSync(join(tmpdir(),'art-deploy-commands-')),settings={file:join(root,'settings.json'),paths:{workspace:root}},target=join(root,'install'),original=childProcess.execFileSync;
+ let missing='git';const commands=[];
+ childProcess.execFileSync=(command,...args)=>{
+  commands.push(command);
+  if(command===missing)throw Object.assign(new Error('missing fixture'),{code:'ENOENT'});
+  if(command==='nvidia-smi')return 'NVIDIA fixture, 8192, 999.0\n';
+  if(command==='git'||command==='curl.exe')return 'fixture version';
+  return original(command,...args);
+ };syncBuiltinESMExports();
+ try{
+  assert.throws(()=>deploymentPlan(settings,{directory:target}),/安装 Git for Windows/);
+  assert.deepEqual(commands,['git']);assert.equal(existsSync(target),false);
+  mkdirSync(join(target,'python_embeded'),{recursive:true});writeFileSync(join(target,'python_embeded/python.exe'),'not executed');
+  missing='curl.exe';assert.throws(()=>deploymentPlan(settings,{directory:target}),/找不到部署命令 curl.exe/);
+  assert.equal(existsSync(runtimeRoot(settings)),false);
+  missing=null;const plan=deploymentPlan(settings,{directory:target});
+  missing='git';await assert.rejects(startDeployment(settings,plan,{operationId:'missing-git-before-dispatch'}),/安装 Git for Windows/);
+  const failed=await recoverDeployment(settings,'missing-git-before-dispatch');
+  assert.equal(failed.status,'failed');assert.equal(failed.stopConfirmed,true);assert.equal(failed.workerPid,undefined);
+  assert.equal(existsSync(join(target,'ComfyUI')),false);
+ }finally{childProcess.execFileSync=original;syncBuiltinESMExports();rmSync(root,{recursive:true,force:true});}
+});
 test('lost deployment stays occupying; cancel only records a request and original identity recovers',async()=>{
  const root=mkdtempSync(join(tmpdir(),'art-deployment-'));const settings={file:join(root,'settings.json'),paths:{workspace:root}};
  try{const file=join(runtimeRoot(settings),'deployments/deploy-one.json');writeJson(file,{schema:'art-workshop/deployment',deploymentId:'deploy-one',operationId:'original',status:'running',stopConfirmed:false,createdAt:'2000-01-01T00:00:00Z',workerPid:2147483647,plan:{planHash:'fixed'}});

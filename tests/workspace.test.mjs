@@ -14,7 +14,7 @@ import sharp from 'sharp';
 import {updateReference} from '../lib/workspace.mjs';
 import {jobTemplate} from '../lib/templates.mjs';
 const png=await sharp({create:{width:1,height:1,channels:3,background:'#00ffaa'}}).png().toBuffer();
-test('工具权威模板使用真实核心题材，填写后可编译且未创建对象',()=>fixture(async(root,settings)=>{
+test('工具权威模板绑定真实核心且不限定主体题材，填写后可编译且未创建对象',()=>fixture(async(root,settings)=>{
  const existing=readObject(root,'cellgame','task','skills'),config=jobTemplate(root,'cellgame',{core:existing.config.core});
  config.items[0].intent='一个圆润的游戏单位';config.items[0].entities[0].appearance='圆润的主体';config.items[0].mustRead=['主体清楚'];
  const created=await createObject(settings,'cellgame','task',{name:'from template',config});

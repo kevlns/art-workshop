@@ -6,7 +6,7 @@ project.json 必须声明 schemaVersion=2、revision、id、name、analysisModel
 
 projects/<projectId>/styles/<styleId>/style.json 与 tasks/<taskId>/task.json 使用 schema=art-workshop/style 或 art-workshop/task，schemaVersion=2、稳定 id、project、展示 name、revision、status、createdAt/updatedAt、config、references 和 report。正式风格的 core.json 不可原地覆写。任务的 config.kind 是 generate/edit，不能改身份与类型。
 
-参考记录包括 id、所属对象、私有相对 path、SHA256、来源、category/purposes、usage、note、ignore。风格四类：style、palette、shape-language、rendering。任务用途：subject、composition、pose、identity-color、surface、scene-light、text。sources 只放编辑底图。
+参考记录包括 id、所属对象、私有相对 path、SHA256、来源、category/purposes、usage、note、ignore。风格三类：style、palette、rendering。任务用途：subject、composition、pose、identity-color、surface、scene-light、text。sources 只放编辑底图。
 
 ## 需求与计划
 
@@ -27,3 +27,5 @@ task recover 根据工程和 operationId 找回唯一原执行；task resume 沿
 旧格式只通过 project upgrade 显式转换，有备份与原子替换；共享图片须人工映射，不能猜测后删除。
 
 升级事务登记在 workspace/.runtime/upgrades/<projectId>.json。替换中断后只通过显式 project upgrade 恢复原备份并重新转换；日常读写拒绝未完成事务。编辑源导入新对象私有 sources；历史快照保留旧事实。历史同资产多次批准须在 mapping 的 selections 中提供 task/assetId/runId/file/variantId，明确当前正式选择，其余保留替换历史，不猜测最近一张。
+
+风格报告与 core.json 另有 schemaVersion=2 的职责契约，只包含 medium、render、color。shape、lighting、domains 与固定物理材质均拒绝；旧报告不能采用，旧核心不能执行旧计划。style list/read 返回只读 compatibility，旧分类关联仍可见且必须明确重新分类。项目和对象存储版本仍为 2。详细字段见 core-guidance.md。

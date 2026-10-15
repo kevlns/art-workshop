@@ -19,7 +19,7 @@ const {backendDefaults,bindBackend,buildComfyRequest}=await import('./lib/backen
 const {startTask,taskStatus,taskView,recoverTask,resumeTask,waitTask,cancelTask,shutdown}=await import('./lib/tasks.mjs');
 const {runtimeRoot,tasks}=await import('./lib/runtime.mjs');
 const {validateConfiguration,doctor}=await import('./lib/diagnostics.mjs');
-const {createProject,createObject,listObjects,readObject,updateObject,deriveObject,discardObject,importReference,removeReference,updateReference,taskDisplayState,STYLE_CATEGORIES,TASK_PURPOSES}=await import('./lib/workspace.mjs');
+const {createProject,createObject,listObjects,readObject,styleView,updateObject,deriveObject,discardObject,importReference,removeReference,updateReference,taskDisplayState,STYLE_CATEGORIES,TASK_PURPOSES}=await import('./lib/workspace.mjs');
 const {startAnalysis,adoptStyle,recoverStyleAdoption}=await import('./lib/style-lifecycle.mjs');
 const {candidates,finalize,deleteCandidate,finalizations,editFromCandidate}=await import('./lib/candidates.mjs');
 const {upgradeProject}=await import('./lib/migration.mjs');
@@ -29,7 +29,7 @@ const {deploymentPlan,startDeployment,deploymentStatus,cancelDeployment,recoverD
 const flags=new Set(['dry','explore','background','start','replace','confirm','all-variants']);
 const allowed=new Set(['config','workspace','output-dir','refs-dir','cache-dir','directory','endpoint','project','input','out','report','note','core','job','plan','item','variant','offset','limit','file','backend','timeout','kind','id','revision','source','category','purposes','mapping','run','candidate','actor','operation','retry-run',...flags]);
 for(let i=0;i<args.length;i++){if(args[i].startsWith('--')){const k=args[i].slice(2);if(!allowed.has(k)||k in options) throw new Error('未知或重复参数 '+k);options[k]=flags.has(k)?true:args[++i];if(options[k]===undefined) throw new Error('参数缺少值 '+k);}else pos.push(args[i]);}
-const print=x=>console.log(JSON.stringify(x,null,2));
+const print=x=>console.log(JSON.stringify(x?.schema==='art-workshop/style'?styleView(settings.paths.workspace,x):x,null,2));
 if(pos[0]==='workflow'&&pos[1]==='list'){print(workflowList());process.exit(0);}
 let settings;
 try{settings=loadSettings({file:options.config?resolve(options.config):undefined,workspace:options.workspace,output:options['output-dir'],refs:options['refs-dir'],cache:options['cache-dir']});}
@@ -79,9 +79,9 @@ try {
     const projectId=required('project'),kind=module==='job'?'task':'style';
     if(action==='template'&&kind==='task')print(jobTemplate(ROOT,projectId,{kind:options.kind,core:options.core}));
     else if(action==='from-candidate'&&kind==='task')print(await editFromCandidate(settings,projectId,required('id'),{runId:required('run'),candidateId:required('candidate')}));
-    else if(action==='list'){const records=listObjects(ROOT,projectId,kind),runs=kind==='task'?tasks(runtimeRoot(settings)).map(t=>taskStatus(runtimeRoot(settings),t.taskId)):[];print(records.map(record=>kind==='task'?{...record,display:taskDisplayState(record,runs,record.finalizations??[])}:record));}
+    else if(action==='list'){const records=listObjects(ROOT,projectId,kind),runs=kind==='task'?tasks(runtimeRoot(settings)).map(t=>taskStatus(runtimeRoot(settings),t.taskId)):[];print(records.map(record=>kind==='task'?{...record,display:taskDisplayState(record,runs,record.finalizations??[])}:styleView(ROOT,record)));}
     else if(action==='create')print(await createObject(settings,projectId,kind,readJson(path(required('input')))));
-    else if(action==='read')print(readObject(ROOT,projectId,kind,required('id')));
+    else if(action==='read'){const record=readObject(ROOT,projectId,kind,required('id'));print(kind==='style'?styleView(ROOT,record):record);}
     else if(action==='update')print(await updateObject(settings,projectId,kind,required('id'),Number(required('revision')),readJson(path(required('input')))));
     else if(action==='analyze'&&kind==='task')print(await startAnalysis(settings,projectId,required('id'),Number(required('revision')),{dry:options.dry,kind:'task',operationId:options.operation}));
     else if(action==='derive')print(await deriveObject(settings,projectId,kind,required('id'),Number(required('revision'))));

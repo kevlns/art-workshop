@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,cpSync,rmSync,writeFileSync,existsSync,readFileSync,renameSync,mkdirSync} from 'node:fs';
+import {mkdtempSync,cpSync,rmSync,writeFileSync,existsSync,readFileSync,mkdirSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createObject,readObject,discardObject} from '../lib/workspace.mjs';
 import {startAnalysis,adoptStyle,recoverStyleAdoption} from '../lib/style-lifecycle.mjs';
 import {waitTask,cancelTask,taskStatus} from '../lib/tasks.mjs';
 import {runtimeRoot,sleep,alive} from '../lib/runtime.mjs';
-import {writeJson,readJson,hash} from '../lib/shared.mjs';
+import {writeJson,readJson,hash,renameWithRetry} from '../lib/shared.mjs';
 import {upgradeProject} from '../lib/migration.mjs';
 import {compileGenerate} from '../lib/generate.mjs';
 import {candidates,finalizations} from '../lib/candidates.mjs';
@@ -22,6 +22,8 @@ test('analysis preview is read-only; real worker binds a report then adoption fr
   const dry=await startAnalysis(settings,'cellgame',record.id,1,{dry:true});assert.equal(dry.remoteCalls,0);
   assert.equal(existsSync(join(root,'cache')),false);
   const run=await startAnalysis(settings,'cellgame',record.id,1,{operationId:'art-original-analysis'});const done=await waitTask(runtimeRoot(settings),run.taskId,{timeoutSeconds:20});assert.equal(done.status,'succeeded',done.error);assert.equal(done.stopConfirmed,true);const duplicate=await startAnalysis(settings,'cellgame',record.id,1,{operationId:'art-original-analysis'});assert.equal(duplicate.taskId,run.taskId);
+  assert.equal(done.currentItem.stage,'report-validation');
+  const evidence=readJson(join(root,'projects/cellgame/styles',record.id,'reports',run.taskId,'responses/1.json'));assert.match(evidence.text,/style-report/);
   const current=readObject(root,'cellgame','style',record.id);assert.equal(current.report.sourceRevision,1);assert.equal(current.revision,2);
   const adopted=await adoptStyle(settings,'cellgame',record.id,2);assert.equal(adopted.status,'frozen');assert.equal((await recoverStyleAdoption(settings,'cellgame',record.id)).revision,adopted.revision);
   await assert.rejects(adoptStyle(settings,'cellgame',record.id,2),/版本|状态/);
@@ -31,6 +33,19 @@ test('cancelled remote analysis preserves its draft and refuses resource cleanup
  const record=await createObject(settings,'cellgame','style',{name:'style',config:{description:'rounded style'}});const mock=join(root,'mock-slow-bl.mjs');writeFileSync(mock,`await new Promise(r=>setTimeout(r,10000));console.log('{}');`);
  const previous=process.env.BL_BIN;process.env.BL_BIN=mock;
  try{const run=await startAnalysis(settings,'cellgame',record.id,1);for(let i=0;i<100&&!taskStatus(runtimeRoot(settings),run.taskId).currentItem;i++)await sleep(50);const done=await cancelTask(runtimeRoot(settings),run.taskId);assert.equal(done.stopConfirmed,false);assert.ok(done.remoteCancellation);await assert.rejects(discardObject(settings,'cellgame','style',record.id,1),/停止|执行/);}finally{if(previous===undefined)delete process.env.BL_BIN;else process.env.BL_BIN=previous;}
+}));
+
+test('invalid report repairs once, retains both responses and leaves the editable draft intact',()=>fixture(async(root,settings)=>{
+ const record=await createObject(settings,'cellgame','style',{name:'invalid',config:{description:'绘制风格'}});
+ const mock=join(root,'invalid-report.mjs');writeFileSync(mock,"console.log(JSON.stringify({text:'not a report'}));");
+ const previous=process.env.BL_BIN;process.env.BL_BIN=mock;
+ try {
+  const run=await startAnalysis(settings,'cellgame',record.id,1);
+  const done=await waitTask(runtimeRoot(settings),run.taskId,{timeoutSeconds:20});
+  assert.equal(done.status,'failed');assert.equal(done.stopConfirmed,true);assert.match(done.error,/一次文本修正/);
+  assert.match(readJson(join(root,'projects/cellgame/styles',record.id,'reports',run.taskId,'responses/2.json')).text,/not a report/);
+  const current=readObject(root,'cellgame','style',record.id);assert.equal(current.revision,1);assert.equal(current.report,null);
+ } finally {if(previous===undefined)delete process.env.BL_BIN;else process.env.BL_BIN=previous;}
 }));
 test('explicit upgrade preserves original bytes in backup and rejects uncertain running project',()=>fixture(async(root,settings)=>{
  const directory=join(root,'projects/cellgame');const project=readJson(join(directory,'project.json'));delete project.schemaVersion;delete project.revision;writeJson(join(directory,'project.json'),project);
@@ -65,7 +80,7 @@ test('upgrade imports editing sources and recovers a crash between directory rep
  const directory=join(root,'projects/cellgame'),source=join(root,'original.png');await sharp({create:{width:64,height:64,channels:4,background:'#fff'}}).png().toFile(source);
  const config=readJson(join(directory,'tasks/edit-white-background/task.json')).config;config.items[0].source='original.png';
  const project=readJson(join(directory,'project.json'));delete project.schemaVersion;writeJson(join(directory,'project.json'),project);writeJson(join(directory,'jobs/edit-job.json'),config);rmSync(join(directory,'tasks'),{recursive:true});
- const backup=join(root,'backups/interrupted');mkdirSync(join(root,'backups'),{recursive:true});renameSync(directory,backup);cpSync(backup,directory,{recursive:true});writeJson(join(directory,'project.json'),{...project,schemaVersion:2});
+ const backup=join(root,'backups/interrupted');mkdirSync(join(root,'backups'),{recursive:true});renameWithRetry(directory,backup);cpSync(backup,directory,{recursive:true});writeJson(join(directory,'project.json'),{...project,schemaVersion:2});
  writeJson(join(runtimeRoot(settings),'upgrades/cellgame.json'),{schema:'art-workshop/upgrade',project:'cellgame',backup:'interrupted',staging:'unused-staging',createdRuns:[]});
  await assert.rejects(upgradeProject(root,'cellgame',{dry:true,settings}),/事务未完成/);
  const upgraded=await upgradeProject(root,'cellgame',{dry:false,settings}),record=readObject(root,'cellgame','task','edit-job');

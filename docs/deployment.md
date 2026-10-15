@@ -29,7 +29,9 @@ v-cli art deployment cancel --id DEPLOYMENT
 v-cli art deployment recover --operation local-deploy-001
 ```
 
-plan 检测 GPU、Python、文件与磁盘，不下载、不启动、不采样；现有文件存在不等于哈希已验证。start 复核冻结预案后创建后台 deploymentId，逐阶段记录实际进度，按固定方案安装、校验、生成与编辑采样；完成后才提交配置。下载或校验失败不覆写既有冲突文件。
+plan 检测 Git、GPU、Python、文件与磁盘；需要下载模型时同时检测 curl.exe。不下载、不启动服务、不采样；现有文件存在不等于哈希已验证。Git 需能在 Vant 的 PATH 中直接执行，安装 Git for Windows 或修改 PATH 后须完全退出并重新启动 Vant。start 和工作进程执行前再次复核依赖与冻结预案；源码克隆前创建临时工作目录，完成固定提交检出后才提交源码。缺少命令与工作目录不可用分别报告，不再统一显示 ENOENT。
+
+start 创建后台 deploymentId，逐阶段记录实际进度，按固定方案安装、校验、生成与编辑采样；完成后才提交配置。下载或校验失败不覆写既有冲突文件。
 
 status 查询原部署。cancel 只停止已核验的本部署进程与采样，不删除用户素材或原模型，不关闭用户先前启动的服务。recover 只找回唯一原登记，不重复安装。工作进程丢失或停止未确认时保留 unknown 与安装占用。
 
