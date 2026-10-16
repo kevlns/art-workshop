@@ -3,7 +3,7 @@
   "package": "@kevlns/art-workshop",
   "command": "art",
   "bin": "art-workshop",
-  "description": "美术工坊：版本化风格/任务、参考管理、预演、后台执行、停止确认与定版。",
+  "description": "管理项目风格、参考图、图片生成、编辑和定版。支持本地 ComfyUI 与远程图片模型。",
   "platforms": [
     "win32",
     "linux",

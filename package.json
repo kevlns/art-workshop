@@ -1,8 +1,8 @@
 {
   "name": "@kevlns/art-workshop",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "private": false,
-  "description": "美术工坊：统一风格的多工程图片生成与编辑工具",
+  "description": "管理项目风格、参考图、图片生成、编辑和定版。支持本地 ComfyUI 与远程图片模型。",
   "type": "module",
   "bin": {
     "art-workshop": "art-workshop.mjs"
@@ -25,10 +25,11 @@
     "skill:sync": "node scripts/sync-skill.mjs",
     "test": "node scripts/test.mjs",
     "pack:guard": "node scripts/pack-guard.mjs",
-    "check": "npm run docs:check && npm test && npm run pack:guard",
+    "check": "npm run docs:style && npm run docs:check && npm test && npm run pack:guard",
     "test:package": "node scripts/test-package-install.mjs",
     "docs:check": "node scripts/check-docs.mjs",
-    "docs:generate": "node scripts/command-docs.mjs"
+    "docs:generate": "node scripts/command-docs.mjs",
+    "docs:style": "node scripts/check-documentation.mjs"
   },
   "engines": {
     "node": ">=20.9"
@@ -45,7 +46,7 @@
     "access": "public"
   },
   "license": "MIT",
-  "author": "kevlns",
+  "author": "Vant",
   "vCli": {
     "manifest": "v-cli.plugin.json"
   },
