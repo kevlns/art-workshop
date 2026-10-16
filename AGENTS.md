@@ -44,3 +44,5 @@ candidate delete 先确认影响，拒绝运行中或被计划/底图引用的�
 风格报告和核心职责版本 schemaVersion=3；不再包含 shape、lighting、domains，不限定主体题材。旧核心保留，只能派生后重新分析采用；旧分类参考必须明确重新分类，不能猜测搬到任务或渲染。低刻画密度不删任务结构，干净笔触不禁止物体纹理，高光画法不统一物理材质。
 
 任务草稿允许内容尚未完成，但拒绝编译器不支持的字段。生成任务的字段正本为 lib/task-contract.mjs；effect 使用 id/kind/target/color/relation/count，不支持 description。先读当前对象，完整保留未修改字段，按当前 revision 保存；保存成功后仍需编译预案，不能声称已生成图片。任务编译错误依据执行回执修正，不猜测风格或尺寸问题。
+
+任务参考可通过 reference import --item-id <对象标识> 绑定单个出图对象；未绑定的参考为任务共用。生成与编辑只采纳共用参考和当前对象参考的观察。reference update 的 itemId 可改绑对象，null 表示任务共用。

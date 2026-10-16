@@ -70,7 +70,7 @@ try {
   else if(module==='reference'){
     const projectId=required('project'),kind=required('kind'),objectId=required('id');
     if(action==='list')print(readObject(ROOT,projectId,kind,objectId).references);
-    else if(action==='import')print(await importReference(settings,projectId,kind,objectId,Number(required('revision')),{source:required('source'),category:options.category,purposes:options.purposes?.split(','),note:options.note??''}));
+    else if(action==='import')print(await importReference(settings,projectId,kind,objectId,Number(required('revision')),{source:required('source'),category:options.category,purposes:options.purposes?.split(','),itemId:options['item-id'],note:options.note??''}));
     else if(action==='remove')print(await removeReference(settings,projectId,kind,objectId,Number(required('revision')),required('item')));
     else if(action==='update')print(await updateReference(settings,projectId,kind,objectId,Number(required('revision')),required('item'),readJson(path(required('input')))));
     else throw new Error('未知 reference 操作');
