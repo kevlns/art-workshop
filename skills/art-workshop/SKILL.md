@@ -16,7 +16,7 @@ description: 美术工坊风格、任务、参考、预演、执行与定版管�
 ## 风格生命周期
 
 style create/read/update/derive/discard 管理草稿。style analyze --dry 只读编译，不联网、启动服务或创建参考目录。实际 analyze 创建 taskId 与独立参考证据；task status/wait/cancel 控制执行，recover 查原登记，resume 仅恢复远程查询与取回。
-报告绑定源配置、参考与模型。更新配置会清除当前报告，旧证据保留。style adopt 校验源版本、报告身份、冲突与未确定项，用户采用后冻结。采用中断通过 style recover 完成已授权事务，不能重新冻结另一份核心。
+报告绑定源配置、参考与模型。更新配置保留报告并标记需复核，旧证据不变。报告 recommendation.rules 是精炼独立成稿，规则含主题、强度和适用条件，不包含迭代描述。issues 仅列需用户取舍的矛盾，notes 保留不阻塞采用的证据局限。style resolve --input {issueId,optionId,note} 记录明确选择并修订有效方案，不重新分析；以 style read 的 review.ready 判断采用条件。复核沿用证据与决定，新证据才重新打开问题。style adopt 校验来源匹配和所有问题已决定，用户采用后冻结。采用中断通过 style recover 完成已授权事务，不能重新冻结另一份核心。
 退出风格配置先继续编辑、保存草稿或放弃；分析停止未确认时不能清理。
 
 ## 计划与执行
@@ -46,4 +46,4 @@ candidate delete 先确认影响，拒绝运行中或被计划/底图引用的�
 
 远端上游身份持久化后才能轮询。`task resume TASK` 只恢复原身份查询与取回，不重发生成；无回执或仍处于 dispatching 的提交保持未知。界面与保存共用 modelEligibility，展示字段不进入执行契约。
 
-风格报告和核心职责版本 schemaVersion=2；不再包含 shape、lighting、domains，不限定主体题材。旧核心保留，只能派生后重新分析采用；旧分类参考必须明确重新分类，不能猜测搬到任务或渲染。低刻画密度不删任务结构，干净笔触不禁止物体纹理，高光画法不统一物理材质。
+风格报告和核心职责版本 schemaVersion=3；不再包含 shape、lighting、domains，不限定主体题材。旧核心保留，只能派生后重新分析采用；旧分类参考必须明确重新分类，不能猜测搬到任务或渲染。低刻画密度不删任务结构，干净笔触不禁止物体纹理，高光画法不统一物理材质。

@@ -28,4 +28,4 @@ task recover 根据工程和 operationId 找回唯一原执行；task resume 沿
 
 升级事务登记在 workspace/.runtime/upgrades/<projectId>.json。替换中断后只通过显式 project upgrade 恢复原备份并重新转换；日常读写拒绝未完成事务。编辑源导入新对象私有 sources；历史快照保留旧事实。历史同资产多次批准须在 mapping 的 selections 中提供 task/assetId/runId/file/variantId，明确当前正式选择，其余保留替换历史，不猜测最近一张。
 
-风格报告与 core.json 另有 schemaVersion=2 的职责契约，只包含 medium、render、color。shape、lighting、domains 与固定物理材质均拒绝；旧报告不能采用，旧核心不能执行旧计划。style list/read 返回只读 compatibility，旧分类关联仍可见且必须明确重新分类。项目和对象存储版本仍为 2。详细字段见 core-guidance.md。
+风格报告与 core.json 使用 schemaVersion=3。recommendation.rules 保存带主题、强度和条件的定性规则，issues 保存具体决策选项，decisions 保存已确认取舍，notes 保存不阻塞的提醒。style list/read 返回 review（ready、stale、openIssues、reason、有效 recommendation）及 compatibility。对象存储版本仍为2，旧草稿与参考不重写。详细字段见 core-guidance.md。

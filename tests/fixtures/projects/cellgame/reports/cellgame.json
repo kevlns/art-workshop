@@ -13,30 +13,42 @@
     }
   ],
   "recommendation": {
-    "medium": "illustration",
-    "render": {
-      "shading": "cel",
-      "toneSteps": 2,
-      "detail": "low",
-      "outline": {
-        "enabled": true,
-        "color": "#34445C",
-        "width": 0.004
+    "rules": [
+      {
+        "id": "medium",
+        "scope": "medium",
+        "strength": "required",
+        "instruction": "采用数字卡通插画表现",
+        "when": ""
       },
-      "highlights": "hard-edge",
-      "brushwork": "clean",
-      "valueContrast": "medium"
-    },
-    "color": {
-      "saturation": "medium",
-      "contrast": "medium",
-      "shadowShift": "cool"
-    }
+      {
+        "id": "outline",
+        "scope": "outline",
+        "strength": "default",
+        "instruction": "深色粗壮硬描边，具体颜色与粗细随画幅调整",
+        "when": ""
+      },
+      {
+        "id": "shading",
+        "scope": "shading",
+        "strength": "default",
+        "instruction": "以有限硬边色阶塑形，层次随体量调整",
+        "when": ""
+      },
+      {
+        "id": "crystal-highlights",
+        "scope": "highlights",
+        "strength": "default",
+        "instruction": "允许白色锐利高光和局部柔和发光",
+        "when": "任务指定透明或发光物体时"
+      }
+    ]
   },
-  "conflicts": [],
-  "uncertainties": [],
   "provenance": {
     "source": "既有项目要求整理；未重新调用视觉模型"
   },
-  "schemaVersion": 2
+  "schemaVersion": 3,
+  "issues": [],
+  "notes": [],
+  "decisions": []
 }

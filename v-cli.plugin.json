@@ -1093,6 +1093,44 @@
       {
         "path": [
           "style",
+          "resolve"
+        ],
+        "usage": "art-workshop style resolve",
+        "description": "记录用户选择并修订风格方案；input 为 {issueId,optionId,note}，不重新分析、不自动采用",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          },
+          {
+            "flags": "--input <file>",
+            "description": "结构化配置文件"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "校验预期版本及空闲状态后更新对象"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "查询不写入；修改验证 revision、归属和停止确认；冻结风格只读"
+        ]
+      },
+      {
+        "path": [
+          "style",
           "derive"
         ],
         "usage": "art-workshop style derive",

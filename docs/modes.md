@@ -2,11 +2,13 @@
 
 ## 风格分析与核心冻结
 
-创建风格草稿，按 style、palette、rendering 分类导入私有参考。style analyze --dry 只编译；实际 analyze 创建 taskId 和独立证据。报告绑定配置版本、图片哈希、分析模型和规则指纹；更新配置或参考后必须重新分析。冲突与未知项未处理时不能采用。
+创建风格草稿，按 style、palette、rendering 分类导入私有参考。讨论澄清意图并回填草稿。style analyze --dry 只编译；实际 analyze 创建 taskId 与独立证据，逐图观察后生成风格报告。
 
-讨论负责澄清分类观察焦点和编辑草稿，不等同于正式分析。正式分析按分类逐图观察，再生成包含 summary、observations、recommendation、conflicts、uncertainties 和 provenance 的结构化报告；只在报告通过职责与格式校验且源草稿未变化时回填。报告是待采用建议，不能声称已冻结风格或已生成图片。错误保留原草稿与证据，本地执行结束后允许编辑；云端计算不确定性单独提示，见 [状态与恢复](troubleshooting.md)。
+报告含 summary、observations、recommendation、issues、notes、decisions 和 provenance。recommendation.rules 是可以独立使用的精炼规范，不含讨论过程。notes 不阻塞采用；issues 给出可执行选项。用户选择后通过 style resolve 记录决定，无需重新分析。style read 的 review.ready 为采用条件，不以聊天中的“可采用”作为事实。
 
-style adopt 冻结当前已审阅报告；style recover 只恢复原已授权采用事务。正式风格只读，修改使用 derive，不能复制文件改身份。任务动态参考用 job analyze，只转写指定内容用途，不替代静态风格。
+草稿或参考改变时保留报告并标记需复核，复核复用未变化的图片观察并接收已有方案和决定。错误保留草稿和证据，本地完成后允许编辑；云端计算不确定性单独提示，见 [状态与恢复](troubleshooting.md)。
+
+style adopt 冻结当前有效规则与决策证据，style recover 只恢复原已授权事务。正式风格只读，修改使用 derive。任务动态参考仍使用 job analyze，不替代静态风格。
 
 ## 远程文生图
 

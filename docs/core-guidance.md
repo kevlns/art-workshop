@@ -1,21 +1,26 @@
-# 风格核心职责
+# 风格核心职责与问题决策
 
-风格只回答“如何绘制”，任务回答“画什么样”。分类和字段由 `lib/style-contract.mjs` 定义，校验与提示词由 `lib/core.mjs` 执行。
+风格定义如何绘制。主体轮廓、比例、部件、姿态、身份色、物理材质、光源、构图与资产尺寸由任务决定。
 
-| 职能 | 风格字段 | 不承担的任务内容 |
-| --- | --- | --- |
-| 媒介 | medium | 主体身份和题材 |
-| 描绘繁简 | render.detail | 轮廓、比例、结构、部件数量 |
-| 明暗画法 | render.shading、toneSteps、valueContrast | 光源位置、方向和场景光照 |
-| 描边 | render.outline | 主体形状 |
-| 高光画法 | render.highlights | 金属、玻璃、皮肤等物理材质 |
-| 绘画痕迹 | render.brushwork | 鳞片、花纹、表面结构 |
-| 色彩关系 | color.saturation、contrast、shadowShift | 主体身份色、固定内容色板 |
+## 最终规范
 
-绘制细节低不代表删减任务要求的结构，干净笔触不代表删掉物体纹理。任务中的身份色和实际光源保持有效。核心不再包含 shape、lighting、domains，也不以题材白名单限制实体 kind。
+报告和核心使用 schemaVersion=3，项目与对象存储版本仍为2。recommendation 只含 rules：每条具有稳定 id、scope、strength、instruction、when。
 
-静态参考只分三类：style（媒介与整体绘制气质）、palette（色彩关系）、rendering（明暗、描边、笔触与刻画）。主体图片可以仅作配色参考，不根据文件名改分类。具体造型参考属于任务 subject，物理材质属于 surface，场景光源属于 scene-light；参考不自动移入或上传到其他用途。
+- scope：medium、shading、outline、highlights、brushwork、detail、palette。
+- strength：required 必须、default 默认倾向、avoid 避免。
+- instruction：300字以内的独立、准确、精炼绘制要求；不能出现本轮、上一版、修改经过等迭代描述。
+- when：适用条件，无条件时为空。局部例外与默认倾向可以共存，不强制精确色值、线宽或色阶。
 
-风格报告和冻结核心使用 schemaVersion=2。新分析必须返回当前结构；旧报告不能采用，旧核心不能生成或执行旧计划。旧核心、报告、历史产物原样保留，可派生草稿后核对参考、重新分析并明确采用。已取消的分类保留为待重新分类资源，禁止猜测迁移。项目对象的 schemaVersion=2 不变，职责版本与对象存储版本分别校验。
+生成提示保留条件与强度。带条件的避免规则不会被展开为全局负面提示。最终核心只使用规则，不把聊天记录、问题解释或证据局限混入生成规范。
 
-输入参考与输出 observations.scope 共用范围：style、palette、rendering；content 和 asset 仅标记任务内容与资产观察，不进入风格推荐。无另一套隐式别名。
+## 报告与取舍
+
+summary 概述当前方案，observations 保存分类证据，notes 保存不影响执行的提醒。issues 只表达真正需要用户选择的矛盾，每项有稳定 id、question、reopenReason 与2至5个 options。选项含 id、label、remove 规则ID和 upsert 规则。
+
+style resolve 校验 revision、报告来源和选项，记录 issueId、问题指纹、optionId、用户依据和时间。选择应用于候选规范，不改变原始模型响应；reviewHistory 记录历次选择。覆盖已有决定涉及的规则时，相关旧决定重新打开，不静默覆盖。采用要求当前来源匹配、所有问题已有有效决定；notes 非空仍可采用。
+
+修改草稿或参考保留报告并标记需复核。复核提供上一版方案和决定；同一证据、问题与选项不变时保留决定，新证据或明确重新打开理由要求重新确认。逐图观察按内容和分类契约缓存，未改变的图不重复请求。
+
+## 历史数据
+
+旧草稿和参考原样保留，旧报告可查看但不可直接采用。重新分析生成当前契约。旧冻结核心保持只读，需派生并生成新版报告后明确采用，不能自动猜测转换。

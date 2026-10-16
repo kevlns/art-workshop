@@ -26,7 +26,7 @@ test('style rejects concrete shapes, light positions, subject lists and physical
  for(const [key,value] of Object.entries({shape:{contour:'rounded'},lighting:{direction:'left'},domains:{robot:{signature:'giant head'}}}))
   assert.throws(()=>validateCoreConfig({...structuredClone(EXAMPLE_CONFIG),[key]:value}),/字段/);
  for(const [key,value] of Object.entries({finish:'glossy',texture:'none'})){
-  const config=structuredClone(EXAMPLE_CONFIG);config.render[key]=value;assert.throws(()=>validateCoreConfig(config),/字段/);
+  const config=structuredClone(EXAMPLE_CONFIG);config.rules[0][key]=value;assert.throws(()=>validateCoreConfig(config),/字段/);
  }
  assert.deepEqual(STYLE_CATEGORIES,['style','palette','rendering']);
  assert.doesNotMatch(coreNegative({config:EXAMPLE_CONFIG}),/繁复细节|繁复纹样|表面纹理|写实反射/);

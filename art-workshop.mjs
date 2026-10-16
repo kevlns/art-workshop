@@ -4,7 +4,7 @@ import {join,resolve} from 'node:path';
 import {readJson,writeJson} from './lib/shared.mjs';
 const args=process.argv.slice(2),pos=[],options={};
 if(args.length===1&&['--version','-V'].includes(args[0])){console.log(readJson(new URL('./package.json',import.meta.url)).version);process.exit(0);}
-const help='art-workshop: config path/show/init/validate | doctor [--backend ID] [--start] | workflow list | deployment plan/start/status/cancel/recover | refs guide | agent index/docs/init | list | style create/list/read/update/derive/discard/analyze/adopt/recover/validate/show | generate show/plan/run | edit show/plan/run | task list/status/wait/cancel/recover/resume | shutdown | check RUN | project init/upgrade | job template/from-candidate/create/list/read/update/derive/discard/analyze | reference import/list/update/remove | candidate list/finalize/delete/finalizations | compare PLAN PLAN\nrun --background 返回任务 ID；--backend 选择后端。shutdown 停止当前工作区关联任务，核验共享队列和进程身份后关闭本地服务。\n也可用 v-cli art 调用；先 v-cli agent docs art，再 v-cli agent describe art --json 查看完整参数。';
+const help='art-workshop: config path/show/init/validate | doctor [--backend ID] [--start] | workflow list | deployment plan/start/status/cancel/recover | refs guide | agent index/docs/init | list | style create/list/read/update/derive/discard/analyze/resolve/adopt/recover/validate/show | generate show/plan/run | edit show/plan/run | task list/status/wait/cancel/recover/resume | shutdown | check RUN | project init/upgrade | job template/from-candidate/create/list/read/update/derive/discard/analyze | reference import/list/update/remove | candidate list/finalize/delete/finalizations | compare PLAN PLAN\nrun --background 返回任务 ID；--backend 选择后端。shutdown 停止当前工作区关联任务，核验共享队列和进程身份后关闭本地服务。\n也可用 v-cli art 调用；先 v-cli agent docs art，再 v-cli agent describe art --json 查看完整参数。';
 if(!args.length||args.length===1&&['--help','-h','help'].includes(args[0])){console.log(help);process.exit(0);}
 const {loadJob,loadProject}=await import('./lib/project.mjs');
 const {referenceRoot,referenceGuide}=await import('./lib/refs.mjs');
@@ -20,7 +20,7 @@ const {startTask,taskStatus,taskView,recoverTask,resumeTask,waitTask,cancelTask,
 const {runtimeRoot,tasks}=await import('./lib/runtime.mjs');
 const {validateConfiguration,doctor}=await import('./lib/diagnostics.mjs');
 const {createProject,createObject,listObjects,readObject,styleView,updateObject,deriveObject,discardObject,importReference,removeReference,updateReference,taskDisplayState,STYLE_CATEGORIES,TASK_PURPOSES}=await import('./lib/workspace.mjs');
-const {startAnalysis,adoptStyle,recoverStyleAdoption}=await import('./lib/style-lifecycle.mjs');
+const {startAnalysis,adoptStyle,recoverStyleAdoption,resolveStyleIssue}=await import('./lib/style-lifecycle.mjs');
 const {candidates,finalize,deleteCandidate,finalizations,editFromCandidate}=await import('./lib/candidates.mjs');
 const {upgradeProject}=await import('./lib/migration.mjs');
 const {workflowList}=await import('./lib/workflows.mjs');
@@ -82,7 +82,7 @@ try {
     else if(action==='list'){const records=listObjects(ROOT,projectId,kind),runs=kind==='task'?tasks(runtimeRoot(settings)).map(t=>taskStatus(runtimeRoot(settings),t.taskId)):[];print(records.map(record=>kind==='task'?{...record,display:taskDisplayState(record,runs,record.finalizations??[])}:styleView(ROOT,record)));}
     else if(action==='create')print(await createObject(settings,projectId,kind,readJson(path(required('input')))));
     else if(action==='read'){const record=readObject(ROOT,projectId,kind,required('id'));print(kind==='style'?styleView(ROOT,record):record);}
-    else if(action==='update')print(await updateObject(settings,projectId,kind,required('id'),Number(required('revision')),readJson(path(required('input')))));
+    else if(action==='update'){const record=await updateObject(settings,projectId,kind,required('id'),Number(required('revision')),readJson(path(required('input'))));print(kind==='style'?styleView(ROOT,record):record);}
     else if(action==='analyze'&&kind==='task')print(await startAnalysis(settings,projectId,required('id'),Number(required('revision')),{dry:options.dry,kind:'task',operationId:options.operation}));
     else if(action==='derive')print(await deriveObject(settings,projectId,kind,required('id'),Number(required('revision'))));
     else if(action==='discard')print(await discardObject(settings,projectId,kind,required('id'),Number(required('revision'))));
@@ -103,6 +103,7 @@ try {
     const projectId=required('project');
     if(action==='analyze')print(await startAnalysis(settings,projectId,required('id'),Number(required('revision')),{dry:options.dry,operationId:options.operation}));
     else if(action==='recover')print(await recoverStyleAdoption(settings,projectId,required('id')));
+    else if(action==='resolve')print(styleView(ROOT,await resolveStyleIssue(settings,projectId,required('id'),Number(required('revision')),readJson(path(required('input'))))));
     else if(action==='adopt')print(await adoptStyle(settings,projectId,required('id'),Number(required('revision')),{note:options.note}));
     else if(action==='validate') print(validateReport(readJson(path(required('report'))),projectId));
     else if(action==='show') print(loadCore(projectId,required('core'),ROOT));

@@ -486,6 +486,21 @@ v-cli art style update
 
 - 查询不写入；修改验证 revision、归属和停止确认；冻结风格只读
 
+## style resolve
+
+记录用户选择并修订风格方案；input 为 {issueId,optionId,note}，不重新分析、不自动采用
+
+```sh
+v-cli art style resolve
+```
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+- `--input <file>`：结构化配置文件
+
+- 查询不写入；修改验证 revision、归属和停止确认；冻结风格只读
+
 ## style derive
 
 派生独立草稿，不继承执行、报告或定版

@@ -6,8 +6,26 @@ import {tmpdir} from 'node:os';
 import {analyzeStyle} from '../lib/analyze.mjs';
 import {readJson} from '../lib/shared.mjs';
 import {OBSERVATION_SCOPES} from '../lib/style-contract.mjs';
+import {issueFingerprint,resolvedRecommendation} from '../lib/style-review.mjs';
 
 async function fixture(run){const root=mkdtempSync(join(tmpdir(),'art-analysis-progress-'));cpSync(new URL('./fixtures/projects/',import.meta.url),join(root,'projects'),{recursive:true});try{return await run(root);}finally{rmSync(root,{recursive:true,force:true});}}
+
+test('recheck preserves explicit choices even when the model omits the old issue; changed evidence reopens it',()=>fixture(async root=>{
+ const report=readJson(join(root,'projects/cellgame/reports/cellgame.json'));report.id='new-style';
+ const rule={id:'shadow',scope:'palette',strength:'default',instruction:'阴影可随主体变化',when:''};
+ const issue={id:'shadow',question:'阴影是否固定？',reopenReason:'',options:[{id:'flexible',label:'随主体变化',remove:[],upsert:[rule]},{id:'fixed',label:'固定冷影',remove:[],upsert:[{...rule,strength:'required',instruction:'统一冷影'}]}]};
+ writeFileSync(join(root,'one.png'),'one');
+ const input={project:'cellgame',id:'new-style',description:'绘制语言',constraints:[],refs:[{path:'one.png',scope:'palette',note:'配色'}]};
+ let calls=0;const runner=args=>{calls++;return {text:args[0]==='vision'?'配色观察':JSON.stringify(report)};};
+ const first=await analyzeStyle({projectId:'cellgame',input,root,refsDir:root,runner});
+ first.issues=[issue];first.decisions=[{issueId:'shadow',fingerprint:issueFingerprint(issue),optionId:'flexible',note:'用户确认',decidedAt:new Date().toISOString()}];
+ const next={...input,description:'更精炼的绘制描述',previous:first};
+ const revised=await analyzeStyle({projectId:'cellgame',input:next,root,refsDir:root,runner});
+ assert.equal(calls,3,'one image call is reused');assert.equal(revised.decisions.length,1);assert.equal(resolvedRecommendation(revised).rules.at(-1).instruction,rule.instruction);
+ writeFileSync(join(root,'one.png'),'changed');
+ const changed=await analyzeStyle({projectId:'cellgame',input:next,root,refsDir:root,runner});
+ assert.equal(changed.decisions.length,0);assert.match(changed.issues[0].reopenReason,/证据已改变/);
+}));
 test('real category scopes validate, progress tracks each image, and one repair does not reread images',()=>fixture(async root=>{
  const report=readJson(join(root,'projects/cellgame/reports/cellgame.json'));
  report.id='new-style';report.observations[0].scope='palette';
