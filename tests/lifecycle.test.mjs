@@ -8,6 +8,25 @@ import {executionSettled,executionLifecycle,assertIdle} from '../lib/lifecycle.m
 import {writeJson} from '../lib/shared.mjs';
 import {taskFile,stateRead} from '../lib/runtime.mjs';
 import {taskStatus,taskView,cancelTask,shutdown} from '../lib/tasks.mjs';
+import {workerAlive} from '../lib/worker-process.mjs';
+
+test('recycled worker PID cannot block shutdown or erase remote uncertainty',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'art-recycled-worker-'));
+ try {
+  const settings={paths:{workspace:root}},runtime=join(root,'.runtime');
+  const task={schema:'art-workshop/task',taskId:'task-recycled',kind:'style-analysis',status:'failed',workerPid:process.pid,finishedAt:'2000-01-01T00:00:00Z',stopConfirmed:false,unsettled:true,remoteCancellation:'upstream unknown'};
+  writeJson(taskFile(runtime,task.taskId),task);
+  assert.equal(workerAlive(task),false);
+  assert.equal(taskView(task).upstreamExecutionUnknown,true);
+  await shutdown(settings,{closeServices:false});
+  assert.deepEqual(stateRead(taskFile(runtime,task.taskId)),task);
+  assert.equal(workerAlive(task,()=>null),true,'unreadable identity fails closed');
+  const identity={pid:process.pid,created:'2020-01-01',command:'worker'};
+  assert.equal(workerAlive({...task,workerIdentity:identity},()=>identity),true);
+  assert.equal(workerAlive({...task,workerIdentity:identity},()=>({...identity,created:'2021-01-01'})),false);
+  assert.equal(executionSettled({...task,kind:'generation'}),false);
+ }finally{rmSync(root,{recursive:true,force:true});}
+});
 
 test('different configuration files cannot hide runs from the same workspace',async()=>{
  const root=mkdtempSync(join(tmpdir(),'art-shared-owner-'));try{
