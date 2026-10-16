@@ -1,6 +1,6 @@
 {
   "name": "@kevlns/art-workshop",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "private": false,
   "description": "管理项目风格、参考图、图片生成、编辑和定版。支持本地 ComfyUI 与远程图片模型。",
   "type": "module",

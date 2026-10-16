@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {mkdtempSync,cpSync,rmSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import sharp from 'sharp';
 import {readObject,importReference,updateObject,discardObject,updateReference} from '../lib/workspace.mjs';
 import {startAnalysis} from '../lib/style-lifecycle.mjs';
@@ -55,4 +57,16 @@ test('reference bindings validate identity and can become shared',async()=>{
   record=await updateReference(settings,'cellgame','task','skills',record.revision,record.references[0].id,{itemId:null});
   assert.equal(record.references[0].itemId,undefined);
  }finally{rmSync(root,{recursive:true,force:true,maxRetries:10,retryDelay:50});}
+});
+
+test('CLI imports a reference for the named output object', async()=>{
+ const root=mkdtempSync(join(tmpdir(),'art-cli-ref-'));
+ cpSync(new URL('./fixtures/projects/',import.meta.url),join(root,'projects'),{recursive:true});
+ try {
+  const image=join(root,'ref.png');writeFileSync(image,await sharp({create:{width:8,height:8,channels:3,background:'#ff8800'}}).png().toBuffer());
+  const record=readObject(root,'cellgame','task','skills'),itemId=record.config.items[0].id;
+  const call=spawnSync(process.execPath,[fileURLToPath(new URL('../art-workshop.mjs',import.meta.url)),'reference','import','--workspace',root,'--config',join(root,'settings.json'),'--project','cellgame','--kind','task','--id','skills','--revision',String(record.revision),'--source',image,'--purposes','subject','--item-id',itemId],{encoding:'utf8'});
+  assert.equal(call.status,0,call.stderr||call.stdout);
+  assert.equal(JSON.parse(call.stdout).references.at(-1).itemId,itemId);
+ } finally {rmSync(root,{recursive:true,force:true,maxRetries:10,retryDelay:50});}
 });

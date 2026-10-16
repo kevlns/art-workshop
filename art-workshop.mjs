@@ -27,7 +27,7 @@ const {workflowList}=await import('./lib/workflows.mjs');
 const {jobTemplate}=await import('./lib/templates.mjs');
 const {deploymentPlan,startDeployment,deploymentStatus,cancelDeployment,recoverDeployment}=await import('./lib/deployment.mjs');
 const flags=new Set(['dry','explore','background','start','replace','confirm','all-variants']);
-const allowed=new Set(['config','workspace','output-dir','refs-dir','cache-dir','directory','endpoint','project','input','out','report','note','core','job','plan','item','variant','offset','limit','file','backend','timeout','kind','id','revision','source','category','purposes','mapping','run','candidate','actor','operation','retry-run',...flags]);
+const allowed=new Set(['config','workspace','output-dir','refs-dir','cache-dir','directory','endpoint','project','input','out','report','note','core','job','plan','item','variant','offset','limit','file','backend','timeout','kind','id','revision','source','category','purposes','mapping','run','candidate','actor','operation','retry-run','item-id',...flags]);
 for(let i=0;i<args.length;i++){if(args[i].startsWith('--')){const k=args[i].slice(2);if(!allowed.has(k)||k in options) throw new Error('未知或重复参数 '+k);options[k]=flags.has(k)?true:args[++i];if(options[k]===undefined) throw new Error('参数缺少值 '+k);}else pos.push(args[i]);}
 const print=x=>console.log(JSON.stringify(x?.schema==='art-workshop/style'?styleView(settings.paths.workspace,x):x,null,2));
 if(pos[0]==='workflow'&&pos[1]==='list'){print(workflowList());process.exit(0);}
