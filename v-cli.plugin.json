@@ -1594,6 +1594,10 @@
           {
             "flags": "--note <text>",
             "description": "参考说明"
+          },
+          {
+            "flags": "--item-id <id>",
+            "description": "所属出图对象标识；未指定为任务共用"
           }
         ],
         "output": {
@@ -1923,7 +1927,7 @@
           },
           {
             "flags": "--input <file>",
-            "description": "category/purposes/note/ignore 的字段补丁"
+            "description": "category/purposes/itemId/note/ignore 的字段补丁；itemId 为 null 时任务共用"
           }
         ],
         "output": {

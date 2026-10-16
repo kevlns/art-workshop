@@ -695,6 +695,7 @@ v-cli art reference import
 - `--category <name>`：四类静态参考之一
 - `--purposes <list>`：逗号分隔动态用途
 - `--note <text>`：参考说明
+- `--item-id <id>`：所属出图对象标识；未指定为任务共用
 
 - 校验图片、大小、路径；复制不修改原图；不支持直接参考时拒绝
 
@@ -819,7 +820,7 @@ v-cli art reference update --project P --kind style --id ID --revision N --item 
 - `--id <id>`：对象身份
 - `--revision <number>`：预期版本
 - `--item <id>`：参考身份
-- `--input <file>`：category/purposes/note/ignore 的字段补丁
+- `--input <file>`：category/purposes/itemId/note/ignore 的字段补丁；itemId 为 null 时任务共用
 
 - 冻结风格只读；任务不允许静态分类；不修改用户原图；旧证据保留
 
