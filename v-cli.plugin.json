@@ -1944,148 +1944,6 @@
       },
       {
         "path": [
-          "deployment",
-          "plan"
-        ],
-        "description": "固定 Qwen 2.1 部署 plan",
-        "options": [
-          {
-            "flags": "--directory <dir>",
-            "description": "本机部署根目录"
-          },
-          {
-            "flags": "--endpoint <url>",
-            "description": "本机 ComfyUI 地址"
-          },
-          {
-            "flags": "--out <file>",
-            "description": "保存不可变预案"
-          }
-        ],
-        "output": {
-          "format": "json",
-          "description": "固定 Qwen 2.1 部署 plan"
-        },
-        "safety": [
-          "只读检测与预案；不下载、不启动、不采样"
-        ],
-        "usage": "art-workshop deployment plan",
-        "arguments": [],
-        "exitCodes": {
-          "0": "成功",
-          "1": "校验、占用或执行失败；未确认停止不释放资源"
-        }
-      },
-      {
-        "path": [
-          "deployment",
-          "start"
-        ],
-        "description": "固定 Qwen 2.1 部署 start",
-        "options": [
-          {
-            "flags": "--plan <file>",
-            "description": "实际冻结部署预案"
-          },
-          {
-            "flags": "--operation <id>",
-            "description": "稳定操作身份"
-          }
-        ],
-        "output": {
-          "format": "json",
-          "description": "固定 Qwen 2.1 部署 start"
-        },
-        "safety": [
-          "下载、源码安装、独立环境、模型哈希验证、生成及编辑采样；不覆写既有不匹配文件"
-        ],
-        "usage": "art-workshop deployment start",
-        "arguments": [],
-        "exitCodes": {
-          "0": "成功",
-          "1": "校验、占用或执行失败；未确认停止不释放资源"
-        }
-      },
-      {
-        "path": [
-          "deployment",
-          "status"
-        ],
-        "description": "固定 Qwen 2.1 部署 status",
-        "options": [
-          {
-            "flags": "--id <id>",
-            "description": "原部署身份"
-          }
-        ],
-        "output": {
-          "format": "json",
-          "description": "固定 Qwen 2.1 部署 status"
-        },
-        "safety": [
-          "只查询原部署，不重复启动"
-        ],
-        "usage": "art-workshop deployment status",
-        "arguments": [],
-        "exitCodes": {
-          "0": "成功",
-          "1": "校验、占用或执行失败；未确认停止不释放资源"
-        }
-      },
-      {
-        "path": [
-          "deployment",
-          "cancel"
-        ],
-        "description": "固定 Qwen 2.1 部署 cancel",
-        "options": [
-          {
-            "flags": "--id <id>",
-            "description": "原部署身份"
-          }
-        ],
-        "output": {
-          "format": "json",
-          "description": "固定 Qwen 2.1 部署 cancel"
-        },
-        "safety": [
-          "请求取消；仅停止已核验子进程与本部署采样，确认后释放安装占用"
-        ],
-        "usage": "art-workshop deployment cancel",
-        "arguments": [],
-        "exitCodes": {
-          "0": "成功",
-          "1": "校验、占用或执行失败；未确认停止不释放资源"
-        }
-      },
-      {
-        "path": [
-          "deployment",
-          "recover"
-        ],
-        "description": "查询唯一原部署回执，不重新执行",
-        "options": [
-          {
-            "flags": "--operation <id>",
-            "description": "启动前登记的稳定身份"
-          }
-        ],
-        "output": {
-          "format": "json",
-          "description": "查询唯一原部署回执，不重新执行"
-        },
-        "safety": [
-          "只读；无法唯一核验时停止未知"
-        ],
-        "usage": "art-workshop deployment recover",
-        "arguments": [],
-        "exitCodes": {
-          "0": "成功",
-          "1": "校验、占用或执行失败；未确认停止不释放资源"
-        }
-      },
-      {
-        "path": [
           "job",
           "template"
         ],
@@ -2184,6 +2042,181 @@
           "查询原上游任务并下载已有产物",
           "提交结果未知时拒绝恢复"
         ]
+      },
+      {
+        "path": [
+          "environment",
+          "guide"
+        ],
+        "description": "本地环境部署指南",
+        "usage": "art-workshop environment guide",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--guide <id>",
+            "description": "部署指南标识；省略使用环境登记或推荐方案"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "环境事实与验收结果"
+        },
+        "safety": [
+          "不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务"
+        ],
+        "exitCodes": {
+          "0": "成功",
+          "1": "验收或执行失败"
+        }
+      },
+      {
+        "path": [
+          "environment",
+          "list"
+        ],
+        "description": "本地环境目录发现",
+        "usage": "art-workshop environment list",
+        "arguments": [],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "环境事实与验收结果"
+        },
+        "safety": [
+          "不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务"
+        ],
+        "exitCodes": {
+          "0": "成功",
+          "1": "验收或执行失败"
+        }
+      },
+      {
+        "path": [
+          "environment",
+          "inspect"
+        ],
+        "description": "本地环境只读检测",
+        "usage": "art-workshop environment inspect",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--directory <value>",
+            "description": "本机环境根目录"
+          },
+          {
+            "flags": "--endpoint <value>",
+            "description": "本机 HTTP 服务根地址"
+          },
+          {
+            "flags": "--guide <id>",
+            "description": "部署指南标识；省略使用环境登记或推荐方案"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "环境事实与验收结果"
+        },
+        "safety": [
+          "不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务"
+        ],
+        "exitCodes": {
+          "0": "成功",
+          "1": "验收或执行失败"
+        }
+      },
+      {
+        "path": [
+          "environment",
+          "verify"
+        ],
+        "description": "本地环境确定性验收",
+        "usage": "art-workshop environment verify",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--directory <value>",
+            "description": "本机环境根目录"
+          },
+          {
+            "flags": "--endpoint <value>",
+            "description": "本机 HTTP 服务根地址"
+          },
+          {
+            "flags": "--guide <id>",
+            "description": "部署指南标识；省略使用环境登记或推荐方案"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "环境事实与验收结果"
+        },
+        "safety": [
+          "不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务"
+        ],
+        "exitCodes": {
+          "0": "成功",
+          "1": "验收或执行失败"
+        }
+      },
+      {
+        "path": [
+          "environment",
+          "register"
+        ],
+        "description": "本地环境验收并登记",
+        "usage": "art-workshop environment register",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--directory <value>",
+            "description": "本机环境根目录"
+          },
+          {
+            "flags": "--endpoint <value>",
+            "description": "本机 HTTP 服务根地址"
+          },
+          {
+            "flags": "--guide <id>",
+            "description": "部署指南标识；省略使用环境登记或推荐方案"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "环境事实与验收结果"
+        },
+        "safety": [
+          "不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务"
+        ],
+        "exitCodes": {
+          "0": "成功",
+          "1": "验收或执行失败"
+        }
+      },
+      {
+        "path": [
+          "environment",
+          "unregister"
+        ],
+        "description": "本地环境解除登记",
+        "usage": "art-workshop environment unregister",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--directory <value>",
+            "description": "本机环境根目录"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "环境事实与验收结果"
+        },
+        "safety": [
+          "不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务"
+        ],
+        "exitCodes": {
+          "0": "成功",
+          "1": "验收或执行失败"
+        }
       }
     ]
   }

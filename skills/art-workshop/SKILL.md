@@ -70,6 +70,10 @@ candidate delete 先确认影响，拒绝运行中或被计划/底图引用的�
 
 `v-cli capability coverage --json` 核对结构化调用覆盖。参考导入的 `--item-id` 指定当前任务出图对象，省略表示任务共用；工具校验对象身份。
 
+### 本地环境部署
+
+使用 environment guide 获取部署指南与契约，environment inspect 读取机器环境。Pi 通过基础工具和动态工作流完成安装、下载、修正与采样；environment verify 独立校验文件、服务和节点，environment register 验收后登记。任务授权、进程、互斥与恢复交由 Harness。不得把模型回复或服务连通当作真实出图。unregister 仅解除登记，不删除模型或停止外部服务。按 --guide 选择随包方案，模型事实和启动参数只由 art 维护。
+
 ## 结果验证
 
 核对原始错误、任务身份、停止状态及实际产物。只报告已经完成的验证，模拟测试与真实执行分别说明。

@@ -830,69 +830,6 @@ v-cli art reference update --project P --kind style --id ID --revision N --item 
 
 - 冻结风格只读；任务不允许静态分类；不修改用户原图；旧证据保留
 
-### deployment plan
-
-固定 Qwen 2.1 部署 plan
-
-```sh
-v-cli art deployment plan
-```
-
-- `--directory <dir>`：本机部署根目录
-- `--endpoint <url>`：本机 ComfyUI 地址
-- `--out <file>`：保存不可变预案
-
-- 只读检测与预案；不下载、不启动、不采样
-
-### deployment start
-
-固定 Qwen 2.1 部署 start
-
-```sh
-v-cli art deployment start
-```
-
-- `--plan <file>`：实际冻结部署预案
-- `--operation <id>`：稳定操作身份
-
-- 下载、源码安装、独立环境、模型哈希验证、生成及编辑采样；不覆写既有不匹配文件
-
-### deployment status
-
-固定 Qwen 2.1 部署 status
-
-```sh
-v-cli art deployment status
-```
-
-- `--id <id>`：原部署身份
-
-- 只查询原部署，不重复启动
-
-### deployment cancel
-
-固定 Qwen 2.1 部署 cancel
-
-```sh
-v-cli art deployment cancel
-```
-
-- `--id <id>`：原部署身份
-
-- 请求取消；仅停止已核验子进程与本部署采样，确认后释放安装占用
-
-### deployment recover
-
-查询唯一原部署回执，不重新执行
-
-```sh
-v-cli art deployment recover
-```
-
-- `--operation <id>`：启动前登记的稳定身份
-
-- 只读；无法唯一核验时停止未知
-
 ### job template
 
 只读返回工具权威的任务配置模板；生成任务使用已冻结核心的题材
@@ -935,6 +872,83 @@ v-cli art task resume TASK
 - 写入原任务状态
 - 查询原上游任务并下载已有产物
 - 提交结果未知时拒绝恢复
+
+### environment guide
+
+本地环境部署指南
+
+```sh
+v-cli art environment guide
+```
+
+- `--guide <id>`：部署指南标识；省略使用环境登记或推荐方案
+
+- 不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务
+
+### environment list
+
+本地环境目录发现
+
+```sh
+v-cli art environment list
+```
+
+
+- 不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务
+
+### environment inspect
+
+本地环境只读检测
+
+```sh
+v-cli art environment inspect
+```
+
+- `--directory <value>`：本机环境根目录
+- `--endpoint <value>`：本机 HTTP 服务根地址
+- `--guide <id>`：部署指南标识；省略使用环境登记或推荐方案
+
+- 不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务
+
+### environment verify
+
+本地环境确定性验收
+
+```sh
+v-cli art environment verify
+```
+
+- `--directory <value>`：本机环境根目录
+- `--endpoint <value>`：本机 HTTP 服务根地址
+- `--guide <id>`：部署指南标识；省略使用环境登记或推荐方案
+
+- 不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务
+
+### environment register
+
+本地环境验收并登记
+
+```sh
+v-cli art environment register
+```
+
+- `--directory <value>`：本机环境根目录
+- `--endpoint <value>`：本机 HTTP 服务根地址
+- `--guide <id>`：部署指南标识；省略使用环境登记或推荐方案
+
+- 不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务
+
+### environment unregister
+
+本地环境解除登记
+
+```sh
+v-cli art environment unregister
+```
+
+- `--directory <value>`：本机环境根目录
+
+- 不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务
 
 ## 结果验证
 

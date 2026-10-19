@@ -4,7 +4,7 @@ import {join,resolve} from 'node:path';
 import {readJson,writeJson} from './lib/shared.mjs';
 const args=process.argv.slice(2),pos=[],options={};
 if(args.length===1&&['--version','-V'].includes(args[0])){console.log(readJson(new URL('./package.json',import.meta.url)).version);process.exit(0);}
-const help='art-workshop: config path/show/init/validate | doctor [--backend ID] [--start] | workflow list | deployment plan/start/status/cancel/recover | refs guide | agent index/docs/init | list | style create/list/read/update/derive/discard/analyze/resolve/adopt/recover/validate/show | generate show/plan/run | edit show/plan/run | task list/status/wait/cancel/recover/resume | shutdown | check RUN | project init/upgrade | job template/from-candidate/create/list/read/update/derive/discard/analyze | reference import/list/update/remove | candidate list/finalize/delete/finalizations | compare PLAN PLAN\nrun --background 返回任务 ID；--backend 选择后端。shutdown 停止当前工作区关联任务，核验共享队列和进程身份后关闭本地服务。\n也可用 v-cli art 调用；先 v-cli agent docs art，再 v-cli agent describe art --json 查看完整参数。';
+const help='art-workshop: config path/show/init/validate | doctor [--backend ID] [--start] | workflow list | environment guide/list/inspect/verify/register/unregister | refs guide | agent index/docs/init | list | style create/list/read/update/derive/discard/analyze/resolve/adopt/recover/validate/show | generate show/plan/run | edit show/plan/run | task list/status/wait/cancel/recover/resume | shutdown | check RUN | project init/upgrade | job template/from-candidate/create/list/read/update/derive/discard/analyze | reference import/list/update/remove | candidate list/finalize/delete/finalizations | compare PLAN PLAN\nrun --background 返回任务 ID；--backend 选择后端。shutdown 停止当前工作区关联任务，核验共享队列和进程身份后关闭本地服务。\n也可用 v-cli art 调用；先 v-cli agent docs art，再 v-cli agent describe art --json 查看完整参数。';
 if(!args.length||args.length===1&&['--help','-h','help'].includes(args[0])){console.log(help);process.exit(0);}
 const {loadJob,loadProject}=await import('./lib/project.mjs');
 const {referenceRoot,referenceGuide}=await import('./lib/refs.mjs');
@@ -25,9 +25,11 @@ const {candidates,finalize,deleteCandidate,finalizations,editFromCandidate}=awai
 const {upgradeProject}=await import('./lib/migration.mjs');
 const {workflowList}=await import('./lib/workflows.mjs');
 const {jobTemplate}=await import('./lib/templates.mjs');
-const {deploymentPlan,startDeployment,deploymentStatus,cancelDeployment,recoverDeployment}=await import('./lib/deployment.mjs');
+const {deploymentGuide}=await import('./lib/deployment-guide.mjs');
+const {inspectInstallation,discoverInstallations}=await import('./lib/environments.mjs');
+const {verifyInstallation,registerInstallation,unregisterInstallation}=await import('./lib/environment-operations.mjs');
 const flags=new Set(['dry','explore','background','start','replace','confirm','all-variants']);
-const allowed=new Set(['config','workspace','output-dir','refs-dir','cache-dir','directory','endpoint','project','input','out','report','note','core','job','plan','item','variant','offset','limit','file','backend','timeout','kind','id','revision','source','category','purposes','mapping','run','candidate','actor','operation','retry-run','item-id',...flags]);
+const allowed=new Set(['config','workspace','output-dir','refs-dir','cache-dir','directory','endpoint','guide','project','input','out','report','note','core','job','plan','item','variant','offset','limit','file','backend','timeout','kind','id','revision','source','category','purposes','mapping','run','candidate','actor','operation','retry-run','item-id',...flags]);
 for(let i=0;i<args.length;i++){if(args[i].startsWith('--')){const k=args[i].slice(2);if(!allowed.has(k)||k in options) throw new Error('未知或重复参数 '+k);options[k]=flags.has(k)?true:args[++i];if(options[k]===undefined) throw new Error('参数缺少值 '+k);}else pos.push(args[i]);}
 const print=x=>console.log(JSON.stringify(x?.schema==='art-workshop/style'?styleView(settings.paths.workspace,x):x,null,2));
 if(pos[0]==='workflow'&&pos[1]==='list'){print(workflowList());process.exit(0);}
@@ -48,13 +50,14 @@ try {
 
   const effectiveRefs=referenceRoot({defaultRefsDir:settings.paths.refs});
   if(settings.autoSyncSkills&&!options.dry&&['style','generate','edit'].includes(module)&&['analyze','adopt','run'].includes(action)){try{autoSync();}catch(error){console.error('skill 自动同步失败：'+error.message+'；可用 agent init 重试。');}}
-  if(module==='deployment'){
-    if(action==='plan'){const plan=deploymentPlan(settings,{directory:required('directory'),endpoint:options.endpoint});if(options.out)writeJson(path(options.out),plan);print(plan);}
-    else if(action==='start')print(await startDeployment(settings,readJson(path(required('plan'))),{operationId:required('operation')}));
-    else if(action==='status')print(deploymentStatus(settings,required('id')));
-    else if(action==='cancel')print(cancelDeployment(settings,required('id')));
-    else if(action==='recover')print(await recoverDeployment(settings,required('operation')));
-    else throw new Error('未知 deployment 操作');
+  if(module==='environment'){
+    if(action==='guide')print(deploymentGuide(options.guide));
+    else if(action==='list')print({environments:discoverInstallations()});
+    else if(action==='inspect')print(await inspectInstallation(required('directory'),required('endpoint'),options.guide));
+    else if(action==='verify'){const result=await verifyInstallation(required('directory'),required('endpoint'),{guideId:options.guide});print(result);if(!result.ok)process.exitCode=1;}
+    else if(action==='register')print(await registerInstallation(required('directory'),required('endpoint'),{guideId:options.guide}));
+    else if(action==='unregister')print(await unregisterInstallation(required('directory')));
+    else throw new Error('未知 environment 操作');
   }
   else if(module==='config'){
     if(action==='path') console.log(settings.file);
