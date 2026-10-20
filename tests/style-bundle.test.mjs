@@ -1,0 +1,33 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,cpSync,rmSync,readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {exportStyleBundle,importStyleBundle,listStyleSources,validateStyleBundle} from '../lib/style-bundle.mjs';
+import {hash,readJson} from '../lib/shared.mjs';
+import {loadCore} from '../lib/core.mjs';
+test('frozen bundle moves across projects, pins origin, verifies hashes and imports idempotently',async t=>{
+ const root=mkdtempSync(join(tmpdir(),'style-bundle-'));t.after(()=>rmSync(root,{recursive:true,force:true}));
+ cpSync(new URL('./fixtures/projects',import.meta.url),join(root,'projects'),{recursive:true});
+ const source=join(root,'projects/cellgame/styles/cellgame/style.json');
+ const fixture=readJson(source);fixture.coreHash=readJson(join(root,"projects/cellgame/styles/cellgame/core.json")).coreHash;writeFileSync(source,JSON.stringify(fixture));
+ const original=readFileSync(source);const out=join(root,'shared/style.style.json');
+ exportStyleBundle(root,'cellgame','cellgame',out);
+ assert.deepEqual(readFileSync(source),original);
+ const bundle=readJson(out);validateStyleBundle(bundle);
+ const settings={paths:{workspace:root}};
+ const imported=await importStyleBundle(settings,'cellgame',out);
+ assert.equal(imported.source.coreHash,bundle.core.coreHash);
+ assert.equal(loadCore('cellgame',imported.id,root).origin.bundleHash,bundle.bundleHash);
+ assert.equal((await importStyleBundle(settings,'cellgame',out)).id,imported.id);
+ assert.equal(listStyleSources([join(root,'missing'),join(root,'shared')])[1].items.length,1);
+ assert.throws(()=>exportStyleBundle(root,'cellgame','cellgame',out),/已存在/);
+ bundle.core.config={};assert.throws(()=>validateStyleBundle(bundle),/校验/);
+});
+test('bundle rejects missing references, traversal and duplicate files even with recomputed outer hash',()=>{
+ const body={schema:'art-workshop/style-bundle',schemaVersion:1,style:{status:'frozen',id:'s',project:'p',references:[]},core:{id:'s',project:'p'},files:[]};
+ body.core.coreHash=hash(body.core);body.style.coreHash=body.core.coreHash;
+ const check=()=>validateStyleBundle({...body,bundleHash:hash(body)});
+ body.files=[{path:'../escape',data:'',hash:hash('')}];assert.throws(check,/路径/);
+ body.files=[];body.style.references=[{path:'refs/missing.png',hash:'a'}];assert.throws(check,/依赖/);
+});

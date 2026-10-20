@@ -2217,6 +2217,96 @@
           "0": "成功",
           "1": "验收或执行失败"
         }
+      },
+      {
+        "path": [
+          "style",
+          "export"
+        ],
+        "usage": "art-workshop style export",
+        "description": "导出冻结风格及必要参考，不复制运行状态",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <value>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <value>",
+            "description": "冻结风格身份"
+          },
+          {
+            "flags": "--out <value>",
+            "description": "风格包输出文件"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "导出冻结风格及必要参考，不复制运行状态"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验失败"
+        },
+        "safety": [
+          "冻结风格包只读；不覆盖已有文件；修改请派生草稿；只导出明确引用的参考图片"
+        ]
+      },
+      {
+        "path": [
+          "style",
+          "import"
+        ],
+        "usage": "art-workshop style import",
+        "description": "导入固定版本的共享冻结风格，保留原身份和版本",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <value>",
+            "description": "目标工程"
+          },
+          {
+            "flags": "--file <value>",
+            "description": "风格包文件"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "导入固定版本的共享冻结风格，保留原身份和版本"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验失败"
+        },
+        "safety": [
+          "冻结风格包只读；不覆盖已有文件；修改请派生草稿；只导出明确引用的参考图片"
+        ]
+      },
+      {
+        "path": [
+          "style",
+          "sources"
+        ],
+        "usage": "art-workshop style sources",
+        "description": "只读列出多个冻结风格来源并报告不可用目录和身份冲突",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <value>",
+            "description": "来源目录列表 JSON 文件"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "只读列出多个冻结风格来源并报告不可用目录和身份冲突"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验失败"
+        },
+        "safety": [
+          "冻结风格包只读；不覆盖已有文件；修改请派生草稿；只导出明确引用的参考图片"
+        ]
       }
     ]
   }

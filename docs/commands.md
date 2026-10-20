@@ -950,6 +950,45 @@ v-cli art environment unregister
 
 - 不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务
 
+### style export
+
+导出冻结风格及必要参考，不复制运行状态
+
+```sh
+v-cli art style export
+```
+
+- `--project <value>`：工程身份
+- `--id <value>`：冻结风格身份
+- `--out <value>`：风格包输出文件
+
+- 冻结风格包只读；不覆盖已有文件；修改请派生草稿；只导出明确引用的参考图片
+
+### style import
+
+导入固定版本的共享冻结风格，保留原身份和版本
+
+```sh
+v-cli art style import
+```
+
+- `--project <value>`：目标工程
+- `--file <value>`：风格包文件
+
+- 冻结风格包只读；不覆盖已有文件；修改请派生草稿；只导出明确引用的参考图片
+
+### style sources
+
+只读列出多个冻结风格来源并报告不可用目录和身份冲突
+
+```sh
+v-cli art style sources
+```
+
+- `--input <value>`：来源目录列表 JSON 文件
+
+- 冻结风格包只读；不覆盖已有文件；修改请派生草稿；只导出明确引用的参考图片
+
 ## 结果验证
 
 按任务身份、停止证据和实际产物核验；只读检查不证明真实出图。

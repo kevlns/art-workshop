@@ -4,7 +4,7 @@ import {join,resolve} from 'node:path';
 import {readJson,writeJson} from './lib/shared.mjs';
 const args=process.argv.slice(2),pos=[],options={};
 if(args.length===1&&['--version','-V'].includes(args[0])){console.log(readJson(new URL('./package.json',import.meta.url)).version);process.exit(0);}
-const help='art-workshop: config path/show/init/validate | doctor [--backend ID] [--start] | workflow list | environment guide/list/inspect/verify/register/unregister | refs guide | agent index/docs/init | list | style create/list/read/update/derive/discard/analyze/resolve/adopt/recover/validate/show | generate show/plan/run | edit show/plan/run | task list/status/wait/cancel/recover/resume | shutdown | check RUN | project init/upgrade | job template/from-candidate/create/list/read/update/derive/discard/analyze | reference import/list/update/remove | candidate list/finalize/delete/finalizations | compare PLAN PLAN\nrun --background 返回任务 ID；--backend 选择后端。shutdown 停止当前工作区关联任务，核验共享队列和进程身份后关闭本地服务。\n也可用 v-cli art 调用；先 v-cli agent docs art，再 v-cli agent describe art --json 查看完整参数。';
+const help='art-workshop: config path/show/init/validate | doctor [--backend ID] [--start] | workflow list | environment guide/list/inspect/verify/register/unregister | refs guide | agent index/docs/init | list | style export/import/sources/create/list/read/update/derive/discard/analyze/resolve/adopt/recover/validate/show | generate show/plan/run | edit show/plan/run | task list/status/wait/cancel/recover/resume | shutdown | check RUN | project init/upgrade | job template/from-candidate/create/list/read/update/derive/discard/analyze | reference import/list/update/remove | candidate list/finalize/delete/finalizations | compare PLAN PLAN\nrun --background 返回任务 ID；--backend 选择后端。shutdown 停止当前工作区关联任务，核验共享队列和进程身份后关闭本地服务。\n也可用 v-cli art 调用；先 v-cli agent docs art，再 v-cli agent describe art --json 查看完整参数。';
 if(!args.length||args.length===1&&['--help','-h','help'].includes(args[0])){console.log(help);process.exit(0);}
 const {loadJob,loadProject}=await import('./lib/project.mjs');
 const {referenceRoot,referenceGuide}=await import('./lib/refs.mjs');
@@ -102,6 +102,12 @@ try {
     else throw new Error('未知 agent 操作');
   }
   else if(module==='list'){print((existsSync(join(ROOT,'projects'))?readdirSync(join(ROOT,'projects')):[]).map(id=>readJson(join(ROOT,'projects',id,'project.json'))));}
+  else if(module==='style'&&['export','import','sources'].includes(action)){
+    const bundle=await import('./lib/style-bundle.mjs');
+    if(action==='export')print(bundle.exportStyleBundle(ROOT,required('project'),required('id'),path(required('out'))));
+    else if(action==='import')print(await bundle.importStyleBundle(settings,required('project'),path(required('file'))));
+    else print(bundle.listStyleSources(readJson(path(required('input')))));
+  }
   else if(module==='style'){
     const projectId=required('project');
     if(action==='analyze')print(await startAnalysis(settings,projectId,required('id'),Number(required('revision')),{dry:options.dry,operationId:options.operation}));

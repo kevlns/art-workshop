@@ -85,3 +85,7 @@ candidate delete 先确认影响，拒绝运行中或被计划/底图引用的�
 ## 许可与版权
 
 MIT。Copyright © 2026 Vant。
+
+## 共享冻结风格
+
+用户要求共享时使用 style export --project ID --id STYLE --out FILE.style.json，收集冻结核心和必要参考，不复制运行记录或设置。style sources --input DIRS.json 只读列出多个来源，单个来源不可用时报告并继续，重复身份内容冲突按来源明确选择。style import --project TARGET --file FILE.style.json 导入固定快照，保留来源身份、版本及核心哈希；不重新分析、采用或随来源更新。导入的冻结对象只读，改动使用 style derive。输出文件不覆盖已有版本。
