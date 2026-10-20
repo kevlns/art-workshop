@@ -74,6 +74,11 @@ candidate delete 先确认影响，拒绝运行中或被计划/底图引用的�
 
 使用 environment guide 获取部署指南与契约，environment inspect 读取机器环境。Pi 通过基础工具和动态工作流完成安装、下载、修正与采样；environment verify 独立校验文件、服务和节点，environment register 验收后登记。任务授权、进程、互斥与恢复交由 Harness。不得把模型回复或服务连通当作真实出图。unregister 仅解除登记，不删除模型或停止外部服务。按 --guide 选择随包方案，模型事实和启动参数只由 art 维护。
 
+### 共享冻结风格
+
+用户要求共享时使用 style export --project ID --id STYLE --out FILE.style.json，收集冻结核心和必要参考，不复制运行记录或设置。style sources --input DIRS.json 只读列出多个来源，单个来源不可用时报告并继续，重复身份内容冲突按来源明确选择。style import --project TARGET --file FILE.style.json 导入固定快照，保留来源身份、版本及核心哈希；不重新分析、采用或随来源更新。导入的冻结对象只读，改动使用 style derive。输出文件不覆盖已有版本。
+
+
 ## 结果验证
 
 核对原始错误、任务身份、停止状态及实际产物。只报告已经完成的验证，模拟测试与真实执行分别说明。
@@ -85,7 +90,3 @@ candidate delete 先确认影响，拒绝运行中或被计划/底图引用的�
 ## 许可与版权
 
 MIT。Copyright © 2026 Vant。
-
-## 共享冻结风格
-
-用户要求共享时使用 style export --project ID --id STYLE --out FILE.style.json，收集冻结核心和必要参考，不复制运行记录或设置。style sources --input DIRS.json 只读列出多个来源，单个来源不可用时报告并继续，重复身份内容冲突按来源明确选择。style import --project TARGET --file FILE.style.json 导入固定快照，保留来源身份、版本及核心哈希；不重新分析、采用或随来源更新。导入的冻结对象只读，改动使用 style derive。输出文件不覆盖已有版本。
