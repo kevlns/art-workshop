@@ -7,7 +7,7 @@ import sharp from 'sharp';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {EXAMPLE_CONFIG,STYLE_CATEGORIES} from '../lib/style-contract.mjs';
-import {validateCoreConfig,validateReport,loadCore,coreNegative} from '../lib/core.mjs';
+import {validateCoreConfig,validateReport,loadCore} from '../lib/core.mjs';
 import {readJson,writeJson,hash} from '../lib/shared.mjs';
 import {compileGenerate} from '../lib/generate.mjs';
 import {executePlan} from '../lib/executor.mjs';
@@ -29,7 +29,6 @@ test('style rejects concrete shapes, light positions, subject lists and physical
   const config=structuredClone(EXAMPLE_CONFIG);config.rules[0][key]=value;assert.throws(()=>validateCoreConfig(config),/字段/);
  }
  assert.deepEqual(STYLE_CATEGORIES,['style','palette','rendering']);
- assert.doesNotMatch(coreNegative({config:EXAMPLE_CONFIG}),/繁复细节|繁复纹样|表面纹理|写实反射/);
 });
 test('real CLI style read and update return current compatibility without changing frozen evidence',()=>fixture(root=>{
  const entry=fileURLToPath(new URL('../art-workshop.mjs',import.meta.url));

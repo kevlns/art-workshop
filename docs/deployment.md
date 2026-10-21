@@ -12,7 +12,7 @@
 
 1. `v-cli art environment guide` 读取指南与模型契约。
 2. `v-cli art environment list` 发现已有环境；`environment inspect --directory DIR --endpoint URL` 检测指定环境。
-3. Pi 使用基础工具与动态工作流完成运行时、节点、依赖、模型和服务配置。网络或命令失败根据实际错误修正，保留成功节点。
+3. `environment prepare --directory DIR --endpoint URL` 按指南选择兼容解释器并准备隔离运行时；Windows 缺少合适 Python 时下载并校验便携版本。Pi 使用基础工具与动态工作流完成节点、依赖、模型和服务配置。网络或命令失败根据实际错误修正，保留成功节点。
 4. `environment verify --directory DIR --endpoint URL` 校验文件 SHA256、服务身份和工作流能力；本命令不下载、启动服务或采样。
 5. 通过标准计划与任务命令验证生成、编辑；保留原 taskId，不重发未知请求。
 6. `environment register --directory DIR --endpoint URL` 重新验收后登记。Vant 部署会话通过 art_operation 调用 environment-register，回填系统目录与地址。

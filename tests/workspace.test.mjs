@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdtempSync,cpSync,rmSync,writeFileSync,readFileSync,existsSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {createObject,readObject,importReference,deriveObject,updateObject,discardObject,objectDirectory,taskDisplayState} from '../lib/workspace.mjs';
+import {createObject,readObject,importReference,deriveObject,updateObject,discardObject,restoreTask,objectDirectory,taskDisplayState} from '../lib/workspace.mjs';
 import {writeJson,readJson} from '../lib/shared.mjs';
 import {runtimeRoot,taskFile} from '../lib/runtime.mjs';
 import {compileGenerate} from '../lib/generate.mjs';
@@ -11,8 +11,16 @@ import {assertPlanCurrent} from '../lib/workspace.mjs';
 import {executePlan} from '../lib/executor.mjs';
 import {candidates,finalize,deleteCandidate,editFromCandidate} from '../lib/candidates.mjs';
 import sharp from 'sharp';
+test('archival checks only the selected object and does not reconcile unrelated stale workers',()=>fixture(async(root,settings)=>{
+ const run={schema:'art-workshop/task',taskId:'unrelated-run',status:'running',createdAt:'2000-01-01T00:00:00Z',project:'cellgame',objectKind:'task',objectId:'another-task',workerPid:0};
+ const file=taskFile(runtimeRoot(settings),run.taskId);writeJson(file,run);
+ const task=readObject(root,'cellgame','task','skills');
+ await discardObject(settings,'cellgame','task',task.id,task.revision);
+ assert.deepEqual(readJson(file),run,'archiving one task must not inspect or rewrite unrelated execution state');
+}));
 import {updateReference} from '../lib/workspace.mjs';
 import {jobTemplate} from '../lib/templates.mjs';
+import {favoriteList,setFavorite} from '../lib/favorites.mjs';
 const png=await sharp({create:{width:1,height:1,channels:3,background:'#00ffaa'}}).png().toBuffer();
 test('工具权威模板绑定真实核心且不限定主体题材，填写后可编译且未创建对象',()=>fixture(async(root,settings)=>{
  const existing=readObject(root,'cellgame','task','skills'),config=jobTemplate(root,'cellgame',{core:existing.config.core});
@@ -80,6 +88,78 @@ test('style derivation owns image copies; discard preserves source and sibling',
  assert.equal(derived.report,null);assert.equal(derived.status,'draft');
  await assert.rejects(updateObject(settings,'cellgame','style',style.id,3,{name:'revive'}),/放弃/);
 }));
+test('failed output remains editable while finalization, tampering, deletion and active writes stay protected',()=>fixture(async(root,settings)=>{
+ const plan=compileGenerate({projectId:'cellgame',jobId:'skills',root});
+ const run=executePlan(plan,[plan.items[0]],{outputRoot:settings.paths.output,log:()=>{},runner:args=>{writeFileSync(join(args[args.indexOf('--out-dir')+1],'image.png'),png);return {};}});
+ const manifest=readJson(run.manifestPath),row=manifest.items[0];
+ row.ok=false;row.status='failed';row.error='透明输出失败';
+ // Historical failed postprocessing did not record a source hash. Editing
+ // captures this readable source in a new task without accepting the old run.
+ row.outputHashes={};writeJson(run.manifestPath,manifest);
+ const runFile=taskFile(runtimeRoot(settings),'task-failed-edit');
+ const receipt={schema:'art-workshop/task',taskId:'task-failed-edit',status:'failed',stopConfirmed:true,plan,manifestPath:run.manifestPath};
+ writeJson(runFile,receipt);
+ let candidate=candidates(settings,'cellgame','skills',receipt.taskId)[0];
+ assert.equal(candidate.accepted,false);assert.equal(candidate.integrity,false);assert.equal(candidate.editable,true);
+ const args={runId:receipt.taskId,candidateId:candidate.candidateId};
+ const edit=await editFromCandidate(settings,'cellgame','skills',args);
+ assert.deepEqual(readFileSync(join(root,edit.config.items[0].source)),png);
+ assert.equal(edit.source.kind,'candidate');assert.equal(edit.source.candidateId,candidate.candidateId);
+ await assert.rejects(finalize(settings,'cellgame','skills',1,{...args,actor:'tester'}),/完整性/);
+ row.outputHashes[candidate.file]='different';writeJson(run.manifestPath,manifest);
+ assert.equal(candidates(settings,'cellgame','skills',receipt.taskId)[0].editable,false);
+ await assert.rejects(editFromCandidate(settings,'cellgame','skills',args),/已被改动/);
+ row.outputHashes={};writeJson(run.manifestPath,manifest);
+ writeJson(runFile,{...receipt,status:'running',stopConfirmed:false});
+ assert.equal(candidates(settings,'cellgame','skills',receipt.taskId)[0].editable,false);
+ await assert.rejects(editFromCandidate(settings,'cellgame','skills',args),/尚未停止/);
+ writeJson(runFile,receipt);
+ const object=readObject(root,'cellgame','task','skills');
+ object.deletedCandidates=[{candidateId:candidate.candidateId}];writeJson(join(objectDirectory(root,'cellgame','task','skills'),'task.json'),object);
+ assert.equal(candidates(settings,'cellgame','skills',receipt.taskId)[0].editable,false);
+ await assert.rejects(editFromCandidate(settings,'cellgame','skills',args),/已删除/);
+ object.deletedCandidates=[];writeJson(join(objectDirectory(root,'cellgame','task','skills'),'task.json'),object);
+ writeFileSync(candidate.path,'not an image');
+ await assert.rejects(editFromCandidate(settings,'cellgame','skills',args),/图片无法完整解码/);
+ rmSync(candidate.path);
+ assert.equal(candidates(settings,'cellgame','skills',receipt.taskId)[0].editable,false);
+ await assert.rejects(editFromCandidate(settings,'cellgame','skills',args),/不存在/);
+}));
+
+test('archiving and restoring an executed task preserves identity, finalizations, favorites and dependent files',()=>fixture(async(root,settings)=>{
+ const output=await sharp(png).resize(1024,1024).png().toBuffer();
+ const plan=compileGenerate({projectId:'cellgame',jobId:'skills',root});
+ const run=executePlan(plan,[plan.items[0]],{outputRoot:settings.paths.output,log:()=>{},runner:args=>{writeFileSync(join(args[args.indexOf('--out-dir')+1],'image.png'),output);return {};}});
+ writeJson(taskFile(runtimeRoot(settings),'task-delete-source'),{schema:'art-workshop/task',taskId:'task-delete-source',status:'succeeded',stopConfirmed:true,plan,manifestPath:run.manifestPath});
+ const candidate=candidates(settings,'cellgame','skills','task-delete-source')[0],args={runId:'task-delete-source',candidateId:candidate.candidateId};
+ const finalized=await finalize(settings,'cellgame','skills',1,{...args,actor:'test'});
+ const edit=await editFromCandidate(settings,'cellgame','skills',args);
+ const original=join(root,'reference.png');writeFileSync(original,png);
+ const before=await importReference(settings,'cellgame','task','skills',finalized.revision,{source:original,purposes:['subject']});
+ const reference=join(objectDirectory(root,'cellgame','task','skills'),before.references[0].path);
+ await setFavorite(settings,'cellgame','skills',{...args,value:true});assert.equal(favoriteList(settings,'cellgame').length,1);
+ const manifestBefore=readFileSync(run.manifestPath);
+ const deleted=await discardObject(settings,'cellgame','task','skills',before.revision);
+ assert.equal(deleted.status,'discarded');assert.ok(deleted.deletedAt);
+ assert.deepEqual(deleted.config,before.config);assert.deepEqual(deleted.finalizations,before.finalizations);assert.deepEqual(deleted.references,before.references);
+ assert.deepEqual(readFileSync(candidate.path),output);assert.deepEqual(readFileSync(run.manifestPath),manifestBefore);
+ assert.deepEqual(readFileSync(reference),png);assert.deepEqual(readFileSync(join(root,edit.config.items[0].source)),output);
+ assert.equal(favoriteList(settings,'cellgame').length,0);
+ assert.equal((await discardObject(settings,'cellgame','task','skills',deleted.revision)).revision,deleted.revision);
+ await assert.rejects(discardObject(settings,'cellgame','task','skills',before.revision),/版本冲突/);
+ await assert.rejects(updateObject(settings,'cellgame','task','skills',deleted.revision,{name:'revived'}),/放弃/);
+ assert.throws(()=>compileGenerate({projectId:'cellgame',jobId:'skills',root}),/任务/);
+ const restored=await restoreTask(settings,'cellgame','skills',deleted.revision);
+ assert.equal(restored.status,'draft');assert.equal(restored.id,before.id);assert.equal(restored.deletedAt,undefined);assert.ok(restored.restoredAt);
+ assert.deepEqual(restored.config,before.config);assert.deepEqual(restored.finalizations,before.finalizations);assert.deepEqual(restored.references,before.references);
+ assert.equal(favoriteList(settings,'cellgame').length,1);assert.deepEqual(readFileSync(candidate.path),output);
+ assert.equal((await restoreTask(settings,'cellgame','skills',restored.revision)).revision,restored.revision);
+ await assert.rejects(restoreTask(settings,'cellgame','skills',deleted.revision),/版本冲突/);
+ writeJson(taskFile(runtimeRoot(settings),'task-busy'),{schema:'art-workshop/task',taskId:'task-busy',status:'running',stopConfirmed:false,workerPid:process.pid,plan});
+ await assert.rejects(discardObject(settings,'cellgame','task','skills',restored.revision),/运行|停止|执行|任务/);
+ await assert.rejects(restoreTask(settings,'cellgame','skills',restored.revision),/运行|停止|执行|任务/);
+}));
+
 test('finalization is idempotent; replacement requires confirmation; deletion clears selection',()=>fixture(async(root,settings)=>{
  const output=await sharp(png).resize(1024,1024).png().toBuffer();
  const plan=compileGenerate({projectId:'cellgame',jobId:'skills',root});const run=executePlan(plan,[plan.items[0]],{outputRoot:settings.paths.output,log:()=>{},runner:args=>{writeFileSync(join(args[args.indexOf('--out-dir')+1],'image.png'),output);return {};}});

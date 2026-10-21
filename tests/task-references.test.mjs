@@ -70,3 +70,40 @@ test('CLI imports a reference for the named output object', async()=>{
   assert.equal(JSON.parse(call.stdout).references.at(-1).itemId,itemId);
  } finally {rmSync(root,{recursive:true,force:true,maxRetries:10,retryDelay:50});}
 });
+
+
+test('subject reference analysis states scope and preserves genuine blocking conflicts', async()=>{
+ const root=mkdtempSync(join(tmpdir(),'art-ref-scope-'));
+ try {
+  const input={project:'p',id:'task',config:{items:[{id:'asset-1',intent:'圆钝石块，透明输出'}]},references:[{id:'ref',path:'stone.png',purposes:['subject'],itemId:'asset-1',note:'只取轮廓和分面',ignore:'背景、光照、描边'}]};
+  const preview=await analyzeTaskReferences({projectId:'p',root,input,analysisModel:'vision',cacheDir:root,dry:true});
+  const prompt=preview.requests[0].at(-1);
+  assert.match(prompt,/白色展示底与透明输出/);
+  assert.match(prompt,/不得列入 conflicts 或 uncertainties/);
+  assert.match(prompt,/字符串数组/);
+  let calls=0;
+  const report=await analyzeTaskReferences({projectId:'p',root,input,analysisModel:'vision',cacheDir:root,runner:()=>{calls++;return {content:JSON.stringify({observations:[{purpose:'subject',description:'圆钝石块，四至五块放射状分面'}],conflicts:[],uncertainties:[]})};}});
+  const {hash}=await import('../lib/shared.mjs');
+  const record={...input,report:{sourceHash:hash({config:input.config,references:input.references}),data:report}};
+  assert.match(taskReferencePrompt(record,'asset-1'),/四至五块放射状分面/);
+  assert.equal(calls,1);
+  record.report.data.conflicts=['要求轮廓同时为严格圆形和严格方形'];
+  assert.throws(()=>taskReferencePrompt(record,'asset-1'),/冲突或待确认/);
+ }finally{rmSync(root,{recursive:true,force:true});}
+});
+
+
+test('all dynamic reference purposes carry explicit boundaries in analysis requests',async()=>{
+ const {TASK_REFERENCE_BOUNDARIES}=await import('../lib/task-references.mjs');
+ const {TASK_PURPOSES}=await import('../lib/workspace.mjs');
+ assert.deepEqual(Object.keys(TASK_REFERENCE_BOUNDARIES),TASK_PURPOSES);
+ for(const purpose of TASK_PURPOSES){
+  const input={project:'p',id:'task',config:{items:[]},references:[{id:'ref',path:'reference.png',purposes:[purpose]}]};
+  const preview=await analyzeTaskReferences({projectId:'p',input,analysisModel:'vision',dry:true});
+  const prompt=preview.requests[0].at(-1);
+  assert.ok(prompt.includes(TASK_REFERENCE_BOUNDARIES[purpose]));
+  assert.ok(prompt.includes(`仅观察指定用途：${JSON.stringify([purpose])}`));
+  assert.match(prompt,/ignore 优先排除/);
+  assert.match(prompt,/不得把范围外信息换标签/);
+ }
+});

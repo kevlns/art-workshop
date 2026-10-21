@@ -6,6 +6,15 @@ import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {TOOL_ROOT as ROOT} from '../lib/settings.mjs';
 import {syncSkill,autoSync,agentIndex} from '../lib/agent.mjs';
+import {skillDocs} from '../scripts/command-docs.mjs';
+
+test('distributed skill and discovery index use the current authority',()=>fixture(base=>{
+ assert.equal(readFileSync(join(ROOT,'skills/art-workshop/SKILL.md'),'utf8'),skillDocs());
+ const manifest=JSON.parse(readFileSync(join(ROOT,'v-cli.plugin.json'),'utf8'));
+ const index=agentIndex(ROOT,base);
+ for(const module of index.modules)assert.deepEqual(module.actions,manifest.agent.commands.filter(command=>command.path[0]===module.name&&command.path.length===2).map(command=>command.path[1]));
+ for(const action of ['revise','export','import','sources'])assert.ok(index.modules.find(module=>module.name==='style').actions.includes(action));
+}));
 function fixture(fn){const root=mkdtempSync(join(tmpdir(),'art-workshop-agent-'));try{return fn(root);}finally{rmSync(root,{recursive:true,force:true});}}
 test('随包skill同步到已有目录、默认不创建无关目录',()=>fixture(base=>{mkdirSync(join(base,'.codex/skills'),{recursive:true});const result=syncSkill({directory:base});assert.equal(result.targets.length,1);assert.equal(result.targets[0].action,'updated');assert.equal(existsSync(join(base,'.claude')),false);const runtime=JSON.parse(readFileSync(join(base,'.codex/skills/art-workshop/runtime.json'),'utf8'));assert.equal(runtime.entry,join(ROOT,'art-workshop.mjs'));assert.equal(syncSkill({directory:base}).targets[0].action,'current');}));
 test('dry不写入、无Agent目录正常跳过',()=>fixture(base=>{assert.deepEqual(syncSkill({directory:base}).targets,[]);mkdirSync(join(base,'.agents/skills'),{recursive:true});const result=syncSkill({directory:base,dry:true});assert.equal(result.targets[0].action,'would-update');assert.equal(existsSync(join(base,'.agents/skills/art-workshop')),false);}));

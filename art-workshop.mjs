@@ -1,10 +1,11 @@
 #!/usr/bin/env node
+import {prepareRuntime} from './lib/environment-runtime.mjs';
 import {readdirSync,existsSync} from 'node:fs';
 import {join,resolve} from 'node:path';
 import {readJson,writeJson} from './lib/shared.mjs';
 const args=process.argv.slice(2),pos=[],options={};
 if(args.length===1&&['--version','-V'].includes(args[0])){console.log(readJson(new URL('./package.json',import.meta.url)).version);process.exit(0);}
-const help='art-workshop: config path/show/init/validate | doctor [--backend ID] [--start] | workflow list | environment guide/list/inspect/verify/register/unregister | refs guide | agent index/docs/init | list | style export/import/sources/create/list/read/update/derive/discard/analyze/resolve/adopt/recover/validate/show | generate show/plan/run | edit show/plan/run | task list/status/wait/cancel/recover/resume | shutdown | check RUN | project init/upgrade | job template/from-candidate/create/list/read/update/derive/discard/analyze | reference import/list/update/remove | candidate list/finalize/delete/finalizations | compare PLAN PLAN\nrun --background 返回任务 ID；--backend 选择后端。shutdown 停止当前工作区关联任务，核验共享队列和进程身份后关闭本地服务。\n也可用 v-cli art 调用；先 v-cli agent docs art，再 v-cli agent describe art --json 查看完整参数。';
+const help='art-workshop: config path/show/init/validate | doctor [--backend ID] [--start] | workflow list | environment guide/list/prepare/inspect/verify/register/unregister | refs guide | agent index/docs/init | list | style export/import/sources/create/list/read/update/derive/discard/analyze/resolve/adopt/recover/validate/show | generate show/plan/run | edit show/plan/run | task list/status/wait/cancel/recover/resume | shutdown | check RUN | project init/upgrade | job template/from-candidate/create/list/read/update/derive/discard/restore/analyze | reference import/list/update/remove | candidate list/favorites/favorite/finalize/delete/finalizations | compare PLAN PLAN\nrun --background 返回任务 ID；--backend 选择后端。shutdown 停止当前工作区关联任务，核验共享队列和进程身份后关闭本地服务。\n也可用 v-cli art 调用；先 v-cli agent docs art，再 v-cli agent describe art --json 查看完整参数。';
 if(!args.length||args.length===1&&['--help','-h','help'].includes(args[0])){console.log(help);process.exit(0);}
 const {loadJob,loadProject}=await import('./lib/project.mjs');
 const {referenceRoot,referenceGuide}=await import('./lib/refs.mjs');
@@ -19,9 +20,10 @@ const {backendDefaults,bindBackend,buildComfyRequest}=await import('./lib/backen
 const {startTask,taskStatus,taskView,recoverTask,resumeTask,waitTask,cancelTask,shutdown}=await import('./lib/tasks.mjs');
 const {runtimeRoot,tasks}=await import('./lib/runtime.mjs');
 const {validateConfiguration,doctor}=await import('./lib/diagnostics.mjs');
-const {createProject,createObject,listObjects,readObject,styleView,updateObject,deriveObject,discardObject,importReference,removeReference,updateReference,taskDisplayState,STYLE_CATEGORIES,TASK_PURPOSES}=await import('./lib/workspace.mjs');
-const {startAnalysis,adoptStyle,recoverStyleAdoption,resolveStyleIssue}=await import('./lib/style-lifecycle.mjs');
+const {createProject,createObject,listObjects,readObject,styleView,updateObject,deriveObject,discardObject,restoreTask,importReference,removeReference,updateReference,taskDisplayState,STYLE_CATEGORIES,TASK_PURPOSES}=await import('./lib/workspace.mjs');
+const {startAnalysis,adoptStyle,recoverStyleAdoption,resolveStyleIssue,reviseStyleRules}=await import('./lib/style-lifecycle.mjs');
 const {candidates,finalize,deleteCandidate,finalizations,editFromCandidate}=await import('./lib/candidates.mjs');
+const {favoriteList,setFavorite}=await import('./lib/favorites.mjs');
 const {upgradeProject}=await import('./lib/migration.mjs');
 const {workflowList}=await import('./lib/workflows.mjs');
 const {jobTemplate}=await import('./lib/templates.mjs');
@@ -29,7 +31,7 @@ const {deploymentGuide}=await import('./lib/deployment-guide.mjs');
 const {inspectInstallation,discoverInstallations}=await import('./lib/environments.mjs');
 const {verifyInstallation,registerInstallation,unregisterInstallation}=await import('./lib/environment-operations.mjs');
 const flags=new Set(['dry','explore','background','start','replace','confirm','all-variants']);
-const allowed=new Set(['config','workspace','output-dir','refs-dir','cache-dir','directory','endpoint','guide','project','input','out','report','note','core','job','plan','item','variant','offset','limit','file','backend','timeout','kind','id','revision','source','category','purposes','mapping','run','candidate','actor','operation','retry-run','item-id',...flags]);
+const allowed=new Set(['config','workspace','output-dir','refs-dir','cache-dir','directory','endpoint','guide','project','input','out','report','note','core','job','plan','item','variant','offset','limit','file','backend','timeout','kind','id','revision','source','category','purposes','mapping','run','candidate','actor','operation','retry-run','item-id','value',...flags]);
 for(let i=0;i<args.length;i++){if(args[i].startsWith('--')){const k=args[i].slice(2);if(!allowed.has(k)||k in options) throw new Error('未知或重复参数 '+k);options[k]=flags.has(k)?true:args[++i];if(options[k]===undefined) throw new Error('参数缺少值 '+k);}else pos.push(args[i]);}
 const print=x=>console.log(JSON.stringify(x?.schema==='art-workshop/style'?styleView(settings.paths.workspace,x):x,null,2));
 if(pos[0]==='workflow'&&pos[1]==='list'){print(workflowList());process.exit(0);}
@@ -53,6 +55,7 @@ try {
   if(module==='environment'){
     if(action==='guide')print(deploymentGuide(options.guide));
     else if(action==='list')print({environments:discoverInstallations()});
+    else if(action==='prepare')print(await prepareRuntime(required('directory'),{guideId:options.guide}));
     else if(action==='inspect')print(await inspectInstallation(required('directory'),required('endpoint'),options.guide));
     else if(action==='verify'){const result=await verifyInstallation(required('directory'),required('endpoint'),{guideId:options.guide});print(result);if(!result.ok)process.exitCode=1;}
     else if(action==='register')print(await registerInstallation(required('directory'),required('endpoint'),{guideId:options.guide}));
@@ -88,6 +91,7 @@ try {
     else if(action==='update'){const record=await updateObject(settings,projectId,kind,required('id'),Number(required('revision')),readJson(path(required('input'))));print(kind==='style'?styleView(ROOT,record):record);}
     else if(action==='analyze'&&kind==='task')print(await startAnalysis(settings,projectId,required('id'),Number(required('revision')),{dry:options.dry,kind:'task',operationId:options.operation}));
     else if(action==='derive')print(await deriveObject(settings,projectId,kind,required('id'),Number(required('revision'))));
+    else if(action==='restore'&&kind==='task')print(await restoreTask(settings,projectId,required('id'),Number(required('revision'))));
     else if(action==='discard')print(await discardObject(settings,projectId,kind,required('id'),Number(required('revision'))));
     else throw new Error('未知对象操作');
   }
@@ -112,6 +116,7 @@ try {
     const projectId=required('project');
     if(action==='analyze')print(await startAnalysis(settings,projectId,required('id'),Number(required('revision')),{dry:options.dry,operationId:options.operation}));
     else if(action==='recover')print(await recoverStyleAdoption(settings,projectId,required('id')));
+    else if(action==='revise')print(styleView(ROOT,await reviseStyleRules(settings,projectId,required('id'),Number(required('revision')),readJson(path(required('input'))))));
     else if(action==='resolve')print(styleView(ROOT,await resolveStyleIssue(settings,projectId,required('id'),Number(required('revision')),readJson(path(required('input'))))));
     else if(action==='adopt')print(await adoptStyle(settings,projectId,required('id'),Number(required('revision')),{note:options.note}));
     else if(action==='validate') print(validateReport(readJson(path(required('report'))),projectId));
@@ -122,7 +127,7 @@ try {
     else if(['plan','run'].includes(action)){
       let plan;
       if(options.plan){if(action!=='run'||['project','job','core','explore','backend'].some(k=>options[k]!==undefined)) throw new Error('冻结计划不能同时调整来源；修改任务后重新 plan');plan=readJson(path(options.plan));validatePlan(plan);if(plan.module!==module) throw new Error('计划模块不匹配');}
-      else plan=bindBackend((module==='generate'?compileGenerate:compileEdit)({projectId:required('project'),jobId:required('job'),coreId:options.core,root:ROOT,localExecution:backendDefaults(settings,options.backend)}),settings,options.backend);
+      else {const job=loadJob(required('project'),required('job'),module,ROOT),backend=options.backend??job.generation?.backend;plan=bindBackend((module==='generate'?compileGenerate:compileEdit)({projectId:required('project'),jobId:required('job'),coreId:options.core,root:ROOT,localExecution:backendDefaults(settings,backend)}),settings,backend);}
       if(action==='plan'){if(options.out) writeJson(path(options.out),plan);print(plan);}
       else {
         if(options['retry-run']&&(options.dry||options.variant||options.item||options.offset||options.limit))throw new Error('失败项重试不能混用预演或手动筛选');
@@ -143,11 +148,16 @@ try {
     else throw new Error('未知 task 操作');
   }else if(module==='shutdown'){if(action)throw new Error('shutdown 不接受位置参数');print(await shutdown(settings));}
   else if(module==='candidate'){
-    const projectId=required('project'),jobId=required('job');
-    if(action==='list')print(candidates(settings,projectId,jobId,required('run')));
-    else if(action==='finalize')print(await finalize(settings,projectId,jobId,Number(required('revision')),{runId:required('run'),candidateId:required('candidate'),replace:options.replace,actor:required('actor')}));
-    else if(action==='delete')print(await deleteCandidate(settings,projectId,jobId,Number(required('revision')),{runId:required('run'),candidateId:required('candidate'),confirm:options.confirm,actor:required('actor')}));
-    else if(action==='finalizations')print(finalizations(settings,projectId,jobId));
+    const projectId=required('project');
+    if(action==='favorites')print(favoriteList(settings,projectId));
+    else if(action==='favorite'){
+      if(!['true','false'].includes(options.value))throw new Error('value 必须为 true 或 false');
+      print(await setFavorite(settings,projectId,required('job'),{runId:required('run'),candidateId:required('candidate'),value:options.value==='true'}));
+    }
+    else if(action==='list')print(candidates(settings,projectId,required('job'),required('run')));
+    else if(action==='finalize')print(await finalize(settings,projectId,required('job'),Number(required('revision')),{runId:required('run'),candidateId:required('candidate'),replace:options.replace,actor:required('actor')}));
+    else if(action==='delete')print(await deleteCandidate(settings,projectId,required('job'),Number(required('revision')),{runId:required('run'),candidateId:required('candidate'),confirm:options.confirm,actor:required('actor')}));
+    else if(action==='finalizations')print(finalizations(settings,projectId,required('job')));
     else throw new Error('未知 candidate 操作');
   }else if(module==='check'){print(checkRun(readJson(manifestPath(action??required('file'))),manifestPath(action??required('file'))));
   }else if(module==='compare'){const read=value=>{const data=readJson(path(value));const plan=data.plan??data;validatePlan(plan);return plan;};const a=read(action),b=read(pos[2]);print({sameCore:a.sources.coreHash===b.sources.coreHash,execution:{before:a.execution,after:b.execution},items:b.items.map(x=>({itemId:x.itemId,variantId:x.variantId,changed:a.items.find(y=>y.itemId===x.itemId&&y.variantId===x.variantId)?.inputHash!==x.inputHash}))});}

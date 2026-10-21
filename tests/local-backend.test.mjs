@@ -14,11 +14,41 @@ import {compileEdit} from '../lib/edit.mjs';
 import {validatePlan} from '../lib/plan.mjs';
 import {ensureService,rememberedService,stopIdentity,shutdownOwnedServices} from '../lib/service.mjs';
 import {runtimeRoot,http,sleep} from '../lib/runtime.mjs';
-import {startTask,waitTask,cancelTask,taskStatus,shutdown,failedItems} from '../lib/tasks.mjs';
+import {startTask,waitTask,cancelTask,taskStatus,shutdown,failedItems,resumeTask,taskView} from '../lib/tasks.mjs';
 import {checkRun} from '../lib/executor.mjs';
 import {BUILTIN_WORKFLOW,loadBackend} from '../lib/workflows.mjs';
 import {validateConfiguration,doctor,environmentIssues} from '../lib/diagnostics.mjs';
 import sharp from 'sharp';
+import {LOCAL_SAMPLING_DEFAULTS} from '../lib/task-contract.mjs';
+
+test('builtin API and editor workflows use the recommended negative-enabled sampling defaults',()=>{
+ const api=JSON.parse(readFileSync(new URL('../workflows/vant-builtin-qwen-image-2.1-Q4-8GB.api.json',import.meta.url)));
+ const ui=JSON.parse(readFileSync(new URL('../workflows/vant-builtin-qwen-image-2.1-Q4-8GB.json',import.meta.url)));
+ const sampler=ui.nodes.find(n=>n.id===6);
+ assert.equal(api['6'].inputs.cfg,LOCAL_SAMPLING_DEFAULTS.cfg);
+ assert.equal(sampler.widgets_values_named.cfg,LOCAL_SAMPLING_DEFAULTS.cfg);
+ assert.equal(sampler.widgets_values[3],LOCAL_SAMPLING_DEFAULTS.cfg);
+ assert.ok(api['6'].inputs.cfg>1);
+ assert.deepEqual(api['6'].inputs.negative,['4',1]);
+});
+
+test('task sampling overrides are frozen into actual requests without changing shared backend or defaults',()=>fixture(async({root,settings})=>{
+ const original=JSON.stringify(settings);
+ const source=compileGenerate({projectId:'cellgame',jobId:'skills',root,localExecution:backendDefaults(settings)});
+ source.snapshots.job.generation={backend:'local',options:{cfg:3,steps:31,sampler:'euler',scheduler:'simple'}};
+ const plan=bindBackend(source,settings);
+ validatePlan(plan);
+ const inputs=buildComfyRequest(plan,plan.items[0]).prompt['6'].inputs;
+ assert.equal(inputs.cfg,3);assert.equal(inputs.steps,31);
+ assert.equal(inputs.sampler_name,'euler');assert.equal(inputs.scheduler,'simple');
+ assert.equal(plan.backend.options.timeoutSeconds,5);
+ assert.equal(JSON.stringify(settings),original);
+ source.snapshots.job.generation.options.cfg=0;
+ const zero=bindBackend(source,settings);assert.equal(buildComfyRequest(zero,zero.items[0]).prompt['6'].inputs.cfg,0);
+ assert.notEqual(zero.planHash,plan.planHash);
+ delete source.snapshots.job.generation.options;
+ const fallback=bindBackend(source,settings);assert.equal(buildComfyRequest(fallback,fallback.items[0]).prompt['6'].inputs.cfg,1);
+}));
 
 async function fixture(fn,delay=50){
   const root=mkdtempSync(join(tmpdir(),'art-local-'));
@@ -161,3 +191,43 @@ test('本地图编辑上传原图并连接编码器，保留动态输出尺寸',
   const info=Object.fromEntries(Object.values(plan.backend.template).map(n=>[n.class_type,{}]));info.LoadImage={input:{required:{image:[['existing.png']]}}};assert.deepEqual(environmentIssues(plan.backend,info),[]);
   await shutdown(settings);
 }));
+
+
+test('lost local worker resumes recorded prompt without new submission',async()=>fixture(async({plan,settings,runtime,endpoint})=>{
+ const started=await startTask(plan,[plan.items[0]],settings);
+ let original;
+ for(let n=0;n<100;n++){original=taskStatus(runtime,started.taskId);if(original.promptId)break;await sleep(50);}
+ assert.ok(original.promptId);
+ process.kill(original.workerPid);
+ await sleep(300);
+ const file=join(runtime,'tasks',started.taskId+'.json');
+ original=JSON.parse(readFileSync(file));original.heartbeat='2000-01-01T00:00:00Z';writeJson(file,original);
+ const lost=taskStatus(runtime,started.taskId);assert.equal(lost.status,'unknown');assert.equal(taskView(lost).canResume,true);
+ await resumeTask(runtime,started.taskId);
+ const done=await waitTask(runtime,started.taskId,{timeoutSeconds:20});
+ assert.equal(done.status,'succeeded',done.error);assert.equal(done.stopConfirmed,true);
+ const manifest=JSON.parse(readFileSync(done.manifestPath));assert.equal(manifest.items[0].ok,true);
+ assert.equal(checkRun(manifest,done.manifestPath)[0].integrity,true);
+ assert.deepEqual(await http(endpoint,'/history/prompt-2'),{});
+ await shutdown(settings);
+},1500));
+
+
+test('serial local recovery preserves first download and never resubmits either sample',async()=>fixture(async({settings,root,runtime,endpoint})=>{
+ settings.execution.perValue=2;
+ const plan=bindBackend(compileGenerate({projectId:'cellgame',jobId:'skills',root,localExecution:backendDefaults(settings)}),settings);
+ const started=await startTask(plan,[plan.items[0]],settings);
+ let original;
+ for(let n=0;n<160;n++){original=taskStatus(runtime,started.taskId);if(original.promptId==='prompt-2')break;await sleep(50);}
+ assert.equal(original.promptId,'prompt-2');
+ process.kill(original.workerPid);await sleep(300);
+ const file=join(runtime,'tasks',started.taskId+'.json');original=JSON.parse(readFileSync(file));original.heartbeat='2000-01-01T00:00:00Z';writeJson(file,original);
+ await resumeTask(runtime,started.taskId);
+ const done=await waitTask(runtime,started.taskId,{timeoutSeconds:20});
+ assert.equal(done.status,'succeeded',done.error);assert.equal(done.stopConfirmed,true);
+ const manifest=JSON.parse(readFileSync(done.manifestPath));assert.equal(manifest.items[0].files.length,2);
+ assert.deepEqual(await http(endpoint,'/history/prompt-3'),{});
+ await resumeTask(runtime,started.taskId);
+ assert.deepEqual(await http(endpoint,'/history/prompt-3'),{});
+ await shutdown(settings);
+},1500));

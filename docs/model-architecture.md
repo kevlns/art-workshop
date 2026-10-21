@@ -31,6 +31,10 @@
 
 `art/model-contract-v1` 排除型号别名列表、展示说明、来源链接及 CLI 示例字段；这些文案变化不改变执行哈希。`art/image-request-v1` 保存规范化请求，`art/execution-contract-v1` 冻结逐项契约。请求参数、尺寸、转换策略或协议规则变化必须重新预演。没有当前执行契约的失效预案不能启动。
 
+### 任务选择
+
+视觉分析由当前对象 config.analysis 选择，生成由当前任务 config.generation 选择；聊天模型与执行模型独立。宿主只管理连接定义与凭据注入，不维护跨任务的默认模型。计划冻结所选后端、真实模型与连接身份；切换其他任务的模型不使当前任务的计划失效，当前任务选择或连接变化则重新编译。
+
 ### 生命周期
 
 每个计划项分别保存 `remoteExecutions[inputHash]`，包括 schema=art/remote-receipt-v1、请求哈希、适配器及版本、服务地址、提交时间、上游任务 ID 和结果。回执不保存 API Key。

@@ -21,7 +21,7 @@ test('incomplete installation fails verification and cannot be registered',async
   const report=await verifyInstallation(directory,'http://127.0.0.1:1/');
   assert.equal(report.ok,false);
   assert.equal(report.sampleVerified,false);
-  assert.ok(report.issues.includes('Python 环境'));
+  assert.ok(report.issues.some(x=>x.startsWith('Python 环境')));
   await assert.rejects(registerInstallation(directory,'http://127.0.0.1:1/'),/验收未通过/);
   assert.equal(existsSync(join(directory,'vant.art.config.json')),false);
  }finally{rmSync(directory,{recursive:true,force:true});}

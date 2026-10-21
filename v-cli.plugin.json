@@ -1131,10 +1131,48 @@
       {
         "path": [
           "style",
+          "revise"
+        ],
+        "usage": "art-workshop style revise",
+        "description": "按用户要求修订完整规则方案；input 为 {rules,summary,note}，沿用未变化的参考证据，不调用模型或自动冻结",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          },
+          {
+            "flags": "--input <file>",
+            "description": "JSON {rules,summary,note}；rules 为完整规则数组，每条 id/scope/strength/instruction/when，avoid 可含 negative 抽象排除表达数组"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "校验预期版本及空闲状态后更新对象"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "查询不写入；修改验证 revision、归属和停止确认；冻结风格只读"
+        ]
+      },
+      {
+        "path": [
+          "style",
           "derive"
         ],
         "usage": "art-workshop style derive",
-        "description": "派生独立草稿，不继承执行、报告或定版",
+        "description": "派生独立草稿，保留结构化规则与独立参考；当前冻结证据标记沿用，不继承核心、执行或授权",
         "arguments": [],
         "options": [
           {
@@ -1360,7 +1398,7 @@
           "discard"
         ],
         "usage": "art-workshop job discard",
-        "description": "确认空闲后丢弃草稿并清理所属资源",
+        "description": "归档已停止的任务，保留配置、参考、收藏、图片与执行历史；可恢复到活跃列表",
         "arguments": [],
         "options": [
           {
@@ -1378,14 +1416,48 @@
         ],
         "output": {
           "format": "json",
-          "description": "确认空闲后丢弃草稿并清理所属资源"
+          "description": "归档已停止的任务，保留配置、参考、收藏、图片与执行历史；可恢复到活跃列表"
         },
         "exitCodes": {
           "0": "成功",
           "1": "校验、版本冲突或执行失败"
         },
         "safety": [
-          "查询不写入；修改验证 revision、归属和停止确认；冻结风格只读"
+          "验证 revision、任务归属和停止确认；归档和恢复均保留原配置、收藏与所有历史文件，不自动执行"
+        ]
+      },
+      {
+        "path": [
+          "job",
+          "restore"
+        ],
+        "usage": "art-workshop job restore",
+        "description": "恢复已归档任务到活跃列表，保留原身份、配置与历史；不重新执行",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "恢复已归档任务到活跃列表，保留原身份、配置与历史；不重新执行"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "验证 revision、任务归属和停止确认；归档和恢复均保留原配置、收藏与所有历史文件，不自动执行"
         ]
       },
       {
@@ -1691,6 +1763,74 @@
       {
         "path": [
           "candidate",
+          "favorites"
+        ],
+        "usage": "art-workshop candidate favorites --project <id>",
+        "description": "网格收藏夹的数据来源，列出工程中仍可用的收藏图片及源任务身份",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "收藏图片、源任务名称、资产及批次身份"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验或读取失败"
+        },
+        "safety": [
+          "只读；忽略已删除的图片和已归档的任务"
+        ]
+      },
+      {
+        "path": [
+          "candidate",
+          "favorite"
+        ],
+        "usage": "art-workshop candidate favorite --project <id> --job <id> --run <id> --candidate <id> --value <true|false>",
+        "description": "设置图片收藏状态，不修改任务需求、版本、定版或运行状态",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--job <id>",
+            "description": "源任务身份"
+          },
+          {
+            "flags": "--run <id>",
+            "description": "源批次身份"
+          },
+          {
+            "flags": "--candidate <id>",
+            "description": "图片候选身份"
+          },
+          {
+            "flags": "--value <true|false>",
+            "description": "true 收藏，false 取消收藏"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "更新后的工程收藏列表"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验或写入失败"
+        },
+        "safety": [
+          "仅修改工程收藏记录；重复操作幂等，不启动分析或生成"
+        ]
+      },
+      {
+        "path": [
+          "candidate",
           "finalizations"
         ],
         "usage": "art-workshop candidate finalizations",
@@ -1982,7 +2122,7 @@
           "from-candidate"
         ],
         "usage": "v-cli art job from-candidate --project <id> --id <task> --run <id> --candidate <id>",
-        "description": "将完整候选导入私有底图，创建独立编辑草稿，不运行",
+        "description": "将已停止批次中的可用图片导入私有底图，创建独立编辑草稿，不要求定版通过、不运行",
         "arguments": [],
         "options": [
           {
@@ -1999,12 +2139,12 @@
           },
           {
             "flags": "--candidate <id>",
-            "description": "完整候选身份"
+            "description": "可用图片的候选身份"
           }
         ],
         "output": {
           "format": "json",
-          "description": "将完整候选导入私有底图，创建独立编辑草稿，不运行"
+          "description": "将已停止批次中的可用图片导入私有底图，创建独立编辑草稿，不要求定版通过、不运行"
         },
         "exitCodes": {
           "0": "成功",
@@ -2084,6 +2224,40 @@
         },
         "safety": [
           "不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务"
+        ],
+        "exitCodes": {
+          "0": "成功",
+          "1": "验收或执行失败"
+        }
+      },
+      {
+        "path": [
+          "environment",
+          "prepare"
+        ],
+        "description": "自动准备兼容 Python 运行时，保留已有环境",
+        "usage": "art-workshop environment prepare",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--directory <value>",
+            "description": "本机环境根目录"
+          },
+          {
+            "flags": "--endpoint <value>",
+            "description": "本机 HTTP 服务根地址"
+          },
+          {
+            "flags": "--guide <id>",
+            "description": "部署指南标识；省略使用环境登记或推荐方案"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "环境事实与验收结果"
+        },
+        "safety": [
+          "仅在目标目录创建运行时；复用兼容 Python，不兼容虚拟环境先改名保留，不修改全局 Python"
         ],
         "exitCodes": {
           "0": "成功",

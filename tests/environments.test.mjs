@@ -6,7 +6,7 @@ import {join} from 'node:path';
 import {readMarker,writeMarker,inspectInstallation,defaultInstallRoot,environmentRoot} from '../lib/environments.mjs';
 test('unmanaged installation inspection is read-only and lists missing dependencies',async()=>{
  const root=mkdtempSync(join(tmpdir(),'art-unmanaged-'));
- try{mkdirSync(join(root,'ComfyUI'),{recursive:true});writeFileSync(join(root,'ComfyUI/main.py'),'# user source');const report=await inspectInstallation(root,'http://127.0.0.1:1/');assert.equal(report.managed,false);assert.equal(report.reusable,false);assert.ok(report.missing.includes('Python 环境'));assert.equal(existsSync(join(root,'vant.art.config.json')),false);}finally{rmSync(root,{recursive:true,force:true});}
+ try{mkdirSync(join(root,'ComfyUI'),{recursive:true});writeFileSync(join(root,'ComfyUI/main.py'),'# user source');const report=await inspectInstallation(root,'http://127.0.0.1:1/');assert.equal(report.managed,false);assert.equal(report.reusable,false);assert.ok(report.missing.some(x=>x.startsWith('Python 环境')));assert.equal(existsSync(join(root,'vant.art.config.json')),false);}finally{rmSync(root,{recursive:true,force:true});}
 });
 test('environment marker has no executable instructions and refuses a remote endpoint',()=>{
  const root=mkdtempSync(join(tmpdir(),'art-env-marker-'));

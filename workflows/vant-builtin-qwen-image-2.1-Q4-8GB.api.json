@@ -75,7 +75,7 @@
       ],
       "seed": 123456,
       "steps": 25,
-      "cfg": 1,
+      "cfg": 3,
       "sampler_name": "euler",
       "scheduler": "simple",
       "denoise": 1

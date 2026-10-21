@@ -507,9 +507,24 @@ v-cli art style resolve
 
 - 查询不写入；修改验证 revision、归属和停止确认；冻结风格只读
 
+### style revise
+
+按用户要求修订完整规则方案；input 为 {rules,summary,note}，沿用未变化的参考证据，不调用模型或自动冻结
+
+```sh
+v-cli art style revise
+```
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+- `--input <file>`：JSON {rules,summary,note}；rules 为完整规则数组，每条 id/scope/strength/instruction/when，avoid 可含 negative 抽象排除表达数组
+
+- 查询不写入；修改验证 revision、归属和停止确认；冻结风格只读
+
 ### style derive
 
-派生独立草稿，不继承执行、报告或定版
+派生独立草稿，保留结构化规则与独立参考；当前冻结证据标记沿用，不继承核心、执行或授权
 
 ```sh
 v-cli art style derive
@@ -604,7 +619,7 @@ v-cli art job derive
 
 ### job discard
 
-确认空闲后丢弃草稿并清理所属资源
+归档已停止的任务，保留配置、参考、收藏、图片与执行历史；可恢复到活跃列表
 
 ```sh
 v-cli art job discard
@@ -614,7 +629,21 @@ v-cli art job discard
 - `--id <id>`：对象身份
 - `--revision <number>`：预期对象版本
 
-- 查询不写入；修改验证 revision、归属和停止确认；冻结风格只读
+- 验证 revision、任务归属和停止确认；归档和恢复均保留原配置、收藏与所有历史文件，不自动执行
+
+### job restore
+
+恢复已归档任务到活跃列表，保留原身份、配置与历史；不重新执行
+
+```sh
+v-cli art job restore
+```
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+
+- 验证 revision、任务归属和停止确认；归档和恢复均保留原配置、收藏与所有历史文件，不自动执行
 
 ### style adopt
 
@@ -735,6 +764,34 @@ v-cli art candidate list
 
 - 只读；校验批次计划和候选身份
 
+### candidate favorites
+
+网格收藏夹的数据来源，列出工程中仍可用的收藏图片及源任务身份
+
+```sh
+v-cli art candidate favorites --project <id>
+```
+
+- `--project <id>`：工程身份
+
+- 只读；忽略已删除的图片和已归档的任务
+
+### candidate favorite
+
+设置图片收藏状态，不修改任务需求、版本、定版或运行状态
+
+```sh
+v-cli art candidate favorite --project <id> --job <id> --run <id> --candidate <id> --value <true|false>
+```
+
+- `--project <id>`：工程身份
+- `--job <id>`：源任务身份
+- `--run <id>`：源批次身份
+- `--candidate <id>`：图片候选身份
+- `--value <true|false>`：true 收藏，false 取消收藏
+
+- 仅修改工程收藏记录；重复操作幂等，不启动分析或生成
+
 ### candidate finalizations
 
 查看资产定版
@@ -846,7 +903,7 @@ v-cli art job template --project <id> --kind <generate|edit> [--core <id>]
 
 ### job from-candidate
 
-将完整候选导入私有底图，创建独立编辑草稿，不运行
+将已停止批次中的可用图片导入私有底图，创建独立编辑草稿，不要求定版通过、不运行
 
 ```sh
 v-cli art job from-candidate --project <id> --id <task> --run <id> --candidate <id>
@@ -855,7 +912,7 @@ v-cli art job from-candidate --project <id> --id <task> --run <id> --candidate <
 - `--project <id>`：工程身份
 - `--id <task>`：源任务身份
 - `--run <id>`：真实批次
-- `--candidate <id>`：完整候选身份
+- `--candidate <id>`：可用图片的候选身份
 
 - 写入新的编辑草稿和私有底图；保留候选来源；不启动生成
 
@@ -895,6 +952,20 @@ v-cli art environment list
 
 
 - 不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务
+
+### environment prepare
+
+自动准备兼容 Python 运行时，保留已有环境
+
+```sh
+v-cli art environment prepare
+```
+
+- `--directory <value>`：本机环境根目录
+- `--endpoint <value>`：本机 HTTP 服务根地址
+- `--guide <id>`：部署指南标识；省略使用环境登记或推荐方案
+
+- 仅在目标目录创建运行时；复用兼容 Python，不兼容虚拟环境先改名保留，不修改全局 Python
 
 ### environment inspect
 

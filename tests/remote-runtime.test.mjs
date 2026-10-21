@@ -30,8 +30,9 @@ test("worker crash and cancellation resume the original upstream identity withou
     states = new Map();
   let posts = 0;
   const png = await sharp({
-    create: { width: 1280, height: 1280, channels: 3, background: "#fff" },
+    create: { width: 1280, height: 1280, channels: 3, background: "#ff00ff" },
   })
+    .composite([{input:await sharp({create:{width:512,height:512,channels:3,background:"#808080"}}).png().toBuffer(),left:384,top:384}])
     .png()
     .toBuffer();
   const server = createServer(async (req, res) => {
@@ -104,6 +105,10 @@ test("worker crash and cancellation resume the original upstream identity withou
       },
       autoSyncSkills: false,
     });
+    const taskConfigPath=join(root,'projects/cellgame/tasks/skills/task.json');
+    const taskConfig=JSON.parse(readFileSync(taskConfigPath));
+    for(const item of taskConfig.config.items){item.composition??={};item.composition.background={type:'transparent'};}
+    writeJson(taskConfigPath,taskConfig);
     const settings = loadSettings({ file }),
       runtime = runtimeRoot(settings),
       plan = bindBackend(
@@ -141,6 +146,14 @@ test("worker crash and cancellation resume the original upstream identity withou
     assert.equal(done.status, "succeeded", done.error);
     assert.equal(done.stopConfirmed, true);
     assert.equal(posts, 1);
+    const manifest=JSON.parse(readFileSync(done.manifestPath));
+    const completed=manifest.items[0];
+    assert.match(completed.files[0],/--transparent\.png$/);
+    assert.equal(completed.outputProcessing[0].method,'chroma-key-v2');
+    const output=join(done.manifestPath,'..',completed.files[0]);
+    assert.equal((await sharp(output).metadata()).hasAlpha,true);
+    assert.equal((await sharp(output).stats()).channels[3].min,0);
+    assert.equal((await sharp(output).stats()).channels[3].max,255);
     await until(() => !alive(done.workerPid));
     const cancelled = await startTask(plan, [plan.items[1]], settings);
     running = cancelled.taskId;

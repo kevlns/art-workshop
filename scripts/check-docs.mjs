@@ -3,7 +3,7 @@ import {resolve,dirname,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {generationConfig} from '../lib/backends.mjs';
 import {id} from '../lib/shared.mjs';
-import {commandDocs} from './command-docs.mjs';
+import {commandDocs,skillDocs} from './command-docs.mjs';
 const root=dirname(dirname(fileURLToPath(import.meta.url)));
 const manifest=JSON.parse(readFileSync(join(root,'v-cli.plugin.json'),'utf8'));
 const commands=manifest.agent.commands.toSorted((a,b)=>b.path.length-a.path.length);
@@ -24,6 +24,7 @@ export function checkInvocation(line){
   return command;
 }
 export function checkDocs(){
+  if(readFileSync(join(root,'skills/art-workshop/SKILL.md'),'utf8')!==skillDocs())throw new Error('随包技能与 AGENTS 规范漂移，请运行 npm run docs:generate');
   // Validate every option, including commands not mentioned by a documentation example.
   for(const command of commands){
     if(!Array.isArray(command.path)||!command.path.length)throw new Error('清单命令路径缺失');
