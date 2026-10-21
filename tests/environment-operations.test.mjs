@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,mkdirSync,writeFileSync,existsSync,rmSync} from 'node:fs';
+import {mkdtempSync,mkdirSync,writeFileSync,existsSync,rmSync,realpathSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {deploymentGuide} from '../lib/deployment-guide.mjs';
@@ -32,7 +32,7 @@ test('unregister removes only matching environment records and preserves install
  const registry=environmentRoot(directory);
  try{
   mkdirSync(registry,{recursive:true});
-  writeFileSync(join(registry,'environment.json'),JSON.stringify({root:directory,environmentId:'test'}));
+  writeFileSync(join(registry,'environment.json'),JSON.stringify({root:realpathSync(directory),environmentId:'test'}));
   writeFileSync(join(directory,'vant.art.config.json'),JSON.stringify({environmentId:'test'}));
   writeFileSync(join(directory,'model.gguf'),'user model');
   await unregisterInstallation(directory);
