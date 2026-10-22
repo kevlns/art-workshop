@@ -819,6 +819,7 @@ v-cli art candidate finalize
 - `--revision <number>`：预期对象版本
 - `--candidate <id>`：候选身份
 - `--actor <text>`：操作者
+- `--name <text>`：导出文件名；留空时使用 vant-gen-任务-资产-批次
 - `--replace`：明确替换已有定版
 
 - 生成完成与哈希有效；重复幂等，替换保留历史

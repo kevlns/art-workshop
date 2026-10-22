@@ -1892,6 +1892,10 @@
             "description": "操作者"
           },
           {
+            "flags": "--name <text>",
+            "description": "导出文件名；留空时使用 vant-gen-任务-资产-批次"
+          },
+          {
             "flags": "--replace",
             "description": "明确替换已有定版"
           }
