@@ -10,6 +10,16 @@ import {taskFile,stateRead} from '../lib/runtime.mjs';
 import {taskStatus,taskView,cancelTask,shutdown} from '../lib/tasks.mjs';
 import {workerAlive} from '../lib/worker-process.mjs';
 
+test('EPERM from a recycled PID is not treated as the worker still being alive',()=>{
+  const original=process.kill;
+  process.kill=()=>{const error=new Error('EPERM');error.code='EPERM';throw error;};
+  try{
+    const task={workerPid:4242,status:'failed',finishedAt:'2026-10-21T03:56:16.310Z',workerIdentity:{pid:4242,exe:'node.exe',created:'2026-10-21T03:53:14.881Z'}};
+    assert.equal(workerAlive(task,()=>({pid:4242,exe:'other.exe',created:'2026-10-22T07:00:11.892Z'})),false);
+    assert.equal(workerAlive(task,()=>null),true);
+  }finally{process.kill=original;}
+});
+
 test('recycled worker PID cannot block shutdown or erase remote uncertainty',async()=>{
  const root=mkdtempSync(join(tmpdir(),'art-recycled-worker-'));
  try {
