@@ -28,6 +28,12 @@ projects/<projectId>/styles/<styleId>/style.json 与 tasks/<taskId>/task.json �
 
 生成 config 包括 project、kind、core、execution、analysis、generation、items，以及互斥的 profile 或内联 asset 规格；实体及效果有稳定 id、数量、颜色、角色与关系。具体主体、构图、动作不冻结进风格。规格定义资产约束、设计基准与检查要点，内联规格属于当前任务，编译时形成同一不可变快照。编辑 config 的 items 明确 source、changes、preserve、mustRead、seed。
 
+生成实体可选 material 描述物理材质，按原文进入主体行。composition 的 lightDirection/lightQuality 由资产规格 allowedOverrides 成对提供非空词表，defaults 成对提供词表内默认值。有效值按规格、任务、variant 顺序覆盖，允许单项覆盖；未开放时携带光照键报错。新 custom 模板开放光照，既有规格不自动改写。
+
+mustRead 保持视觉特征字符串数组。生成和编辑 item 均可选 textSpecs 数组，每项为 {content,hierarchy,zone,fontHint?}：准确文字、层级、位置或载体为必填描述，字形可选，均不限制字数。草稿允许暂缺或留空，编译检查完整性。相同文字的不同位置、层级、字形保留，完全相同项仅在编译输出去重。生成禁文字规格仅拒绝非空 textSpecs，不拒绝视觉特征；编辑任务按底图和修改/保留集处理。文字要求独立编译为画面文字规格段，有文字规格时追加文字保真负向；候选 checks.content 保持字符串数组，accepted 只代表技术完整性。
+
+job read/list 的 resolvedAsset 是当前有效规格只读投影，assetError 是解析失败说明；两者不属于 config，不能保存为需求。新编译计划带 compilerVersion=4 并参与 planHash；版本不作为执行准入门槛，已有计划缺字段时保留缺席，后端重绑定不补版本。
+
 plan 包括 schema=art-workshop/plan、module/project/job、sources、snapshots、refs、execution、items、planHash。sources 绑定 taskRevision、taskConfigHash 和 coreHash；项目/核心/profile/任务形成快照。项含 inputHash、实际尺寸和 seed。透明背景为 {type:"transparent"}；生成配置位于 composition.background，编辑配置位于 changes 中 target=background 的 value。预案项 output 固定 PNG、透明背景及处理版本并参与哈希；含完全透明区域的原生 alpha 保留，否则从边缘核实洋红底色，容许模型色偏，处理与外边界连通的底色及混合边缘。接近不透明的 alpha 噪声不视为透明背景。记录 outputProcessing，保留原图和透明 PNG。任何来源或哈希变化拒绝运行。
 
 analysis 为 {provider,model}，风格和任务分别保存视觉分析实例。generation 为 {backend,remote?,options?}，remote 为 {provider,model}；选中后端的模型进入执行与请求快照，旧 execution.model 不覆盖所选后端。options 为当前任务的本地采样覆盖 {steps?,cfg?,sampler?,scheduler?}，合并到冻结方案 backend.options，进入实际 ComfyUI 请求；远程后端拒绝这些字段。新任务本地推荐默认值为 steps=25、cfg=3、sampler=euler、scheduler=simple，内置工作流相同。显式值及历史计划保留。省略字段沿用后端或工作流默认值，数值 0 不视为省略。任务切换模型、后端或采样参数会改变配置哈希，必须重新编译。凭据由宿主按实例注入，不保存在配置。

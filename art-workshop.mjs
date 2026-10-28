@@ -7,6 +7,7 @@ const args=process.argv.slice(2),pos=[],options={};
 if(args.length===1&&['--version','-V'].includes(args[0])){console.log(readJson(new URL('./package.json',import.meta.url)).version);process.exit(0);}
 const help='art-workshop: config path/show/init/validate | doctor [--backend ID] [--start] | workflow list | environment guide/list/prepare/inspect/verify/register/unregister | refs guide | agent index/docs/init | list | style export/import/sources/create/list/read/update/derive/discard/analyze/resolve/adopt/recover/validate/show | generate show/plan/run | edit show/plan/run | task list/status/wait/cancel/recover/resume | shutdown | check RUN | project init/upgrade | job template/from-candidate/create/list/read/update/derive/discard/restore/analyze | reference import/list/update/remove | candidate list/favorites/favorite/finalize/delete/finalizations | compare PLAN PLAN\nrun --background 返回任务 ID；--backend 选择后端。shutdown 停止当前工作区关联任务，核验共享队列和进程身份后关闭本地服务。\n也可用 v-cli art 调用；先 v-cli agent docs art，再 v-cli agent describe art --json 查看完整参数。';
 if(!args.length||args.length===1&&['--help','-h','help'].includes(args[0])){console.log(help);process.exit(0);}
+const {taskObjectView}=await import('./lib/asset-profile.mjs');
 const {loadJob,loadProject}=await import('./lib/project.mjs');
 const {referenceRoot,referenceGuide}=await import('./lib/refs.mjs');
 const {loadSettings,initSettings,externalPath}=await import('./lib/settings.mjs');
@@ -85,10 +86,10 @@ try {
     const projectId=required('project'),kind=module==='job'?'task':'style';
     if(action==='template'&&kind==='task')print(jobTemplate(ROOT,projectId,{kind:options.kind,core:options.core}));
     else if(action==='from-candidate'&&kind==='task')print(await editFromCandidate(settings,projectId,required('id'),{runId:required('run'),candidateId:required('candidate')}));
-    else if(action==='list'){const records=listObjects(ROOT,projectId,kind),runs=kind==='task'?tasks(runtimeRoot(settings)).map(t=>taskStatus(runtimeRoot(settings),t.taskId)):[];print(records.map(record=>kind==='task'?{...record,display:taskDisplayState(record,runs,record.finalizations??[])}:styleView(ROOT,record)));}
+    else if(action==='list'){const records=listObjects(ROOT,projectId,kind),runs=kind==='task'?tasks(runtimeRoot(settings)).map(t=>taskStatus(runtimeRoot(settings),t.taskId)):[];print(records.map(record=>kind==='task'?{...taskObjectView(ROOT,record),display:taskDisplayState(record,runs,record.finalizations??[])}:styleView(ROOT,record)));}
     else if(action==='create')print(await createObject(settings,projectId,kind,readJson(path(required('input')))));
-    else if(action==='read'){const record=readObject(ROOT,projectId,kind,required('id'));print(kind==='style'?styleView(ROOT,record):record);}
-    else if(action==='update'){const record=await updateObject(settings,projectId,kind,required('id'),Number(required('revision')),readJson(path(required('input'))));print(kind==='style'?styleView(ROOT,record):record);}
+    else if(action==='read'){const record=readObject(ROOT,projectId,kind,required('id'));print(kind==='style'?styleView(ROOT,record):taskObjectView(ROOT,record));}
+    else if(action==='update'){const record=await updateObject(settings,projectId,kind,required('id'),Number(required('revision')),readJson(path(required('input'))));print(kind==='style'?styleView(ROOT,record):taskObjectView(ROOT,record));}
     else if(action==='analyze'&&kind==='task')print(await startAnalysis(settings,projectId,required('id'),Number(required('revision')),{dry:options.dry,kind:'task',operationId:options.operation}));
     else if(action==='derive')print(await deriveObject(settings,projectId,kind,required('id'),Number(required('revision'))));
     else if(action==='restore'&&kind==='task')print(await restoreTask(settings,projectId,required('id'),Number(required('revision'))));

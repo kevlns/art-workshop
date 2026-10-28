@@ -20,6 +20,24 @@ import {BUILTIN_WORKFLOW,loadBackend} from '../lib/workflows.mjs';
 import {validateConfiguration,doctor,environmentIssues} from '../lib/diagnostics.mjs';
 import sharp from 'sharp';
 import {LOCAL_SAMPLING_DEFAULTS} from '../lib/task-contract.mjs';
+import {candidates,finalize} from '../lib/candidates.mjs';
+import {readObject,updateObject} from '../lib/workspace.mjs';
+
+test('stored unversioned plan starts, completes and finalizes without rewriting task or plan',()=>fixture(async({root,settings,runtime})=>{
+ const stored=JSON.parse(readFileSync(new URL('./fixtures/compiler-legacy-plan.json',import.meta.url),'utf8'));
+ settings.generation.backends.local.bindings.model={node:'1',input:'unet_name'};
+ const plan=bindBackend(stored,settings),before=hash(readObject(root,'cellgame','task','white-cell').config);
+ assert.equal(Object.hasOwn(plan,'compilerVersion'),false);
+ const started=await startTask(plan,[plan.items[0]],settings);
+ const done=await waitTask(runtime,started.taskId,{timeoutSeconds:20});
+ assert.equal(done.status,'succeeded',done.error);
+ assert.equal(Object.hasOwn(done.plan,'compilerVersion'),false);
+ const candidate=candidates(settings,'cellgame','white-cell',started.taskId)[0];
+ assert.equal(candidate.accepted,true);
+ const finalized=await finalize(settings,'cellgame','white-cell',1,{runId:started.taskId,candidateId:candidate.candidateId,actor:'compiler-test'});
+ assert.equal(hash(finalized.config),before);assert.equal(finalized.finalizations[0].candidateId,candidate.candidateId);
+ assert.equal(done.plan.planHash,plan.planHash);
+}));
 
 test('builtin API and editor workflows use the recommended negative-enabled sampling defaults',()=>{
  const api=JSON.parse(readFileSync(new URL('../workflows/vant-builtin-qwen-image-2.1-Q4-8GB.api.json',import.meta.url)));

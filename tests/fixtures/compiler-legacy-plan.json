@@ -1,0 +1,328 @@
+{
+  "schema": "art-workshop/plan",
+  "module": "generate",
+  "project": "cellgame",
+  "job": "white-cell",
+  "execution": {
+    "model": "qwen-image-3.0-pro",
+    "size": "1024*1024",
+    "promptExtend": false,
+    "perValue": 1,
+    "watermark": false
+  },
+  "sources": {
+    "taskRevision": 1,
+    "taskConfigHash": "d37c8f2a6f88ffba9a77877fbf7a21158e7e35b4c275c7503211345a2ab65d67",
+    "core": "cellgame",
+    "coreHash": "35edf470aa4b27e1649443f59b99e0e9f68dafc1a423dff43064a966f4088011",
+    "selection": "任务绑定"
+  },
+  "snapshots": {
+    "project": {
+      "id": "cellgame",
+      "name": "细胞游戏",
+      "analysisModel": "qwen3-vl-plus",
+      "execution": {
+        "model": "qwen-image-3.0-pro",
+        "size": "1024*1024",
+        "promptExtend": false,
+        "perValue": 1,
+        "watermark": false
+      },
+      "cores": [
+        "cellgame"
+      ],
+      "defaultCore": "cellgame",
+      "schemaVersion": 2,
+      "revision": 1
+    },
+    "core": {
+      "schema": "art-workshop/core",
+      "project": "cellgame",
+      "id": "cellgame",
+      "guidance": {
+        "principles": [
+          "风格只定义如何绘制，跨主体复用；不能冻结参考作品的具体内容。",
+          "具体轮廓、比例、结构、部件、姿态、数量、身份色、物理材质和光源方向由任务需求定义。",
+          "刻画密度只控制绘制繁简，不省略任务声明的结构、部件或文字。",
+          "高光是表现方式，不统一物体材质；笔触是绘画痕迹，不禁止需求中的鳞片、花纹或表面结构。",
+          "色彩规则描述饱和度、色相对比和阴影偏色；主体身份色与实际光照以任务声明为准。",
+          "背景、视角、构图、留白、裁切、文字和尺寸属于任务与资产规格。",
+          "分类决定观察焦点，不按图片主体或文件名推断；风格参考不配置任务用途。",
+          "区分观察、建议和未确定项，不从参考图片中的内容生成全局主题或题材白名单。",
+          "规则精炼且一致，模型、凭据、参数和运行状态不进入风格核心。",
+          "冻结可追溯，核心不可原地覆写；旧职责版本必须重新分析和明确采用。"
+        ],
+        "ownership": {
+          "core": "媒介、描绘细节、明暗方式、描边、高光画法、笔触、明度对比与色彩关系",
+          "brief": "主体、轮廓、比例、结构、部件、姿态、动作、数量、身份色、材质与光源",
+          "profile": "画幅、背景、视角、构图、留白、裁切、文字和投影要求",
+          "execution": "模型、像素尺寸、候选数量、seed、水印与扩写",
+          "edit": "明确的修改目标、保持目标和编辑底图，二者不得冲突"
+        }
+      },
+      "config": {
+        "rules": [
+          {
+            "id": "medium",
+            "scope": "medium",
+            "strength": "required",
+            "instruction": "采用数字卡通插画表现",
+            "when": ""
+          },
+          {
+            "id": "outline",
+            "scope": "outline",
+            "strength": "default",
+            "instruction": "深色粗壮硬描边，具体颜色与粗细随画幅调整",
+            "when": ""
+          },
+          {
+            "id": "shading",
+            "scope": "shading",
+            "strength": "default",
+            "instruction": "以有限硬边色阶塑形，层次随体量调整",
+            "when": ""
+          },
+          {
+            "id": "crystal-highlights",
+            "scope": "highlights",
+            "strength": "default",
+            "instruction": "允许白色锐利高光和局部柔和发光",
+            "when": "任务指定透明或发光物体时"
+          }
+        ]
+      },
+      "report": {
+        "schema": "art-workshop/style-report",
+        "project": "cellgame",
+        "id": "cellgame",
+        "summary": "数字插画，以干净描边、硬边色块和偏冷阴影表达；造型、材质、身份色与光源由任务定义。",
+        "observations": [
+          {
+            "source": "已确认的项目美术要求",
+            "scope": "style",
+            "feature": "简洁硬边明暗与干净描边",
+            "evidence": "沿用本工程已采用的风格要求。",
+            "confidence": 1
+          }
+        ],
+        "recommendation": {
+          "rules": [
+            {
+              "id": "medium",
+              "scope": "medium",
+              "strength": "required",
+              "instruction": "采用数字卡通插画表现",
+              "when": ""
+            },
+            {
+              "id": "outline",
+              "scope": "outline",
+              "strength": "default",
+              "instruction": "深色粗壮硬描边，具体颜色与粗细随画幅调整",
+              "when": ""
+            },
+            {
+              "id": "shading",
+              "scope": "shading",
+              "strength": "default",
+              "instruction": "以有限硬边色阶塑形，层次随体量调整",
+              "when": ""
+            },
+            {
+              "id": "crystal-highlights",
+              "scope": "highlights",
+              "strength": "default",
+              "instruction": "允许白色锐利高光和局部柔和发光",
+              "when": "任务指定透明或发光物体时"
+            }
+          ]
+        },
+        "provenance": {
+          "source": "既有项目要求整理；未重新调用视觉模型"
+        },
+        "schemaVersion": 3,
+        "issues": [],
+        "notes": [],
+        "decisions": []
+      },
+      "approvedAt": "2026-10-08T09:53:38.964Z",
+      "approvalNote": "采用既有工程要求，按当前职责边界整理冻结",
+      "schemaVersion": 3,
+      "coreHash": "35edf470aa4b27e1649443f59b99e0e9f68dafc1a423dff43064a966f4088011"
+    },
+    "profile": {
+      "project": "cellgame",
+      "id": "biological-unit",
+      "name": "游戏生物单位单体概念图",
+      "constraints": {
+        "text": false,
+        "frame": false,
+        "scene": false,
+        "crop": false,
+        "shadow": true
+      },
+      "defaults": {
+        "preset": "centered",
+        "view": "等距视角",
+        "direction": "无方向",
+        "occupancy": 0.7,
+        "effectIntensity": "中",
+        "background": {
+          "type": "solid",
+          "color": "#FFFFFF"
+        }
+      },
+      "allowedOverrides": {
+        "preset": [
+          "centered",
+          "radial"
+        ],
+        "view": [
+          "等距视角"
+        ],
+        "direction": [
+          "无方向"
+        ],
+        "occupancy": {
+          "min": 0.6,
+          "max": 0.8
+        },
+        "effectIntensity": [
+          "弱",
+          "中",
+          "强"
+        ]
+      },
+      "presets": {
+        "centered": "主体居中，完整展示生物轮廓与身体结构",
+        "radial": "围绕生物主体的核心结构作放射构图"
+      },
+      "checks": [
+        "等距视角",
+        "生物主体完整、正下方简洁投影",
+        "无文字与场景"
+      ]
+    },
+    "job": {
+      "project": "cellgame",
+      "kind": "generate",
+      "core": "cellgame",
+      "profile": "biological-unit",
+      "items": [
+        {
+          "id": "white-cell",
+          "seed": 9000,
+          "intent": "白细胞生物单位，具有明确的上部感知膜冠与下部运动膜裙；表面分布随机大小、疏密不均的柔软鼓包和浅凹，形成有辨识度的生物结构",
+          "entities": [
+            {
+              "id": "cell",
+              "kind": "cell",
+              "appearance": "上下分区的厚实软体白细胞；上部为隆起膜冠，沿顶部不规则聚集几个大小不同的柔软感知突起；中部膜体分布大小、间距不均的鼓包与浅凹，局部轮廓起伏；下部为较宽扁的运动膜裙，向前伸出宽短伪足，两侧及后方短伪足支撑；上下通过较窄膜褶过渡，全部结构由连续细胞膜形成，不是孔洞、机械镶嵌或规则颗粒",
+              "color": "上部乳白色，中部暖灰白色，下部浅蓝灰色；内层细胞核为蓝灰色",
+              "role": "primary",
+              "count": 1
+            }
+          ],
+          "effects": [],
+          "composition": {
+            "preset": "centered",
+            "focalTarget": "cell",
+            "view": "等距视角",
+            "occupancy": 0.7,
+            "effectIntensity": "弱",
+            "background": {
+              "type": "solid",
+              "color": "#FFFFFF"
+            },
+            "direction": "无方向"
+          },
+          "mustRead": [
+            "上部隆起感知膜冠与随机大小的柔软突起",
+            "中部膜体随机鼓包和浅凹，疏密不均",
+            "下部宽扁运动膜裙与短伪足",
+            "上下部位轮廓与功能分工明确，保持连续细胞膜",
+            "无孔洞、机械镶嵌、规则颗粒或五官"
+          ],
+          "variants": [
+            {
+              "id": "base"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "refs": [],
+  "items": [
+    {
+      "itemId": "white-cell",
+      "variantId": "base",
+      "seed": 9000,
+      "brief": {
+        "id": "white-cell",
+        "seed": 9000,
+        "intent": "白细胞生物单位，具有明确的上部感知膜冠与下部运动膜裙；表面分布随机大小、疏密不均的柔软鼓包和浅凹，形成有辨识度的生物结构",
+        "entities": [
+          {
+            "id": "cell",
+            "kind": "cell",
+            "appearance": "上下分区的厚实软体白细胞；上部为隆起膜冠，沿顶部不规则聚集几个大小不同的柔软感知突起；中部膜体分布大小、间距不均的鼓包与浅凹，局部轮廓起伏；下部为较宽扁的运动膜裙，向前伸出宽短伪足，两侧及后方短伪足支撑；上下通过较窄膜褶过渡，全部结构由连续细胞膜形成，不是孔洞、机械镶嵌或规则颗粒",
+            "color": "上部乳白色，中部暖灰白色，下部浅蓝灰色；内层细胞核为蓝灰色",
+            "role": "primary",
+            "count": 1
+          }
+        ],
+        "effects": [],
+        "composition": {
+          "preset": "centered",
+          "view": "等距视角",
+          "direction": "无方向",
+          "occupancy": 0.7,
+          "effectIntensity": "弱",
+          "background": {
+            "type": "solid",
+            "color": "#FFFFFF"
+          },
+          "focalTarget": "cell"
+        },
+        "mustRead": [
+          "上部隆起感知膜冠与随机大小的柔软突起",
+          "中部膜体随机鼓包和浅凹，疏密不均",
+          "下部宽扁运动膜裙与短伪足",
+          "上下部位轮廓与功能分工明确，保持连续细胞膜",
+          "无孔洞、机械镶嵌、规则颗粒或五官"
+        ],
+        "variants": [
+          {
+            "id": "base"
+          }
+        ]
+      },
+      "prompt": "【本次用途与主体】\n白细胞生物单位，具有明确的上部感知膜冠与下部运动膜裙；表面分布随机大小、疏密不均的柔软鼓包和浅凹，形成有辨识度的生物结构。\n【静态冻结风格】\n风格只定义如何绘制：媒介、刻画密度、明暗方式、描边、高光画法、笔触和色彩关系。具体主体、轮廓、比例、结构、部件、姿态、身份色、物理材质、光源位置方向、构图、背景和资产规格属于任务，不能冻结到风格中。刻画密度不删减任务要求的结构或部件；笔触不是物体表面纹理，高光画法不是统一材质。\n默认倾向可按任务调整；有适用条件的规则仅在条件成立时使用。\n【媒介与整体语言】\n必须遵守：采用数字卡通插画表现\n【描边】\n默认倾向：深色粗壮硬描边，具体颜色与粗细随画幅调整\n【明暗与形体表现】\n默认倾向：以有限硬边色阶塑形，层次随体量调整\n【高光】\n默认倾向（任务指定透明或发光物体时）：允许白色锐利高光和局部柔和发光\n【动态需求：主体、细节与关系】\ncell：1 个上下分区的厚实软体白细胞；上部为隆起膜冠，沿顶部不规则聚集几个大小不同的柔软感知突起；中部膜体分布大小、间距不均的鼓包与浅凹，局部轮廓起伏；下部为较宽扁的运动膜裙，向前伸出宽短伪足，两侧及后方短伪足支撑；上下通过较窄膜褶过渡，全部结构由连续细胞膜形成，不是孔洞、机械镶嵌或规则颗粒，上部乳白色，中部暖灰白色，下部浅蓝灰色；内层细胞核为蓝灰色，主要实体。\n【动态构图与背景】\n视觉焦点：cell。\n主体居中，完整展示生物轮廓与身体结构。视角：等距视角；方向：无方向；整体占画幅约 70%；效果强度：弱。\n纯色背景 #FFFFFF，整张背景颜色均匀，无渐变、光晕或纹理。\n【交付规格与约束】\n游戏生物单位单体概念图；无文字；画幅无装饰外框；主体和效果边缘完整，四周留出空间；主体正下方简洁投影。\n【必须可读的特征】\n- 上部隆起感知膜冠与随机大小的柔软突起\n- 中部膜体随机鼓包和浅凹，疏密不均\n- 下部宽扁运动膜裙与短伪足\n- 上下部位轮廓与功能分工明确，保持连续细胞膜\n- 无孔洞、机械镶嵌、规则颗粒或五官",
+      "negativeBlock": "文字, 字母, 水印, 装饰外框",
+      "imageArgs": [],
+      "checks": {
+        "content": [
+          "上部隆起感知膜冠与随机大小的柔软突起",
+          "中部膜体随机鼓包和浅凹，疏密不均",
+          "下部宽扁运动膜裙与短伪足",
+          "上下部位轮廓与功能分工明确，保持连续细胞膜",
+          "无孔洞、机械镶嵌、规则颗粒或五官"
+        ],
+        "style": [
+          "风格只定义如何绘制：媒介、刻画密度、明暗方式、描边、高光画法、笔触和色彩关系。具体主体、轮廓、比例、结构、部件、姿态、身份色、物理材质、光源位置方向、构图、背景和资产规格属于任务，不能冻结到风格中。刻画密度不删减任务要求的结构或部件；笔触不是物体表面纹理，高光画法不是统一材质。\n默认倾向可按任务调整；有适用条件的规则仅在条件成立时使用。\n【媒介与整体语言】\n必须遵守：采用数字卡通插画表现\n【描边】\n默认倾向：深色粗壮硬描边，具体颜色与粗细随画幅调整\n【明暗与形体表现】\n默认倾向：以有限硬边色阶塑形，层次随体量调整\n【高光】\n默认倾向（任务指定透明或发光物体时）：允许白色锐利高光和局部柔和发光"
+        ],
+        "asset": [
+          "等距视角",
+          "生物主体完整、正下方简洁投影",
+          "无文字与场景",
+          "纯色背景 #FFFFFF，整张背景颜色均匀，无渐变、光晕或纹理。"
+        ]
+      },
+      "inputHash": "f5a419f457743586be83ee7adf2c76b698688ffb5797a7b61c94d4c7dfd02623"
+    }
+  ],
+  "planHash": "89fd85aa27a2bc1164a848dd6de4a86c70ae51bb2c749bd1d35e87e9e58bc941"
+}

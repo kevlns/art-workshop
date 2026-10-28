@@ -86,6 +86,10 @@ candidate delete 先确认影响，拒绝运行中或被计划/底图引用的�
 
 任务草稿允许内容尚未完成，但拒绝编译器不支持的字段。生成任务的字段正本为 lib/task-contract.mjs；effect 使用 id/kind/target/color/relation/count，不支持 description。先读当前对象，完整保留未修改字段，按当前 revision 保存；保存成功后仍需编译预案，不能声称已生成图片。任务编译错误依据执行回执修正，不猜测风格或尺寸问题。
 
+任务 mustRead 是必须看清的视觉特征，保持字符串数组；画面文字使用独立 textSpecs 数组，每项 content（准确文字）、hierarchy（层级）、zone（位置或载体）必填，fontHint（字形）可选。所有描述完整保存，不设字数上限；草稿允许未填完，预案要求完整。生成任务仅在资产规格允许文字时接受非空 textSpecs，编辑任务按底图及 changes/preserve 执行；不把视觉特征转成文字，不自动开启文字权限。entity.material 是可选物理材质描述。composition.lightDirection/lightQuality 由资产规格成对声明词表及默认值，任务和 variant 可以单项覆盖，未开放能力时携带字段会报错。
+
+job read 返回的 resolvedAsset 是只读有效资产规格，assetError 表示解析失败；更新只提交原 config，不回填投影或默认值。任务对象 schemaVersion=2、风格核心 schemaVersion=3 与计划 compilerVersion=4 相互独立。新编译预案记录编译版本；读取或执行原计划不补字段，不迁移任务或冻结风格。
+
 任务参考可通过 reference import --item-id <对象标识> 绑定单个出图对象；未绑定的参考为任务共用。生成与编辑只采纳共用参考和当前对象参考的观察。reference update 的 itemId 可改绑对象，null 表示任务共用。
 
 `v-cli capability coverage --json` 核对结构化调用覆盖。参考导入的 `--item-id` 指定当前任务出图对象，省略表示任务共用；工具校验对象身份。

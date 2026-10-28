@@ -74,7 +74,8 @@ test("model-specific dimension clamping respects both minimum and maximum pixel 
   }
 });
 
-import { runBl } from "../lib/bl.mjs";
+import { dashscopeAdapter } from "../lib/adapters/dashscope.mjs";
+const nativePreview = (plan, item) => { const request = generationRequest(plan, item); return { mode: request.transport.mode, path: request.transport.path, request: dashscopeAdapter.preview(request) }; };
 import { generationRequest } from "../lib/providers.mjs";
 import { buildArgs } from "../lib/plan.mjs";
 const modelPlan = (model, module = "generate") => ({
@@ -107,7 +108,7 @@ test("all four new models use synchronous native requests in preview and executi
         item = p.items[0];
       const args = buildRemoteArgs(p, item, "output", "test");
       assert.deepEqual(buildArgs(p, item, "output", "test"), args);
-      const result = runBl(args, { dry: true });
+      const result = nativePreview(p, item);
       assert.equal(result.mode, "sync");
       assert.equal(
         result.path,
@@ -349,10 +350,7 @@ test("catalog covers exact official snapshots and records early/specialized mode
   ]) {
     const p = modelPlan(model, "edit");
     assert.equal(validateRemotePlan(p).supported, true);
-    const request = runBl(
-      buildRemoteArgs(p, p.items[0], "output", "snapshot"),
-      { dry: true },
-    );
+    const request = nativePreview(p, p.items[0]);
     assert.equal(request.request.model, model);
     assert.equal(request.mode, "sync");
   }
