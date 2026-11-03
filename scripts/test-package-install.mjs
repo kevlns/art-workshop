@@ -19,7 +19,7 @@ try{
   if(manifest.package!==info.name||manifest.command!=='art'||manifest.bin!=='art-workshop')throw new Error('随包插件身份不符');
   if(!existsSync(join(root,'AGENTS.md')))throw new Error('v-cli 随包规范缺失');
   const docs=run(['agent','docs']);
-  const expectedDocs=GUIDE_FILES.map(file=>readFileSync(join(root,file),'utf8')).join('\n\n');
+  const expectedDocs=readFileSync(join(root,'skills/art-workshop/SKILL.md'),'utf8');
   if(docs.trimEnd()!==expectedDocs.trimEnd())throw new Error('安装版 agent docs 未完整输出全部随包指南');
   if(!existsSync(join(root,'skills','art-workshop','SKILL.md')))throw new Error('随包 skill 缺失');
   const builtin=JSON.parse(run(['workflow','list']))[0];if(!builtin.default||!existsSync(builtin.api)||!existsSync(builtin.ui))throw new Error('内置工作流缺失');

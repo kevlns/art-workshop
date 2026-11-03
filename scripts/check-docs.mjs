@@ -24,7 +24,7 @@ export function checkInvocation(line){
   return command;
 }
 export function checkDocs(){
-  if(readFileSync(join(root,'skills/art-workshop/SKILL.md'),'utf8')!==skillDocs())throw new Error('随包技能与 AGENTS 规范漂移，请运行 npm run docs:generate');
+  for(const skill of manifest.skills??[])if(!existsSync(join(root,skill.path)))throw new Error('技能入口缺失：'+skill.path);
   // Validate every option, including commands not mentioned by a documentation example.
   for(const command of commands){
     if(!Array.isArray(command.path)||!command.path.length)throw new Error('清单命令路径缺失');

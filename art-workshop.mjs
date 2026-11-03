@@ -5,7 +5,7 @@ import {join,resolve} from 'node:path';
 import {readJson,writeJson} from './lib/shared.mjs';
 const args=process.argv.slice(2),pos=[],options={};
 if(args.length===1&&['--version','-V'].includes(args[0])){console.log(readJson(new URL('./package.json',import.meta.url)).version);process.exit(0);}
-const help='art-workshop: config path/show/init/validate | doctor [--backend ID] [--start] | workflow list | environment guide/list/prepare/inspect/verify/register/unregister | refs guide | agent index/docs/init | list | style export/import/sources/create/list/read/update/derive/discard/analyze/resolve/adopt/recover/validate/show | generate show/plan/run | edit show/plan/run | task list/status/wait/cancel/recover/resume | shutdown | check RUN | project init/upgrade | job template/from-candidate/create/list/read/update/derive/discard/restore/analyze | reference import/list/update/remove | candidate list/favorites/favorite/finalize/delete/finalizations | compare PLAN PLAN\nrun --background 返回任务 ID；--backend 选择后端。shutdown 停止当前工作区关联任务，核验共享队列和进程身份后关闭本地服务。\n也可用 v-cli art 调用；先 v-cli agent docs art，再 v-cli agent describe art --json 查看完整参数。';
+const help='art-workshop: config path/show/init/validate | doctor [--backend ID] [--start] | workflow list | environment guide/list/prepare/inspect/verify/register/unregister | refs guide | agent index/docs/export | conversation start/status/cancel/resume | list | style export/import/sources/create/list/read/update/derive/discard/analyze/resolve/adopt/recover/validate/show | generate show/plan/run | edit show/plan/run | task list/status/wait/cancel/recover/resume | shutdown | check RUN | project init/upgrade | job template/from-candidate/create/list/read/update/derive/discard/restore/analyze | reference import/list/update/remove | candidate list/favorites/favorite/finalize/delete/finalizations | compare PLAN PLAN\nrun --background 返回任务 ID；--backend 选择后端。shutdown 停止当前工作区关联任务，核验共享队列和进程身份后关闭本地服务。\n也可用 v-cli art 调用；先 v-cli agent docs art，再 v-cli agent describe art --json 查看完整参数。';
 if(!args.length||args.length===1&&['--help','-h','help'].includes(args[0])){console.log(help);process.exit(0);}
 const {taskObjectView}=await import('./lib/asset-profile.mjs');
 const {loadJob,loadProject}=await import('./lib/project.mjs');
@@ -16,12 +16,12 @@ const {compileGenerate}=await import('./lib/generate.mjs');
 const {compileEdit}=await import('./lib/edit.mjs');
 const {validatePlan,selectItems}=await import('./lib/plan.mjs');
 const {executePlan,checkRun}=await import('./lib/executor.mjs');
-const {agentIndex,agentDocs,syncSkill,autoSync}=await import('./lib/agent.mjs');
+const {agentIndex,agentDocs,exportSkill}=await import('./lib/agent.mjs');
 const {backendDefaults,bindBackend,buildComfyRequest}=await import('./lib/backends.mjs');
 const {startTask,taskStatus,taskView,recoverTask,resumeTask,waitTask,cancelTask,shutdown}=await import('./lib/tasks.mjs');
 const {runtimeRoot,tasks}=await import('./lib/runtime.mjs');
 const {validateConfiguration,doctor}=await import('./lib/diagnostics.mjs');
-const {createProject,createObject,listObjects,readObject,styleView,updateObject,deriveObject,discardObject,restoreTask,importReference,removeReference,updateReference,taskDisplayState,STYLE_CATEGORIES,TASK_PURPOSES}=await import('./lib/workspace.mjs');
+const {finishMigration,createProject,createObject,listObjects,readObject,styleView,updateObject,deriveObject,discardObject,restoreTask,importReference,removeReference,updateReference,taskDisplayState,STYLE_CATEGORIES,TASK_PURPOSES}=await import('./lib/workspace.mjs');
 const {startAnalysis,adoptStyle,recoverStyleAdoption,resolveStyleIssue,reviseStyleRules}=await import('./lib/style-lifecycle.mjs');
 const {candidates,finalize,deleteCandidate,finalizations,editFromCandidate}=await import('./lib/candidates.mjs');
 const {favoriteList,setFavorite}=await import('./lib/favorites.mjs');
@@ -32,7 +32,7 @@ const {deploymentGuide}=await import('./lib/deployment-guide.mjs');
 const {inspectInstallation,discoverInstallations}=await import('./lib/environments.mjs');
 const {verifyInstallation,registerInstallation,unregisterInstallation}=await import('./lib/environment-operations.mjs');
 const flags=new Set(['dry','explore','background','start','replace','confirm','all-variants']);
-const allowed=new Set(['config','workspace','output-dir','refs-dir','cache-dir','directory','endpoint','guide','project','input','out','report','note','core','job','plan','item','variant','offset','limit','file','backend','timeout','kind','id','revision','source','category','purposes','mapping','run','candidate','actor','operation','retry-run','item-id','value','name',...flags]);
+const allowed=new Set(['config','workspace','output-dir','refs-dir','cache-dir','directory','host','session','request','endpoint','guide','project','input','out','report','note','core','job','plan','item','variant','offset','limit','file','backend','timeout','kind','id','revision','source','category','purposes','mapping','run','candidate','actor','operation','retry-run','item-id','value','name',...flags]);
 for(let i=0;i<args.length;i++){if(args[i].startsWith('--')){const k=args[i].slice(2);if(!allowed.has(k)||k in options) throw new Error('未知或重复参数 '+k);options[k]=flags.has(k)?true:args[++i];if(options[k]===undefined) throw new Error('参数缺少值 '+k);}else pos.push(args[i]);}
 const print=x=>console.log(JSON.stringify(x?.schema==='art-workshop/style'?styleView(settings.paths.workspace,x):x,null,2));
 if(pos[0]==='workflow'&&pos[1]==='list'){print(workflowList());process.exit(0);}
@@ -52,8 +52,13 @@ try {
   const [module,action]=pos;
 
   const effectiveRefs=referenceRoot({defaultRefsDir:settings.paths.refs});
-  if(settings.autoSyncSkills&&!options.dry&&['style','generate','edit'].includes(module)&&['analyze','adopt','run'].includes(action)){try{autoSync();}catch(error){console.error('skill 自动同步失败：'+error.message+'；可用 agent init 重试。');}}
-  if(module==='environment'){
+  if(module==='conversation'){
+    const {startConversation,conversationStatus,controlConversation}=await import('./lib/conversation.mjs');
+    if(action==='start')print(await startConversation(readJson(path(required('input'))),settings));
+    else if(action==='status')print(await conversationStatus(settings,required('session'),required('request')));
+    else if(['cancel','resume','close'].includes(action))print(await controlConversation(settings,required('session'),required('request'),action));
+    else throw new Error('未知 conversation 操作');
+  }else if(module==='environment'){
     if(action==='guide')print(deploymentGuide(options.guide));
     else if(action==='list')print({environments:discoverInstallations()});
     else if(action==='prepare')print(await prepareRuntime(required('directory'),{guideId:options.guide}));
@@ -82,9 +87,10 @@ try {
     else if(action==='update')print(await updateReference(settings,projectId,kind,objectId,Number(required('revision')),required('item'),readJson(path(required('input')))));
     else throw new Error('未知 reference 操作');
   }
-  else if(module==='job'||module==='style'&&['create','list','update','derive','discard','read'].includes(action)){
+  else if(module==='job'||module==='style'&&['create','list','update','derive','discard','read','migration-complete'].includes(action)){
     const projectId=required('project'),kind=module==='job'?'task':'style';
-    if(action==='template'&&kind==='task')print(jobTemplate(ROOT,projectId,{kind:options.kind,core:options.core}));
+    if(action==='migration-complete')print(await finishMigration(settings,projectId,kind,required('id'),Number(required('revision')),readJson(path(required('input')))));
+    else if(action==='template'&&kind==='task')print(jobTemplate(ROOT,projectId,{kind:options.kind,core:options.core}));
     else if(action==='from-candidate'&&kind==='task')print(await editFromCandidate(settings,projectId,required('id'),{runId:required('run'),candidateId:required('candidate')}));
     else if(action==='list'){const records=listObjects(ROOT,projectId,kind),runs=kind==='task'?tasks(runtimeRoot(settings)).map(t=>taskStatus(runtimeRoot(settings),t.taskId)):[];print(records.map(record=>kind==='task'?{...taskObjectView(ROOT,record),display:taskDisplayState(record,runs,record.finalizations??[])}:styleView(ROOT,record)));}
     else if(action==='create')print(await createObject(settings,projectId,kind,readJson(path(required('input')))));
@@ -103,7 +109,7 @@ try {
   else if(module==='agent'){
     if(action==='index') print({...agentIndex(undefined,ROOT),config:settings.file,paths:settings.paths});
     else if(action==='docs') console.log(agentDocs());
-    else if(action==='init') print(syncSkill({directory:resolve(options.directory??process.cwd()),dry:options.dry}));
+    else if(action==='export') print(exportSkill({directory:required('directory'),host:required('host'),dry:options.dry}));
     else throw new Error('未知 agent 操作');
   }
   else if(module==='list'){print((existsSync(join(ROOT,'projects'))?readdirSync(join(ROOT,'projects')):[]).map(id=>readJson(join(ROOT,'projects',id,'project.json'))));}

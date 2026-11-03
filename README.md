@@ -56,7 +56,7 @@ npm run test:package
 
 ## 文档
 
-[Agent 调用规范](AGENTS.md) · [文档规范](docs/documentation.md) · [art 命令参考](docs/commands.md) · [配置与存储](docs/configuration.md) · [风格核心职责与问题决策](docs/core-guidance.md) · [art 工程与输入结构](docs/data-formats.md) · [本地环境检测与部署](docs/deployment.md) · [模型与执行架构](docs/model-architecture.md) · [模式与调用流程](docs/modes.md) · [远程图片适配与筛选](docs/remote-models.md) · [任务控制与诊断](docs/troubleshooting.md)
+[Agent 调用规范](skills/art-workshop/SKILL.md) · [文档规范](docs/documentation.md) · [art 命令参考](docs/commands.md) · [配置与存储](docs/configuration.md) · [风格核心职责与问题决策](docs/core-guidance.md) · [art 工程与输入结构](docs/data-formats.md) · [本地环境检测与部署](docs/deployment.md) · [模型与执行架构](docs/model-architecture.md) · [模式与调用流程](docs/modes.md) · [远程图片适配与筛选](docs/remote-models.md) · [任务控制与诊断](docs/troubleshooting.md)
 
 ## 许可与版权
 

@@ -1,3 +1,4 @@
+import {startConversation,conversationStatus,controlConversation,compileConversation} from '../lib/conversation.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,cpSync,rmSync,readFileSync,existsSync,writeFileSync} from 'node:fs';
@@ -87,7 +88,7 @@ async function fixture(fn,delay=50){
   const file=join(root,'config.json');writeJson(file,{paths:{workspace:root,output:join(root,'output'),refs:join(root,'refs'),cache:join(root,'cache')},generation:{defaultBackend:'local',backends:{local:b}},autoSyncSkills:false});
   const settings=loadSettings({file}),plan=bindBackend(compileGenerate({projectId:'cellgame',jobId:'skills',root,localExecution:backendDefaults(settings)}),settings);
   try{await fn({root,endpoint,settings,plan,b,template,runtime:runtimeRoot(settings)});}
-  finally{const service=rememberedService(runtimeRoot(settings),endpoint);if(service?.identity)try{await stopIdentity(service.identity);}catch{};rmSync(root,{recursive:true,force:true});}
+  finally{try{await shutdown(settings);}catch{};const service=rememberedService(runtimeRoot(settings),endpoint);if(service?.identity)try{await stopIdentity(service.identity);}catch{};rmSync(root,{recursive:true,force:true,maxRetries:6,retryDelay:150});}
 }
 test('失败项重试保持原预案且排除已成功项，停止未知不能重试',async()=>fixture(async({plan,runtime})=>{
   const runId='task-failed',manifestPath=join(runtime,'failed-manifest.json');
@@ -214,7 +215,7 @@ test('本地图编辑上传原图并连接编码器，保留动态输出尺寸',
 test('lost local worker resumes recorded prompt without new submission',async()=>fixture(async({plan,settings,runtime,endpoint})=>{
  const started=await startTask(plan,[plan.items[0]],settings);
  let original;
- for(let n=0;n<100;n++){original=taskStatus(runtime,started.taskId);if(original.promptId)break;await sleep(50);}
+ for(let n=0;n<100;n++){original=JSON.parse(readFileSync(join(runtime,'tasks',started.taskId+'.json')));if(original.promptId)break;await sleep(50);}
  assert.ok(original.promptId);
  process.kill(original.workerPid);
  await sleep(300);
@@ -236,8 +237,8 @@ test('serial local recovery preserves first download and never resubmits either 
  const plan=bindBackend(compileGenerate({projectId:'cellgame',jobId:'skills',root,localExecution:backendDefaults(settings)}),settings);
  const started=await startTask(plan,[plan.items[0]],settings);
  let original;
- for(let n=0;n<160;n++){original=taskStatus(runtime,started.taskId);if(original.promptId==='prompt-2')break;await sleep(50);}
- assert.equal(original.promptId,'prompt-2');
+ for(let n=0;n<1200;n++){original=JSON.parse(readFileSync(join(runtime,'tasks',started.taskId+'.json')));if(original.promptId==='prompt-2'||original.status==='failed')break;await sleep(50);}
+ assert.equal(original.promptId,'prompt-2',JSON.stringify(original));
  process.kill(original.workerPid);await sleep(300);
  const file=join(runtime,'tasks',started.taskId+'.json');original=JSON.parse(readFileSync(file));original.heartbeat='2000-01-01T00:00:00Z';writeJson(file,original);
  await resumeTask(runtime,started.taskId);
@@ -249,3 +250,29 @@ test('serial local recovery preserves first download and never resubmits either 
  assert.deepEqual(await http(endpoint,'/history/prompt-3'),{});
  await shutdown(settings);
 },1500));
+
+test('会话文生图走真实worker管线，重复请求只取原运行且不创建项目任务',()=>fixture(async({settings,runtime,root,endpoint})=>{
+ const before=hash(readObject(root,'cellgame','task','skills'));
+ const request={sessionId:'session-one',requestId:'message-one',mode:'generate',prompt:'一只白色小猫',backend:'local',size:'512*512',count:1};
+ const started=await startConversation(request,settings);assert.ok(started.runId,JSON.stringify(started));
+ assert.equal((await startConversation(request,settings)).runId,started.runId);
+ await assert.rejects(startConversation({...request,prompt:'不同描述'},settings),/重投/);
+ const done=await waitTask(runtime,started.runId,{timeoutSeconds:20});assert.equal(done.status,'succeeded',done.error);
+ const result=await conversationStatus(settings,request.sessionId,request.requestId);
+ assert.equal(result.status,'succeeded');assert.equal(result.artifacts.length,1);assert.ok(existsSync(result.artifacts[0].path));
+ const cli=spawnSync(process.execPath,[fileURLToPath(new URL('../art-workshop.mjs',import.meta.url)),'conversation','status','--config',settings.file,'--session',request.sessionId,'--request',request.requestId],{encoding:'utf8'});assert.equal(cli.status,0,cli.stdout+cli.stderr);assert.equal(JSON.parse(cli.stdout).runId,started.runId);
+ assert.equal(hash(readObject(root,'cellgame','task','skills')),before);assert.equal(existsSync(join(root,'projects/conversation-session-one')),false);
+ const state=await http(endpoint,'/history/prompt-1');assert.ok(state['prompt-1']);assert.deepEqual(await http(endpoint,'/history/prompt-2'),{});
+}));
+test('会话编辑引用图片固定哈希，无登记请求可确认未提交，未提交失败不自动重投',()=>fixture(async({settings,runtime,root,template})=>{
+ template['3']={class_type:'VAELoader',inputs:{vae_name:'vae.safetensors'}};template['10']={class_type:'LoadImage',inputs:{image:''}};writeJson(join(root,'workflow.json'),template);
+ settings.generation.backends.local.bindings.image={node:'10',input:'image'};settings.generation.backends.local.bindings.vae={node:'3',input:'vae_name'};
+ const image=join(root,'source.png');writeFileSync(image,await sharp({create:{width:512,height:512,channels:3,background:'#ffffff'}}).png().toBuffer());
+ const request={sessionId:'session-edit',requestId:'message-edit',mode:'edit',prompt:'把背景改为蓝色',images:[{path:image,purpose:'底图，保留主体'}],preserve:'主体轮廓',backend:'local'};
+ const plan=await compileConversation(request,settings);assert.equal(plan.scope.kind,'conversation');assert.equal(plan.refs.length,1);
+ const started=await startConversation(request,settings);assert.ok(started.runId,JSON.stringify(started));
+ const done=await waitTask(runtime,started.runId,{timeoutSeconds:20});assert.equal(done.status,'succeeded',done.error);
+ assert.equal((await conversationStatus(settings,'session-edit','not-started')).preSubmission,true);
+ const broken={...request,requestId:'message-broken',count:0};await assert.rejects(startConversation(broken,settings));
+ assert.equal((await controlConversation(settings,'session-edit','message-broken','cancel')).stopConfirmed,true);
+}));

@@ -15,8 +15,9 @@ test('EPERM from a recycled PID is not treated as the worker still being alive',
   process.kill=()=>{const error=new Error('EPERM');error.code='EPERM';throw error;};
   try{
     const task={workerPid:4242,status:'failed',finishedAt:'2026-10-21T03:56:16.310Z',workerIdentity:{pid:4242,exe:'node.exe',created:'2026-10-21T03:53:14.881Z'}};
-    assert.equal(workerAlive(task,()=>({pid:4242,exe:'other.exe',created:'2026-10-22T07:00:11.892Z'})),false);
-    assert.equal(workerAlive(task,()=>null),true);
+    assert.equal(workerAlive(task,()=>({state:'running',identity:{pid:4242,exe:'other.exe',created:'2026-10-22T07:00:11.892Z'}})),false);
+    assert.equal(workerAlive(task,()=>({state:'unknown'})),true);
+    assert.equal(workerAlive(task,()=>({state:'missing'})),false);
   }finally{process.kill=original;}
 });
 
@@ -30,10 +31,10 @@ test('recycled worker PID cannot block shutdown or erase remote uncertainty',asy
   assert.equal(taskView(task).upstreamExecutionUnknown,true);
   await shutdown(settings,{closeServices:false});
   assert.deepEqual(stateRead(taskFile(runtime,task.taskId)),task);
-  assert.equal(workerAlive(task,()=>null),true,'unreadable identity fails closed');
+  assert.equal(workerAlive(task,()=>({state:'unknown'})),true,'unreadable identity fails closed');
   const identity={pid:process.pid,created:'2020-01-01',command:'worker'};
-  assert.equal(workerAlive({...task,workerIdentity:identity},()=>identity),true);
-  assert.equal(workerAlive({...task,workerIdentity:identity},()=>({...identity,created:'2021-01-01'})),false);
+  assert.equal(workerAlive({...task,workerIdentity:identity},()=>({state:'running',identity})),true);
+  assert.equal(workerAlive({...task,workerIdentity:identity},()=>({state:'running',identity:{...identity,created:'2021-01-01'}})),false);
   assert.equal(executionSettled({...task,kind:'generation'}),false);
  }finally{rmSync(root,{recursive:true,force:true});}
 });

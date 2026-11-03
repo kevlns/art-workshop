@@ -26,7 +26,7 @@
 | generation | defaultBackend、defaults、backends |
 | analysisModel | 分析模型默认值，连接仍需单独就绪 |
 | defaultProject | 未传 --project 时的工程 ID，不跨工程回退 |
-| autoSyncSkills | 默认 true；实际分析、采用、运行入口可刷新随包技能，查询与 dry 不刷新 |
+| autoSyncSkills | 旧配置兼容读取，已停用；安装和运行不向外部 Agent 写文件 |
 
 Vant 显式传入绑定，把工程对象、参考、批次及图片集中在工程 `.vant/art`。独立 CLI 默认 workspace 可以容纳多个工程，不自动绑定当前 Git 工程。普通输入、计划和报告相对路径以 workspace 为基准；`check RUN` 相对批次以 output 为基准。参考源文件建议提供绝对路径。
 

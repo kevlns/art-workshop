@@ -115,20 +115,19 @@ v-cli art agent docs
 - 查询与预演不创建参考目录
 - 无网络调用
 
-### agent init
+### agent export
 
-将随包 skill 同步到目标下已有 Agent 技能目录
+显式导出技能到指定宿主目录；默认安装不导出
 
 ```sh
-v-cli art agent init [--directory <dir>] [--dry]
+v-cli art agent export --host codex --directory <DIR> [--dry]
 ```
 
-- `--directory <dir>`：同步目标根目录，默认 cwd
-- `--dry`：只读预演，不联网、不创建参考目录
+- `--host <HOST>`：目标宿主 codex 或 claude
+- `--directory <DIR>`：明确指定导出目录
+- `--dry`：仅预演
 
-- 查询与预演不创建参考目录
-- 无网络调用
-- 覆盖同名随包 skill 和 runtime.json，保留扩展文件
+- 仅显式请求时导出，不扫描用户目录，不生成安装绝对路径回执
 
 ### list
 
@@ -1060,6 +1059,115 @@ v-cli art style sources
 - `--input <value>`：来源目录列表 JSON 文件
 
 - 冻结风格包只读；不覆盖已有文件；修改请派生草稿；只导出明确引用的参考图片
+
+### conversation start
+
+编译并幂等提交会话出图，不创建项目任务
+
+```sh
+v-cli art conversation start --config <path> --input <path>
+```
+
+- `--config <path>`：隔离配置路径
+- `--input <path>`：结构化会话请求 JSON
+
+- bounded
+- idempotent
+- no-job-create
+
+### conversation status
+
+查询原运行与真实产物
+
+```sh
+v-cli art conversation status --config <path> --session <id> --request <id>
+```
+
+- `--config <path>`：隔离配置路径
+- `--session <id>`：会话身份
+- `--request <id>`：原请求身份
+
+- bounded
+- idempotent
+- no-job-create
+
+### conversation cancel
+
+取消原运行
+
+```sh
+v-cli art conversation cancel --config <path> --session <id> --request <id>
+```
+
+- `--config <path>`：隔离配置路径
+- `--session <id>`：会话身份
+- `--request <id>`：原请求身份
+
+- bounded
+- idempotent
+- no-job-create
+
+### conversation resume
+
+仅恢复原上游身份，不重新提交
+
+```sh
+v-cli art conversation resume --config <path> --session <id> --request <id>
+```
+
+- `--config <path>`：隔离配置路径
+- `--session <id>`：会话身份
+- `--request <id>`：原请求身份
+
+- bounded
+- idempotent
+- no-job-create
+
+### conversation close
+
+宿主退出时停止本请求的worker，保留外部共享服务
+
+```sh
+v-cli art conversation close --config <path> --session <id> --request <id>
+```
+
+- `--config <path>`：隔离配置路径
+- `--session <id>`：会话身份
+- `--request <id>`：原请求身份
+
+- bounded
+- idempotent
+- no-job-create
+
+### style migration-complete
+
+校验当前迁移草稿并完成配置迁移；input 为 {note}，不分析、不生成或定版
+
+```sh
+v-cli art style migration-complete
+```
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+- `--input <file>`：JSON {rules,summary,note}；rules 为完整规则数组，每条 id/scope/strength/instruction/when，avoid 可含 negative 抽象排除表达数组
+
+- 查询不写入；修改验证 revision、归属和停止确认；冻结风格只读
+
+### job migration-complete
+
+校验当前迁移草稿并完成配置迁移；input 为 {note}，不分析、不生成或定版
+
+```sh
+v-cli art job migration-complete
+```
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+- `--input <file>`：JSON {rules,summary,note}；rules 为完整规则数组，每条 id/scope/strength/instruction/when，avoid 可含 negative 抽象排除表达数组
+
+- 查询不写入；修改验证 revision、归属和停止确认；冻结风格只读
 
 ## 结果验证
 
