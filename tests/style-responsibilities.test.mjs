@@ -67,10 +67,10 @@ test('old frozen contracts remain inspectable but cannot be adopted or executed'
  const historical=structuredClone(current);delete historical.snapshots.core.schemaVersion;delete historical.planHash;historical.planHash=hash(historical);
  assert.doesNotThrow(()=>validatePlan(historical),'history still verifies its original hash');
  assert.throws(()=>executePlan(historical,historical.items,{dry:true}),/旧风格计划/);
- assert.throws(()=>assertPlanCurrent(current,settings),/旧风格核心/);
+ assert.throws(()=>assertPlanCurrent(current,settings),/旧风格核心|格式弃用/);
  assert.equal(readFileSync(file,'utf8'),original);
 }));
-test('removed shape references stay visible and require explicit mapping on an independent draft',()=>fixture(async(root,settings)=>{
+test('removed shape references stay visible and can only be migrated through a new current draft',()=>fixture(async(root,settings)=>{
  const source=join(root,'source.png');await sharp({create:{width:8,height:8,channels:4,background:'#c80'}}).png().toFile(source);
  const derived=await deriveObject(settings,'cellgame','style','cellgame',1);
  let draft=await importReference(settings,'cellgame','style',derived.id,1,{source,category:'rendering'});
@@ -78,10 +78,10 @@ test('removed shape references stay visible and require explicit mapping on an i
  const original=readFileSync(join(root,'projects/cellgame/styles/cellgame/core.json'),'utf8');
  assert.deepEqual(styleView(root,draft).compatibility.pendingReferences,[draft.references[0].id]);
  assert.throws(()=>analysisInput(settings,draft),/明确重新分类|先明确重新分类/);
- const mapped=await updateReference(settings,'cellgame','style',draft.id,draft.revision,draft.references[0].id,{category:'rendering',note:'只看绘画笔触，不继承轮廓'});
- assert.equal(styleView(root,mapped).compatibility.usable,true);
- const preview=await analyzeStyle({projectId:'cellgame',input:analysisInput(settings,mapped),root,refsDir:root,dry:true});
- assert.match(JSON.stringify(preview.requests),/具体主体|轮廓/);
+ await assert.rejects(updateReference(settings,'cellgame','style',draft.id,draft.revision,draft.references[0].id,{category:'rendering',note:'只看绘画笔触，不继承轮廓'}),/格式弃用/);
+ const migrated=await deriveObject(settings,'cellgame','style',draft.id,draft.revision);
+ assert.equal(migrated.migration.status,'pending');assert.deepEqual(migrated.references,[]);
+ assert.equal(styleView(root,migrated).format.status,'current');
  assert.equal(readFileSync(join(root,'projects/cellgame/styles/cellgame/core.json'),'utf8'),original);
- assert.deepEqual(readFileSync(source),readFileSync(join(root,'projects/cellgame/styles',mapped.id,mapped.references[0].path)));
+ assert.deepEqual(readFileSync(source),readFileSync(join(root,'projects/cellgame/styles',migrated.id,'migration/resources/0.png')));
 }));

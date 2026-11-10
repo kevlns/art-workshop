@@ -12,6 +12,8 @@
 
 ### 配置入口
 
+本页的全局配置默认属于图片通道，`image` 前缀与旧命令使用同一份配置。视频通道显式绑定工程根目录，模型和工作流单独保存到 `.vant/config/video.json`，任务及成片保存在 `.vant/video`；不会把视频配置写入图片全局设置。详见 [图片与视频通道](channels.md)。
+
 `config path/show/init/validate` 分别查询位置、生效配置、创建模板和校验。`config init` 不覆盖已有文件。查询、发现和预演不创建参考目录；`config validate` 不联网、不启动服务。
 
 配置位置优先级为 CLI `--config`、`ART_WORKSHOP_CONFIG`、`<VANT_HOME 或 ~/.vant>/tools/art-workshop/config.json`。资源路径优先级为 CLI 路径选项、配置 paths、默认路径。配置文件和资源均须位于工具安装目录之外。
@@ -26,7 +28,7 @@
 | generation | defaultBackend、defaults、backends |
 | analysisModel | 分析模型默认值，连接仍需单独就绪 |
 | defaultProject | 未传 --project 时的工程 ID，不跨工程回退 |
-| autoSyncSkills | 默认 true；实际分析、采用、运行入口可刷新随包技能，查询与 dry 不刷新 |
+| autoSyncSkills | 旧配置兼容读取，已停用；安装和运行不向外部 Agent 写文件 |
 
 Vant 显式传入绑定，把工程对象、参考、批次及图片集中在工程 `.vant/art`。独立 CLI 默认 workspace 可以容纳多个工程，不自动绑定当前 Git 工程。普通输入、计划和报告相对路径以 workspace 为基准；`check RUN` 相对批次以 output 为基准。参考源文件建议提供绝对路径。
 
@@ -66,6 +68,12 @@ Vant 系统模型配置统一保存 Provider 实例及凭据，工程只引用�
 ### 状态与共享环境
 
 对象变更锁和执行登记归 workspace/.runtime；更换配置文件不产生另一套占用。共享服务登记归用户数据根的 state/art-services，环境索引、接入日志和证据归 state/art-environments。安装根保存模型、程序与 vant.art.config.json，控制数据写入用户 .vant 数据目录。
+
+### 风格规则与样张
+
+风格的 config.rules 是可编辑配置，保存有效规则时维护当前核心与历史哈希快照，不需要先派生或采用。原始 style/palette/rendering 参考仅用于分析指定关注点；用户通过 style sample-select 认可的候选复制到风格 samples 目录，独立保存文件和规则哈希。候选的样张定版开关将图片加入或移出“风格配置 → 运行时参考”，按图片内容哈希去重。移除关系保留历史文件，不修改用户源图，不调用资产定版或导出。
+
+生成和编辑任务以 config.styleReferenceMode 选择 approved（默认）或 text-only。approved 使用匹配当前规则哈希的样张；从未采用样张时按规则生成并在预案标记 no-samples；已有样张全部过期时拒绝使用。text-only 明确仅使用文字规则。后端不支持图片输入时明确报错，不把已配置样张静默丢弃。打样任务固定 text-only，创建任务后仍需配置模型和执行预案。
 
 
 

@@ -24,7 +24,7 @@ export function checkInvocation(line){
   return command;
 }
 export function checkDocs(){
-  if(readFileSync(join(root,'skills/art-workshop/SKILL.md'),'utf8')!==skillDocs())throw new Error('随包技能与 AGENTS 规范漂移，请运行 npm run docs:generate');
+  for(const skill of manifest.skills??[])if(!existsSync(join(root,skill.path)))throw new Error('技能入口缺失：'+skill.path);
   // Validate every option, including commands not mentioned by a documentation example.
   for(const command of commands){
     if(!Array.isArray(command.path)||!command.path.length)throw new Error('清单命令路径缺失');
@@ -57,7 +57,7 @@ export function checkDocs(){
   if(reference!==commandDocs())throw new Error('命令参考与清单漂移，请运行 npm run docs:generate');
   for(const command of commands)if(!reference.includes(command.path.join(' ')))throw new Error('命令参考遗漏 '+command.path.join(' '));
   const modes=readFileSync(join(root,'docs/modes.md'),'utf8');
-  for(const heading of ['远程文生图','本地内置文生图','本地自定义文生图','远程图编辑','本地 Qwen 2.1 图编辑','风格分析与核心冻结'])if(!modes.includes('## '+heading))throw new Error('缺少模式规范 '+heading);
+  for(const heading of ['远程文生图','本地内置文生图','本地自定义文生图','远程图编辑','本地 Qwen 2.1 图编辑','风格保存、打样与样张定版'])if(!modes.includes('## '+heading))throw new Error('缺少模式规范 '+heading);
   return {ok:true,files:files.length,invocations,jsonExamples};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){

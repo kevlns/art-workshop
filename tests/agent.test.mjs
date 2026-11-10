@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {TOOL_ROOT as ROOT} from '../lib/settings.mjs';
-import {syncSkill,autoSync,agentIndex} from '../lib/agent.mjs';
+import {exportSkill,agentIndex} from '../lib/agent.mjs';
 import {skillDocs} from '../scripts/command-docs.mjs';
 
 test('distributed skill and discovery index use the current authority',()=>fixture(base=>{
@@ -16,11 +16,30 @@ test('distributed skill and discovery index use the current authority',()=>fixtu
  for(const action of ['revise','export','import','sources'])assert.ok(index.modules.find(module=>module.name==='style').actions.includes(action));
 }));
 function fixture(fn){const root=mkdtempSync(join(tmpdir(),'art-workshop-agent-'));try{return fn(root);}finally{rmSync(root,{recursive:true,force:true});}}
-test('随包skill同步到已有目录、默认不创建无关目录',()=>fixture(base=>{mkdirSync(join(base,'.codex/skills'),{recursive:true});const result=syncSkill({directory:base});assert.equal(result.targets.length,1);assert.equal(result.targets[0].action,'updated');assert.equal(existsSync(join(base,'.claude')),false);const runtime=JSON.parse(readFileSync(join(base,'.codex/skills/art-workshop/runtime.json'),'utf8'));assert.equal(runtime.entry,join(ROOT,'art-workshop.mjs'));assert.equal(syncSkill({directory:base}).targets[0].action,'current');}));
-test('dry不写入、无Agent目录正常跳过',()=>fixture(base=>{assert.deepEqual(syncSkill({directory:base}).targets,[]);mkdirSync(join(base,'.agents/skills'),{recursive:true});const result=syncSkill({directory:base,dry:true});assert.equal(result.targets[0].action,'would-update');assert.equal(existsSync(join(base,'.agents/skills/art-workshop')),false);}));
-test('随包内容刷新本地旧skill，项目扩展保留',()=>fixture(base=>{const target=join(base,'.codex/skills/art-workshop');mkdirSync(target,{recursive:true});writeFileSync(join(target,'SKILL.md'),'old');writeFileSync(join(target,'PROJECT.md'),'project notes');syncSkill({directory:base});assert.equal(readFileSync(join(target,'SKILL.md'),'utf8'),readFileSync(join(ROOT,'skills/art-workshop/SKILL.md'),'utf8'));assert.equal(readFileSync(join(target,'PROJECT.md'),'utf8'),'project notes');}));
-test('安装布局不依赖源码位置，移动工具后刷新入口',()=>fixture(base=>{const pkg=join(base,'installed');mkdirSync(pkg);cpSync(join(ROOT,'skills'),join(pkg,'skills'),{recursive:true});mkdirSync(join(base,'.codex/skills'),{recursive:true});syncSkill({directory:base,root:pkg});const file=join(base,'.codex/skills/art-workshop/runtime.json');assert.equal(JSON.parse(readFileSync(file,'utf8')).root,pkg);syncSkill({directory:base,root:ROOT});assert.equal(JSON.parse(readFileSync(file,'utf8')).root,ROOT);}));
-test('自动同步覆盖工作目录、用户目录和自定义CODEX_HOME',()=>fixture(base=>{const cwd=join(base,'project'),home=join(base,'user'),custom=join(base,'custom');for(const dir of [join(cwd,'.claude/skills'),join(home,'.agents/skills'),join(custom,'skills')])mkdirSync(dir,{recursive:true});const result=autoSync({cwd,home,env:{CODEX_HOME:custom}});assert.equal(result.targets.length,3);}));
+test('显式导出保留完整脚本和宿主适配，默认不探测目录',()=>fixture(base=>{
+ assert.throws(()=>exportSkill({directory:base}),/显式/);
+ assert.throws(()=>exportSkill({host:'codex'}),/显式/);
+ const dry=exportSkill({directory:base,host:'codex',dry:true});assert.equal(existsSync(dry.target),false);
+ exportSkill({directory:base,host:'codex'});const target=join(base,'art-workshop');
+ assert.ok(existsSync(join(target,'scripts/getty.py')));assert.ok(existsSync(join(target,'agents/openai.yaml')));
+ assert.equal(existsSync(join(target,'runtime.json')),false);assert.equal(existsSync(join(base,'.codex')),false);
+ writeFileSync(join(target,'PROJECT.md'),'project notes');exportSkill({directory:base,host:'claude'});
+ assert.equal(readFileSync(join(target,'PROJECT.md'),'utf8'),'project notes');
+}));
 test('能力索引包含三个模块、实际工程及任务',()=>fixture(base=>{cpSync(join(ROOT,'tests/fixtures/projects'),join(base,'projects'),{recursive:true});const index=agentIndex(ROOT,base);assert.equal(index.projects[0].id,'cellgame');assert.ok(index.projects[0].jobs.includes('skills'));assert.deepEqual(index.modules.slice(0,3).map(x=>x.name),['style','generate','edit']);}));
-test('CLI发现与预演同步只读，docs可直接读取',()=>fixture(base=>{mkdirSync(join(base,'.codex/skills'),{recursive:true});cpSync(join(ROOT,'tests/fixtures/projects'),join(base,'projects'),{recursive:true});const run=args=>spawnSync(process.execPath,[join(ROOT,'art-workshop.mjs'),...args,'--workspace',base],{cwd:base,encoding:'utf8'});const index=run(['agent','index']);assert.equal(index.status,0,index.stderr);assert.equal(JSON.parse(index.stdout).tool,'art-workshop');const dry=run(['agent','init','--directory',base,'--dry']);assert.equal(dry.status,0,dry.stderr);assert.equal(existsSync(join(base,'.codex/skills/art-workshop')),false);const docs=run(['agent','docs']);assert.equal(docs.status,0,docs.stderr);assert.match(docs.stdout,/风格核心职责/);const init=run(['agent','init','--directory',base]);assert.equal(init.status,0,init.stderr);assert.equal(existsSync(join(base,'.codex/skills/art-workshop/SKILL.md')),true);}));
-test('非法目标不会覆写其他文件',()=>fixture(base=>{mkdirSync(join(base,'.codex/skills'),{recursive:true});writeFileSync(join(base,'.codex/skills/art-workshop'),'keep');assert.throws(()=>syncSkill({directory:base}),/不是普通目录/);assert.equal(readFileSync(join(base,'.codex/skills/art-workshop'),'utf8'),'keep');}));
+test('CLI发现和技能导出预演只读，运行规范从声明的SKILL读取',()=>fixture(base=>{
+ const run=args=>spawnSync(process.execPath,[join(ROOT,'art-workshop.mjs'),...args,'--workspace',base],{cwd:base,encoding:'utf8'});
+ const index=run(['agent','index']);assert.equal(index.status,0,index.stderr);
+ const dry=run(['agent','export','--directory',base,'--host','codex','--dry']);assert.equal(dry.status,0,dry.stdout+dry.stderr);
+ assert.equal(existsSync(join(base,'art-workshop')),false);
+ const docs=run(['agent','docs']);assert.equal(docs.status,0,docs.stderr);assert.equal(docs.stdout.trim(),skillDocs().trim());
+}));
+test('非法目标不会覆写其他文件',()=>fixture(base=>{
+ writeFileSync(join(base,'art-workshop'),'keep');assert.throws(()=>exportSkill({directory:base,host:'codex'}),/不是普通目录/);
+ assert.equal(readFileSync(join(base,'art-workshop'),'utf8'),'keep');
+}));
+test('安装包没有默认同步脚本或外部Agent配置，适配单独保存',()=>{
+ const pkg=JSON.parse(readFileSync(join(ROOT,'package.json'),'utf8'));
+ assert.equal(pkg.scripts.postinstall,undefined);assert.equal(existsSync(join(ROOT,'skills/art-workshop/agents')),false);
+ assert.ok(existsSync(join(ROOT,'adapters/codex/agents/openai.yaml')));
+});

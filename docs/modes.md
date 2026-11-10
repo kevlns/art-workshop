@@ -10,17 +10,23 @@
 
 ## 操作流程
 
-### 风格分析与核心冻结
+### 风格保存、打样与样张定版
 
-创建风格草稿，按 style、palette、rendering 分类导入专属参考。讨论澄清意图并回填草稿。style analyze --dry 只编译；实际 analyze 创建 taskId 与独立证据，逐图观察后生成风格报告。
+创建风格，按 style、palette、rendering 分类导入分析参考。讨论澄清意图，按当前 revision 保存完整配置；规则可随时增删修改，有效 rules 保存后即可用于任务，无需派生或采用。style analyze 是可选辅助：--dry 只编译，实际 analyze 创建 taskId 与独立证据，逐图观察后生成建议报告。
 
-报告含 summary、observations、recommendation、issues、notes、decisions 和 provenance。recommendation.rules 是可以独立使用的精炼规范，不含讨论过程。notes 不阻塞采用；issues 给出可执行选项。用户选择后通过 style resolve 记录决定，无需重新分析。style read 的 review.ready 为采用条件，不以聊天中的“可采用”作为事实。
+报告含 summary、observations、recommendation、issues、notes、decisions 和 provenance。recommendation.rules 是精炼建议，不自动替换已保存的 config.rules。issues 给出实质矛盾的可执行选项，用户选择后可通过 style resolve 记录；review.ready 只表示分析建议可采用，不是直接保存规则的前置条件。
 
-已有规则可按明确要求通过 style revise 修订，沿用未改变的证据，不重复分析。派生当前版本的冻结风格时保留结构化规则与独立参考，并标记沿用原冻结证据；不继承核心、授权、执行与对话。
+按明确要求使用 style update 保存规则，不为普通措辞修改重复分析；style revise 保留兼容入口并记录用户修订依据。每次保存维护当前核心与按哈希保留的历史快照，历史运行不覆写。derive 仅用于用户需要独立风格时，不是修改的必经步骤。
 
 需要新增参考证据或分析复核时，复核复用未变化的图片观察并接收已有方案和决定。错误保留草稿和证据，本地完成后允许编辑；云端计算不确定性单独提示，见 [状态与恢复](troubleshooting.md)。
 
-style adopt 冻结当前有效规则与决策证据，style recover 只恢复原已授权事务。正式风格只读，修改使用 derive。任务动态参考仍使用 job analyze，不替代静态风格。
+使用 style sample-job --id STYLE --revision N 创建仅规则打样任务，--count 可指定每个主体生成 1～4 张候选，配置模型后按普通计划与执行流程出图；创建任务不自动启动生成。用户认可候选时使用 style sample-select --id STYLE --revision N --job JOB --run RUN --candidate HASH 完成样张定版，加入当前风格的运行时参考；style sample-remove --sample SAMPLE 移除采用关系并保留历史文件。
+
+样张绑定 rulesHash。任务 styleReferenceMode 默认 approved：从未采用样张时按文字规则生成并在预案标识 no-samples；已有样张全部过期时拒绝使用，混合新旧样张只使用当前规则匹配项；text-only 明确仅使用规则。原始分主题参考不会自动上传。模型不支持样张输入时明确报错，可显式切换 text-only。多图输入的风格用途说明不保证完全隔离主体与构图，需要真实出图验证。
+
+style adopt 和 style recover 仅保留既有报告采用及中断事务的兼容路径，不是规则保存门槛。任务动态参考仍使用 job analyze。
+
+候选图片使用“样张定版 / 取消样张定版”开关，对应兼容 API style sample-select / sample-remove；这只维护当前风格的运行时参考，不执行资产定版或导出。定版图片在“风格配置 → 运行时参考”显示，按图片内容哈希去重，重复图片不会新增一份。任务的 approved/text-only 决定是否使用运行时参考，不为每张参考另设启用开关。
 
 ### 远程文生图
 
@@ -28,7 +34,7 @@ style adopt 冻结当前有效规则与决策证据，style recover 只恢复原
 
 型号的生成/编辑模式、输入数量、尺寸、提示词与参数限制统一来自 [模型目录](remote-models.md)。不能把 URL+Key 或 image 标签视为已经适配；不能以注册型号推定账号权限。
 
-生成提示词顺序为用途与主体、静态冻结风格、动态主体与关系、动态构图与背景、交付规格、必须可读特征及参考观察。风格的无条件抽象负向表达独立编译；有条件的排除完整保留在条件段。适配器根据模型能力保留独立负向参数或明确并入排除段。编辑提示分别列出修改与保留要求；同一范围可修改局部并保留其他特征，不按标签重叠直接判错。
+生成提示词顺序为用途与主体、已保存风格规则、动态主体与关系、动态构图与背景、交付规格、必须可读特征及参考观察。风格的无条件抽象负向表达独立编译；有条件的排除完整保留在条件段。适配器根据模型能力保留独立负向参数或明确并入排除段。编辑提示分别列出修改与保留要求；同一范围可修改局部并保留其他特征，不按标签重叠直接判错。
 
 透明输出通过 {type:"transparent"} 配置，计划绑定 PNG 处理契约；原图保留，候选使用校验后的透明 PNG。同色细节和半透明材质存在色键处理局限，不能承诺任意抠图质量。
 

@@ -22,11 +22,17 @@
 
 ## 执行约束
 
-相对计划、输入和报告路径以 workspace 为基准；运行批次以 output 为基准。参考导入的源文件建议使用绝对路径。查询与预演不初始化参考目录。
+`image` 与 `video` 是独立二级通道。图片可使用 `v-cli art image ...`，旧图片根命令与原 `art.*` 能力身份保留。新 SDK 暴露 `art.image-*` 和 `art.video-*`；已安装旧版 v-cli 不会自动获得新能力。
 
-冻结计划不能覆盖 project/job/core/backend/explore。`--all-variants` 与 `--variant` 互斥。`--retry-run` 只用于原计划的明确失败项，不能混用 dry/item/variant/offset/limit。远程恢复只用 `task resume`，不会补发未提交项。
+图片的相对计划、输入和报告路径以 workspace 为基准；运行批次以 output 为基准。参考导入的源文件建议使用绝对路径。查询与预演不初始化参考目录。
 
-前台运行也登记 taskId；后台启动成功仅表示收到执行身份。状态、停止确认和实际产物分别核对。详见 [任务控制](troubleshooting.md)、[模型架构](model-architecture.md) 和 [部署](deployment.md)。
+视频的 `--workspace` 必须指向工程根目录，数据在 `.vant/video`、设置在 `.vant/config/video.json`；不能传图片工坊存储子目录。`--input` 只能读取该工程内的 JSON 对象文件。先读取 `video describe` 中的业务 schema，保留真实 revision/expectedRevision 与稳定 requestId。
+
+所有视频写命令必须传 `--operation`。非 video-UUID 的上层身份会稳定映射成 video-UUID，并在回执保留 originOperationId。同身份同请求只重读回执；未知结果与未决指纹使用 DSH/CLI 共享目录阻止换入口重投。`video execution status --operation <id>` 只读核对原回执；`submitted` 只证明提交身份，不证明视频已完成。
+
+冻结图片计划不能覆盖 project/job/core/backend/explore。`--all-variants` 与 `--variant` 互斥。`--retry-run` 只用于原计划的明确失败项，不能混用 dry/item/variant/offset/limit。图片远程恢复只用 `task resume`，不会补发未提交项。
+
+前台图片运行也登记 taskId；后台启动成功仅表示收到执行身份。状态、停止确认和实际产物分别核对。详见 [任务控制](troubleshooting.md)、[模型架构](model-architecture.md) 和 [部署](deployment.md)。
 
 ## 参数与输出
 
@@ -38,6 +44,8 @@
 v-cli art help
 ```
 
+结构化能力：`art.help`。
+
 
 - 无配置读取、目录初始化、网络或模型调用
 
@@ -48,6 +56,8 @@ v-cli art help
 ```sh
 v-cli art config path
 ```
+
+结构化能力：`art.config-path`。
 
 
 - 查询与预演不创建参考目录
@@ -61,6 +71,8 @@ v-cli art config path
 v-cli art config show
 ```
 
+结构化能力：`art.config-show`。
+
 
 - 查询与预演不创建参考目录
 - 无网络调用
@@ -72,6 +84,8 @@ v-cli art config show
 ```sh
 v-cli art config init
 ```
+
+结构化能力：`art.config-init`。
 
 
 - 查询与预演不创建参考目录
@@ -86,6 +100,8 @@ v-cli art config init
 v-cli art refs guide [--project <id>]
 ```
 
+结构化能力：`art.refs-guide`。
+
 - `--project <id>`：工程 ID；未指定时使用本地 defaultProject，不跨工程回退
 
 - 查询与预演不创建参考目录
@@ -99,6 +115,8 @@ v-cli art refs guide [--project <id>]
 v-cli art agent index
 ```
 
+结构化能力：`art.agent-index`。
+
 
 - 查询与预演不创建参考目录
 - 无网络调用
@@ -111,24 +129,27 @@ v-cli art agent index
 v-cli art agent docs
 ```
 
+结构化能力：`art.agent-docs`。
+
 
 - 查询与预演不创建参考目录
 - 无网络调用
 
-### agent init
+### agent export
 
-将随包 skill 同步到目标下已有 Agent 技能目录
+显式导出技能到指定宿主目录；默认安装不导出
 
 ```sh
-v-cli art agent init [--directory <dir>] [--dry]
+v-cli art agent export --host codex --directory <DIR> [--dry]
 ```
 
-- `--directory <dir>`：同步目标根目录，默认 cwd
-- `--dry`：只读预演，不联网、不创建参考目录
+结构化能力：`art.agent-export`。
 
-- 查询与预演不创建参考目录
-- 无网络调用
-- 覆盖同名随包 skill 和 runtime.json，保留扩展文件
+- `--host <HOST>`：目标宿主 codex 或 claude
+- `--directory <DIR>`：明确指定导出目录
+- `--dry`：仅预演
+
+- 仅显式请求时导出，不扫描用户目录，不生成安装绝对路径回执
 
 ### list
 
@@ -137,6 +158,8 @@ v-cli art agent init [--directory <dir>] [--dry]
 ```sh
 v-cli art list
 ```
+
+结构化能力：`art.list`。
 
 
 - 查询与预演不创建参考目录
@@ -149,6 +172,8 @@ v-cli art list
 ```sh
 v-cli art style analyze
 ```
+
+结构化能力：`art.style-analyze`。
 
 - `--project <id>`：工程身份
 - `--id <id>`：对象身份
@@ -166,6 +191,8 @@ v-cli art style analyze
 v-cli art style validate [--project <id>] [--report <file>]
 ```
 
+结构化能力：`art.style-validate`。
+
 - `--project <id>`：工程 ID；未指定时使用本地 defaultProject，不跨工程回退
 - `--report <file>`：风格报告 JSON，相对路径基于 workspace
 
@@ -179,6 +206,8 @@ v-cli art style validate [--project <id>] [--report <file>]
 ```sh
 v-cli art style show [--project <id>] [--core <id>]
 ```
+
+结构化能力：`art.style-show`。
 
 - `--project <id>`：工程 ID；未指定时使用本地 defaultProject，不跨工程回退
 - `--core <id>`：工程内冻结核心 ID；显式选择与任务绑定冲突时拒绝执行
@@ -194,6 +223,8 @@ v-cli art style show [--project <id>] [--core <id>]
 v-cli art generate show [--project <id>] [--job <id>]
 ```
 
+结构化能力：`art.generate-show`。
+
 - `--project <id>`：工程 ID；未指定时使用本地 defaultProject，不跨工程回退
 - `--job <id>`：工程内任务 ID
 
@@ -207,6 +238,8 @@ v-cli art generate show [--project <id>] [--job <id>]
 ```sh
 v-cli art generate plan [--project <id>] [--job <id>] [--core <id>] [--out <file>]
 ```
+
+结构化能力：`art.generate-plan`。
 
 - `--project <id>`：工程 ID；未指定时使用本地 defaultProject，不跨工程回退
 - `--job <id>`：工程内任务 ID
@@ -225,6 +258,8 @@ v-cli art generate plan [--project <id>] [--job <id>] [--core <id>] [--out <file
 ```sh
 v-cli art generate run [--plan <file>] [--project <id>] [--job <id>] [--core <id>] [--item <id>] [--variant <id>] [--explore] [--offset <n>] [--limit <n>] [--dry]
 ```
+
+结构化能力：`art.generate-start`。
 
 - `--plan <file>`：冻结计划文件；不能同时指定 project/job/core/explore
 - `--project <id>`：工程 ID；未指定时使用本地 defaultProject，不跨工程回退
@@ -256,6 +291,8 @@ v-cli art generate run [--plan <file>] [--project <id>] [--job <id>] [--core <id
 v-cli art edit show [--project <id>] [--job <id>]
 ```
 
+结构化能力：`art.edit-show`。
+
 - `--project <id>`：工程 ID；未指定时使用本地 defaultProject，不跨工程回退
 - `--job <id>`：工程内任务 ID
 
@@ -269,6 +306,8 @@ v-cli art edit show [--project <id>] [--job <id>]
 ```sh
 v-cli art edit plan [--project <id>] [--job <id>] [--core <id>] [--out <file>]
 ```
+
+结构化能力：`art.edit-plan`。
 
 - `--project <id>`：工程 ID；未指定时使用本地 defaultProject，不跨工程回退
 - `--job <id>`：工程内任务 ID
@@ -287,6 +326,8 @@ v-cli art edit plan [--project <id>] [--job <id>] [--core <id>] [--out <file>]
 ```sh
 v-cli art edit run [--plan <file>] [--project <id>] [--job <id>] [--core <id>] [--item <id>] [--variant <id>] [--explore] [--offset <n>] [--limit <n>] [--dry]
 ```
+
+结构化能力：`art.edit-start`。
 
 - `--plan <file>`：冻结计划文件；不能同时指定 project/job/core/explore
 - `--project <id>`：工程 ID；未指定时使用本地 defaultProject，不跨工程回退
@@ -318,6 +359,8 @@ v-cli art edit run [--plan <file>] [--project <id>] [--job <id>] [--core <id>] [
 v-cli art check RUN
 ```
 
+结构化能力：`art.check`。
+
 - 位置参数 `RUN`：运行目录或 manifest 路径，按 output 解析（必填）
 
 - 只读；不调用模型、不写入评分或定版记录
@@ -329,6 +372,8 @@ v-cli art check RUN
 ```sh
 v-cli art compare BEFORE AFTER
 ```
+
+结构化能力：`art.compare`。
 
 - 位置参数 `BEFORE`：前一份计划/执行记录 JSON，按 workspace 解析（必填）
 - 位置参数 `AFTER`：后一份计划/执行记录 JSON，按 workspace 解析（必填）
@@ -344,6 +389,8 @@ v-cli art compare BEFORE AFTER
 v-cli art task list
 ```
 
+结构化能力：`art.run-list`。
+
 - `--project <id>`：仅列出指定工程运行
 
 - 读取外部运行状态
@@ -355,6 +402,8 @@ v-cli art task list
 ```sh
 v-cli art task status TASK
 ```
+
+结构化能力：`art.run-status`。
 
 - 位置参数 `TASK`：art 任务 ID（必填）
 
@@ -368,6 +417,8 @@ v-cli art task status TASK
 v-cli art task wait TASK
 ```
 
+结构化能力：`art.run-wait`。
+
 - 位置参数 `TASK`：art 任务 ID（必填）
 - `--timeout <seconds>`：等待秒数，默认 3600
 
@@ -380,6 +431,8 @@ v-cli art task wait TASK
 ```sh
 v-cli art task cancel TASK
 ```
+
+结构化能力：`art.run-cancel`。
 
 - 位置参数 `TASK`：art 任务 ID（必填）
 
@@ -395,6 +448,8 @@ v-cli art task cancel TASK
 v-cli art shutdown
 ```
 
+结构化能力：`art.shutdown`。
+
 
 - 停止配置范围内所有任务
 - 只取消关联任务；共享队列仍有其他任务时保留服务
@@ -409,6 +464,8 @@ v-cli art shutdown
 v-cli art config validate
 ```
 
+结构化能力：`art.config-validate`。
+
 - `--backend <id>`：仅检查指定后端
 
 - 只读校验，不启动服务、不调用模型
@@ -420,6 +477,8 @@ v-cli art config validate
 ```sh
 v-cli art doctor
 ```
+
+结构化能力：`art.doctor`。
 
 - `--backend <id>`：仅检查指定后端
 - `--start`：无可用服务时按配置启动；不采样，检查后服务保留
@@ -436,6 +495,8 @@ v-cli art doctor
 v-cli art workflow list
 ```
 
+结构化能力：`art.workflow-list`。
+
 
 - 读取随包工作流清单，不依赖合法用户配置、不补 refs、不调用模型
 
@@ -447,10 +508,12 @@ v-cli art workflow list
 v-cli art style create
 ```
 
+结构化能力：`art.style-create`。
+
 - `--project <id>`：工程身份
 - `--input <file>`：结构化配置文件
 
-- 查询不写入；修改验证 revision、归属和停止确认；冻结风格只读
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
 
 ### style list
 
@@ -460,9 +523,11 @@ v-cli art style create
 v-cli art style list
 ```
 
+结构化能力：`art.style-list`。
+
 - `--project <id>`：工程身份
 
-- 查询不写入；修改验证 revision、归属和停止确认；冻结风格只读
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
 
 ### style read
 
@@ -472,25 +537,29 @@ v-cli art style list
 v-cli art style read
 ```
 
+结构化能力：`art.style-read`。
+
 - `--project <id>`：工程身份
 - `--id <id>`：对象身份
 
-- 查询不写入；修改验证 revision、归属和停止确认；冻结风格只读
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
 
 ### style update
 
-校验预期版本及空闲状态后更新对象
+保存风格名称、规则与配置；已保存风格可随时修改，更新当前执行版本并保留历史快照
 
 ```sh
 v-cli art style update
 ```
+
+结构化能力：`art.style-update`。
 
 - `--project <id>`：工程身份
 - `--id <id>`：对象身份
 - `--revision <number>`：预期对象版本
 - `--input <file>`：结构化配置文件
 
-- 查询不写入；修改验证 revision、归属和停止确认；冻结风格只读
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
 
 ### style resolve
 
@@ -500,27 +569,31 @@ v-cli art style update
 v-cli art style resolve
 ```
 
+结构化能力：`art.style-resolve`。
+
 - `--project <id>`：工程身份
 - `--id <id>`：对象身份
 - `--revision <number>`：预期对象版本
 - `--input <file>`：结构化配置文件
 
-- 查询不写入；修改验证 revision、归属和停止确认；冻结风格只读
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
 
 ### style revise
 
-按用户要求修订完整规则方案；input 为 {rules,summary,note}，沿用未变化的参考证据，不调用模型或自动冻结
+保存完整规则修订 {rules,summary,note}；不要求先有分析报告，不调用模型
 
 ```sh
 v-cli art style revise
 ```
+
+结构化能力：`art.style-revise`。
 
 - `--project <id>`：工程身份
 - `--id <id>`：对象身份
 - `--revision <number>`：预期对象版本
 - `--input <file>`：JSON {rules,summary,note}；rules 为完整规则数组，每条 id/scope/strength/instruction/when，avoid 可含 negative 抽象排除表达数组
 
-- 查询不写入；修改验证 revision、归属和停止确认；冻结风格只读
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
 
 ### style derive
 
@@ -530,11 +603,13 @@ v-cli art style revise
 v-cli art style derive
 ```
 
+结构化能力：`art.style-derive`。
+
 - `--project <id>`：工程身份
 - `--id <id>`：对象身份
 - `--revision <number>`：预期对象版本
 
-- 查询不写入；修改验证 revision、归属和停止确认；冻结风格只读
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
 
 ### style discard
 
@@ -544,11 +619,13 @@ v-cli art style derive
 v-cli art style discard
 ```
 
+结构化能力：`art.style-discard`。
+
 - `--project <id>`：工程身份
 - `--id <id>`：对象身份
 - `--revision <number>`：预期对象版本
 
-- 查询不写入；修改验证 revision、归属和停止确认；冻结风格只读
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
 
 ### job create
 
@@ -558,10 +635,12 @@ v-cli art style discard
 v-cli art job create
 ```
 
+结构化能力：`art.job-create`。
+
 - `--project <id>`：工程身份
 - `--input <file>`：结构化配置文件
 
-- 查询不写入；修改验证 revision、归属和停止确认；冻结风格只读
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
 
 ### job list
 
@@ -571,9 +650,11 @@ v-cli art job create
 v-cli art job list
 ```
 
+结构化能力：`art.job-list`。
+
 - `--project <id>`：工程身份
 
-- 查询不写入；修改验证 revision、归属和停止确认；冻结风格只读
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
 
 ### job read
 
@@ -583,10 +664,12 @@ v-cli art job list
 v-cli art job read
 ```
 
+结构化能力：`art.job-read`。
+
 - `--project <id>`：工程身份
 - `--id <id>`：对象身份
 
-- 查询不写入；修改验证 revision、归属和停止确认；冻结风格只读
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
 
 ### job update
 
@@ -596,12 +679,14 @@ v-cli art job read
 v-cli art job update
 ```
 
+结构化能力：`art.job-update`。
+
 - `--project <id>`：工程身份
 - `--id <id>`：对象身份
 - `--revision <number>`：预期对象版本
 - `--input <file>`：结构化配置文件
 
-- 查询不写入；修改验证 revision、归属和停止确认；冻结风格只读
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
 
 ### job derive
 
@@ -611,11 +696,13 @@ v-cli art job update
 v-cli art job derive
 ```
 
+结构化能力：`art.job-derive`。
+
 - `--project <id>`：工程身份
 - `--id <id>`：对象身份
 - `--revision <number>`：预期对象版本
 
-- 查询不写入；修改验证 revision、归属和停止确认；冻结风格只读
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
 
 ### job discard
 
@@ -624,6 +711,8 @@ v-cli art job derive
 ```sh
 v-cli art job discard
 ```
+
+结构化能力：`art.job-discard`。
 
 - `--project <id>`：工程身份
 - `--id <id>`：对象身份
@@ -639,6 +728,8 @@ v-cli art job discard
 v-cli art job restore
 ```
 
+结构化能力：`art.job-restore`。
+
 - `--project <id>`：工程身份
 - `--id <id>`：对象身份
 - `--revision <number>`：预期对象版本
@@ -647,11 +738,13 @@ v-cli art job restore
 
 ### style adopt
 
-采用当前有效报告并冻结
+兼容旧草稿的报告采用入口；已保存规则保持当前版本，日常修改直接使用 style update
 
 ```sh
 v-cli art style adopt
 ```
+
+结构化能力：`art.style-adopt`。
 
 - `--project <id>`：工程身份
 - `--id <id>`：对象身份
@@ -668,6 +761,8 @@ v-cli art style adopt
 v-cli art style recover
 ```
 
+结构化能力：`art.style-recover`。
+
 - `--project <id>`：工程身份
 - `--id <id>`：对象身份
 
@@ -681,6 +776,8 @@ v-cli art style recover
 v-cli art project init
 ```
 
+结构化能力：`art.project-init`。
+
 - `--project <id>`：工程身份
 - `--input <file>`：结构化配置文件
 
@@ -693,6 +790,8 @@ v-cli art project init
 ```sh
 v-cli art project upgrade
 ```
+
+结构化能力：`art.project-upgrade`。
 
 - `--project <id>`：工程身份
 - `--dry`：预检
@@ -708,6 +807,8 @@ v-cli art project upgrade
 v-cli art reference list
 ```
 
+结构化能力：`art.reference-list`。
+
 - `--project <id>`：工程身份
 - `--kind <style|task>`：对象粒度
 - `--id <id>`：对象身份
@@ -721,6 +822,8 @@ v-cli art reference list
 ```sh
 v-cli art reference import
 ```
+
+结构化能力：`art.reference-import`。
 
 - `--project <id>`：工程身份
 - `--kind <style|task>`：对象粒度
@@ -742,6 +845,8 @@ v-cli art reference import
 v-cli art reference remove
 ```
 
+结构化能力：`art.reference-remove`。
+
 - `--project <id>`：工程身份
 - `--kind <style|task>`：对象粒度
 - `--id <id>`：对象身份
@@ -758,6 +863,8 @@ v-cli art reference remove
 v-cli art candidate list
 ```
 
+结构化能力：`art.candidate-list`。
+
 - `--project <id>`：工程身份
 - `--job <id>`：配置任务身份
 - `--run <id>`：执行批次身份
@@ -772,6 +879,8 @@ v-cli art candidate list
 v-cli art candidate favorites --project <id>
 ```
 
+结构化能力：`art.candidate-favorites`。
+
 - `--project <id>`：工程身份
 
 - 只读；忽略已删除的图片和已归档的任务
@@ -783,6 +892,8 @@ v-cli art candidate favorites --project <id>
 ```sh
 v-cli art candidate favorite --project <id> --job <id> --run <id> --candidate <id> --value <true|false>
 ```
+
+结构化能力：`art.candidate-favorite`。
 
 - `--project <id>`：工程身份
 - `--job <id>`：源任务身份
@@ -800,6 +911,8 @@ v-cli art candidate favorite --project <id> --job <id> --run <id> --candidate <i
 v-cli art candidate finalizations
 ```
 
+结构化能力：`art.candidate-finalizations`。
+
 - `--project <id>`：工程身份
 - `--job <id>`：配置任务身份
 
@@ -812,6 +925,8 @@ v-cli art candidate finalizations
 ```sh
 v-cli art candidate finalize
 ```
+
+结构化能力：`art.candidate-finalize`。
 
 - `--project <id>`：工程身份
 - `--job <id>`：配置任务身份
@@ -832,6 +947,8 @@ v-cli art candidate finalize
 v-cli art candidate delete
 ```
 
+结构化能力：`art.candidate-delete`。
+
 - `--project <id>`：工程身份
 - `--job <id>`：配置任务身份
 - `--run <id>`：执行批次身份
@@ -850,6 +967,8 @@ v-cli art candidate delete
 v-cli art job analyze
 ```
 
+结构化能力：`art.job-analyze`。
+
 - `--project <id>`：工程身份
 - `--id <id>`：对象身份
 - `--revision <number>`：预期对象版本
@@ -866,6 +985,8 @@ v-cli art job analyze
 v-cli art task recover --project P --operation OPERATION
 ```
 
+结构化能力：`art.run-recover`。
+
 - `--project <id>`：原工程身份
 - `--operation <id>`：启动前持久化的原操作身份
 
@@ -879,6 +1000,8 @@ v-cli art task recover --project P --operation OPERATION
 v-cli art reference update --project P --kind style --id ID --revision N --item REF --input PATCH.json
 ```
 
+结构化能力：`art.reference-update`。
+
 - `--project <id>`：工程身份
 - `--kind <kind>`：style 或 task
 - `--id <id>`：对象身份
@@ -886,7 +1009,7 @@ v-cli art reference update --project P --kind style --id ID --revision N --item 
 - `--item <id>`：参考身份
 - `--input <file>`：category/purposes/itemId/note/ignore 的字段补丁；itemId 为 null 时任务共用
 
-- 冻结风格只读；任务不允许静态分类；不修改用户原图；旧证据保留
+- 风格规则可编辑保存；任务不允许静态分类；不修改用户原图；旧证据保留
 
 ### job template
 
@@ -895,6 +1018,8 @@ v-cli art reference update --project P --kind style --id ID --revision N --item 
 ```sh
 v-cli art job template --project <id> --kind <generate|edit> [--core <id>]
 ```
+
+结构化能力：`art.job-template`。
 
 - `--project <id>`：工程身份
 - `--kind <generate|edit>`：任务类型
@@ -909,6 +1034,8 @@ v-cli art job template --project <id> --kind <generate|edit> [--core <id>]
 ```sh
 v-cli art job from-candidate --project <id> --id <task> --run <id> --candidate <id>
 ```
+
+结构化能力：`art.job-from-candidate`。
 
 - `--project <id>`：工程身份
 - `--id <task>`：源任务身份
@@ -925,6 +1052,8 @@ v-cli art job from-candidate --project <id> --id <task> --run <id> --candidate <
 v-cli art task resume TASK
 ```
 
+结构化能力：`art.run-resume`。
+
 - 位置参数 `TASK`：art 任务 ID（必填）
 
 - 写入原任务状态
@@ -939,6 +1068,8 @@ v-cli art task resume TASK
 v-cli art environment guide
 ```
 
+结构化能力：`art.environment-guide`。
+
 - `--guide <id>`：部署指南标识；省略使用环境登记或推荐方案
 
 - 不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务
@@ -951,6 +1082,8 @@ v-cli art environment guide
 v-cli art environment list
 ```
 
+结构化能力：`art.environment-list`。
+
 
 - 不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务
 
@@ -961,6 +1094,8 @@ v-cli art environment list
 ```sh
 v-cli art environment prepare
 ```
+
+结构化能力：`art.environment-prepare`。
 
 - `--directory <value>`：本机环境根目录
 - `--endpoint <value>`：本机 HTTP 服务根地址
@@ -976,6 +1111,8 @@ v-cli art environment prepare
 v-cli art environment inspect
 ```
 
+结构化能力：`art.environment-inspect`。
+
 - `--directory <value>`：本机环境根目录
 - `--endpoint <value>`：本机 HTTP 服务根地址
 - `--guide <id>`：部署指南标识；省略使用环境登记或推荐方案
@@ -989,6 +1126,8 @@ v-cli art environment inspect
 ```sh
 v-cli art environment verify
 ```
+
+结构化能力：`art.environment-verify`。
 
 - `--directory <value>`：本机环境根目录
 - `--endpoint <value>`：本机 HTTP 服务根地址
@@ -1004,6 +1143,8 @@ v-cli art environment verify
 v-cli art environment register
 ```
 
+结构化能力：`art.environment-register`。
+
 - `--directory <value>`：本机环境根目录
 - `--endpoint <value>`：本机 HTTP 服务根地址
 - `--guide <id>`：部署指南标识；省略使用环境登记或推荐方案
@@ -1018,6 +1159,8 @@ v-cli art environment register
 v-cli art environment unregister
 ```
 
+结构化能力：`art.environment-unregister`。
+
 - `--directory <value>`：本机环境根目录
 
 - 不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务
@@ -1029,6 +1172,8 @@ v-cli art environment unregister
 ```sh
 v-cli art style export
 ```
+
+结构化能力：`art.style-export`。
 
 - `--project <value>`：工程身份
 - `--id <value>`：冻结风格身份
@@ -1044,6 +1189,8 @@ v-cli art style export
 v-cli art style import
 ```
 
+结构化能力：`art.style-import`。
+
 - `--project <value>`：目标工程
 - `--file <value>`：风格包文件
 
@@ -1057,9 +1204,2207 @@ v-cli art style import
 v-cli art style sources
 ```
 
+结构化能力：`art.style-sources`。
+
 - `--input <value>`：来源目录列表 JSON 文件
 
 - 冻结风格包只读；不覆盖已有文件；修改请派生草稿；只导出明确引用的参考图片
+
+### conversation start
+
+编译并幂等提交会话出图，不创建项目任务
+
+```sh
+v-cli art conversation start --config <path> --input <path>
+```
+
+结构化能力：`art.conversation-start`。
+
+- `--config <path>`：隔离配置路径
+- `--input <path>`：结构化会话请求 JSON
+
+- bounded
+- idempotent
+- no-job-create
+
+### conversation status
+
+查询原运行与真实产物
+
+```sh
+v-cli art conversation status --config <path> --session <id> --request <id>
+```
+
+结构化能力：`art.conversation-status`。
+
+- `--config <path>`：隔离配置路径
+- `--session <id>`：会话身份
+- `--request <id>`：原请求身份
+
+- bounded
+- idempotent
+- no-job-create
+
+### conversation cancel
+
+取消原运行
+
+```sh
+v-cli art conversation cancel --config <path> --session <id> --request <id>
+```
+
+结构化能力：`art.conversation-cancel`。
+
+- `--config <path>`：隔离配置路径
+- `--session <id>`：会话身份
+- `--request <id>`：原请求身份
+
+- bounded
+- idempotent
+- no-job-create
+
+### conversation resume
+
+仅恢复原上游身份，不重新提交
+
+```sh
+v-cli art conversation resume --config <path> --session <id> --request <id>
+```
+
+结构化能力：`art.conversation-resume`。
+
+- `--config <path>`：隔离配置路径
+- `--session <id>`：会话身份
+- `--request <id>`：原请求身份
+
+- bounded
+- idempotent
+- no-job-create
+
+### conversation close
+
+宿主退出时停止本请求的worker，保留外部共享服务
+
+```sh
+v-cli art conversation close --config <path> --session <id> --request <id>
+```
+
+结构化能力：`art.conversation-close`。
+
+- `--config <path>`：隔离配置路径
+- `--session <id>`：会话身份
+- `--request <id>`：原请求身份
+
+- bounded
+- idempotent
+- no-job-create
+
+### style migration-complete
+
+校验当前迁移草稿并完成配置迁移；input 为 {note}，不分析、不生成或定版
+
+```sh
+v-cli art style migration-complete
+```
+
+结构化能力：`art.style-migration-complete`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+- `--input <file>`：JSON {rules,summary,note}；rules 为完整规则数组，每条 id/scope/strength/instruction/when，avoid 可含 negative 抽象排除表达数组
+
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
+
+### job migration-complete
+
+校验当前迁移草稿并完成配置迁移；input 为 {note}，不分析、不生成或定版
+
+```sh
+v-cli art job migration-complete
+```
+
+结构化能力：`art.job-migration-complete`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+- `--input <file>`：JSON {rules,summary,note}；rules 为完整规则数组，每条 id/scope/strength/instruction/when，avoid 可含 negative 抽象排除表达数组
+
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
+
+### image help
+
+显示命令入口与 v-cli 发现方式
+
+```sh
+v-cli art image help
+```
+
+结构化能力：`art.image-help`。
+
+
+- 无配置读取、目录初始化、网络或模型调用
+
+### image config path
+
+显示本地配置文件路径
+
+```sh
+v-cli art image config path
+```
+
+结构化能力：`art.image-config-path`。
+
+
+- 查询与预演不创建参考目录
+- 无网络调用
+
+### image config show
+
+显示生效的本地配置和外部资源路径
+
+```sh
+v-cli art image config show
+```
+
+结构化能力：`art.image-config-show`。
+
+
+- 查询与预演不创建参考目录
+- 无网络调用
+
+### image config init
+
+配置不存在时创建本地模板；已存在时读取，不覆盖
+
+```sh
+v-cli art image config init
+```
+
+结构化能力：`art.image-config-init`。
+
+
+- 查询与预演不创建参考目录
+- 无网络调用
+- 写入外部本地配置
+
+### image refs guide
+
+解释参考分类目录的用途与推荐图片样式
+
+```sh
+v-cli art image refs guide [--project <id>]
+```
+
+结构化能力：`art.image-refs-guide`。
+
+- `--project <id>`：工程 ID；未指定时使用本地 defaultProject，不跨工程回退
+
+- 查询与预演不创建参考目录
+- 无网络调用
+
+### image agent index
+
+发现模块、工程、核心、任务与随包 skill
+
+```sh
+v-cli art image agent index
+```
+
+结构化能力：`art.image-agent-index`。
+
+
+- 查询与预演不创建参考目录
+- 无网络调用
+
+### image agent docs
+
+输出全部随包模式、配置、工程、命令、诊断与核心指南
+
+```sh
+v-cli art image agent docs
+```
+
+结构化能力：`art.image-agent-docs`。
+
+
+- 查询与预演不创建参考目录
+- 无网络调用
+
+### image agent export
+
+显式导出技能到指定宿主目录；默认安装不导出
+
+```sh
+v-cli art image agent export --host codex --directory <DIR> [--dry]
+```
+
+结构化能力：`art.image-agent-export`。
+
+- `--host <HOST>`：目标宿主 codex 或 claude
+- `--directory <DIR>`：明确指定导出目录
+- `--dry`：仅预演
+
+- 仅显式请求时导出，不扫描用户目录，不生成安装绝对路径回执
+
+### image list
+
+列出外部工作目录中的工程
+
+```sh
+v-cli art image list
+```
+
+结构化能力：`art.image-list`。
+
+
+- 查询与预演不创建参考目录
+- 无网络调用
+
+### image style analyze
+
+草稿风格后台分析
+
+```sh
+v-cli art image style analyze
+```
+
+结构化能力：`art.image-style-analyze`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+- `--dry`：只读编译预演
+- `--operation <id>`：分析启动前登记的稳定操作身份
+
+- dry 不联网、不写参考目录；执行创建运行身份和不可变参考证据；远程停止不确定时保留资源
+
+### image style validate
+
+校验报告及核心规则的一致性
+
+```sh
+v-cli art image style validate [--project <id>] [--report <file>]
+```
+
+结构化能力：`art.image-style-validate`。
+
+- `--project <id>`：工程 ID；未指定时使用本地 defaultProject，不跨工程回退
+- `--report <file>`：风格报告 JSON，相对路径基于 workspace
+
+- 查询与预演不创建参考目录
+- 无网络调用
+
+### image style show
+
+读取当前工程的指定冻结核心并验证完整性
+
+```sh
+v-cli art image style show [--project <id>] [--core <id>]
+```
+
+结构化能力：`art.image-style-show`。
+
+- `--project <id>`：工程 ID；未指定时使用本地 defaultProject，不跨工程回退
+- `--core <id>`：工程内冻结核心 ID；显式选择与任务绑定冲突时拒绝执行
+
+- 查询与预演不创建参考目录
+- 无网络调用
+
+### image generate show
+
+读取文生图任务
+
+```sh
+v-cli art image generate show [--project <id>] [--job <id>]
+```
+
+结构化能力：`art.image-generate-show`。
+
+- `--project <id>`：工程 ID；未指定时使用本地 defaultProject，不跨工程回退
+- `--job <id>`：工程内任务 ID
+
+- 查询与预演不创建参考目录
+- 无网络调用
+
+### image generate plan
+
+编译文生图计划，明确来源及真实请求
+
+```sh
+v-cli art image generate plan [--project <id>] [--job <id>] [--core <id>] [--out <file>]
+```
+
+结构化能力：`art.image-generate-plan`。
+
+- `--project <id>`：工程 ID；未指定时使用本地 defaultProject，不跨工程回退
+- `--job <id>`：工程内任务 ID
+- `--core <id>`：工程内冻结核心 ID；显式选择与任务绑定冲突时拒绝执行
+- `--out <file>`：可选外部输出文件；相对路径基于 workspace
+- `--backend <id>`：新计划选择配置中的远程/本地后端 ID；冻结计划不能覆盖
+
+- 查询与预演不创建参考目录
+- 无网络调用
+- 指定 out 时写入外部计划文件
+
+### image generate run
+
+执行或预演文生图计划
+
+```sh
+v-cli art image generate run [--plan <file>] [--project <id>] [--job <id>] [--core <id>] [--item <id>] [--variant <id>] [--explore] [--offset <n>] [--limit <n>] [--dry]
+```
+
+结构化能力：`art.image-generate-start`。
+
+- `--plan <file>`：冻结计划文件；不能同时指定 project/job/core/explore
+- `--project <id>`：工程 ID；未指定时使用本地 defaultProject，不跨工程回退
+- `--job <id>`：工程内任务 ID
+- `--core <id>`：工程内冻结核心 ID；显式选择与任务绑定冲突时拒绝执行
+- `--item <id>`：选择单体
+- `--variant <id>`：选择候选，默认 base
+- `--explore`：执行全部候选；仅在从任务编译时使用
+- `--offset <n>`：选择起始偏移，默认 0
+- `--limit <n>`：执行数量上限
+- `--dry`：只读预演所选请求；不联网、不启动服务、不上传、不创建参考目录
+- `--backend <id>`：选择统一配置中的后端；冻结计划不允许覆盖
+- `--background`：后台执行并返回 taskId
+- `--all-variants`：执行冻结预案中的全部构图候选；不能与 --variant 同用
+- `--retry-run <id>`：原批次停止已确认后，仅重试明确失败项；成功项不重做
+- `--operation <id>`：启动前持久化的稳定操作身份；丢失回执时按原身份 recover
+
+- 查询与预演不创建参考目录
+- 远程非 dry 通过登记的协议适配器调用模型，可能产生费用，按已有任务授权执行
+- 本地非 dry 可启动任务和 ComfyUI 服务并采样，不调用百炼生图
+- 真实执行写入外部图片、manifest、任务状态和诊断
+- dry 只展示请求，不启动或探测服务、不上传、不生成图片
+
+### image edit show
+
+读取图编辑任务
+
+```sh
+v-cli art image edit show [--project <id>] [--job <id>]
+```
+
+结构化能力：`art.image-edit-show`。
+
+- `--project <id>`：工程 ID；未指定时使用本地 defaultProject，不跨工程回退
+- `--job <id>`：工程内任务 ID
+
+- 查询与预演不创建参考目录
+- 无网络调用
+
+### image edit plan
+
+编译图编辑计划，明确来源及真实请求
+
+```sh
+v-cli art image edit plan [--project <id>] [--job <id>] [--core <id>] [--out <file>]
+```
+
+结构化能力：`art.image-edit-plan`。
+
+- `--project <id>`：工程 ID；未指定时使用本地 defaultProject，不跨工程回退
+- `--job <id>`：工程内任务 ID
+- `--core <id>`：工程内冻结核心 ID；显式选择与任务绑定冲突时拒绝执行
+- `--out <file>`：可选外部输出文件；相对路径基于 workspace
+- `--backend <id>`：新计划选择配置中的远程/本地后端 ID；冻结计划不能覆盖
+
+- 查询与预演不创建参考目录
+- 无网络调用
+- 指定 out 时写入外部计划文件
+
+### image edit run
+
+执行或预演图编辑计划
+
+```sh
+v-cli art image edit run [--plan <file>] [--project <id>] [--job <id>] [--core <id>] [--item <id>] [--variant <id>] [--explore] [--offset <n>] [--limit <n>] [--dry]
+```
+
+结构化能力：`art.image-edit-start`。
+
+- `--plan <file>`：冻结计划文件；不能同时指定 project/job/core/explore
+- `--project <id>`：工程 ID；未指定时使用本地 defaultProject，不跨工程回退
+- `--job <id>`：工程内任务 ID
+- `--core <id>`：工程内冻结核心 ID；显式选择与任务绑定冲突时拒绝执行
+- `--item <id>`：选择单体
+- `--variant <id>`：选择候选，默认 base
+- `--explore`：执行全部候选；仅在从任务编译时使用
+- `--offset <n>`：选择起始偏移，默认 0
+- `--limit <n>`：执行数量上限
+- `--dry`：只读预演所选请求；不联网、不启动服务、不上传、不创建参考目录
+- `--backend <id>`：选择统一配置中的后端；冻结计划不允许覆盖
+- `--background`：后台执行并返回 taskId
+- `--all-variants`：执行冻结预案中的全部构图候选；不能与 --variant 同用
+- `--retry-run <id>`：原批次停止已确认后，仅重试明确失败项；成功项不重做
+- `--operation <id>`：启动前持久化的稳定操作身份；丢失回执时按原身份 recover
+
+- 查询与预演不创建参考目录
+- 远程非 dry 通过登记的协议适配器调用模型，可能产生费用，按已有任务授权执行
+- 本地非 dry 可启动任务和 ComfyUI 服务并采样，不调用百炼生图
+- 真实执行写入外部图片、manifest、任务状态和诊断
+- dry 只展示请求，不启动或探测服务、不上传、不生成图片
+
+### image check
+
+核验运行计划、执行归属、产物与文件哈希；不进行人工评分
+
+```sh
+v-cli art image check RUN
+```
+
+结构化能力：`art.image-check`。
+
+- 位置参数 `RUN`：运行目录或 manifest 路径，按 output 解析（必填）
+
+- 只读；不调用模型、不写入评分或定版记录
+
+### image compare
+
+比较两份计划或执行记录的核心、执行配置和单体变更
+
+```sh
+v-cli art image compare BEFORE AFTER
+```
+
+结构化能力：`art.image-compare`。
+
+- 位置参数 `BEFORE`：前一份计划/执行记录 JSON，按 workspace 解析（必填）
+- 位置参数 `AFTER`：后一份计划/执行记录 JSON，按 workspace 解析（必填）
+
+- 查询与预演不创建参考目录
+- 无网络调用
+
+### image task list
+
+列出任务状态
+
+```sh
+v-cli art image task list
+```
+
+结构化能力：`art.image-run-list`。
+
+- `--project <id>`：仅列出指定工程运行
+
+- 读取外部运行状态
+
+### image task status
+
+查看单次任务及后端 prompt_id
+
+```sh
+v-cli art image task status TASK
+```
+
+结构化能力：`art.image-run-status`。
+
+- 位置参数 `TASK`：art 任务 ID（必填）
+
+- 读取外部运行状态
+
+### image task wait
+
+等待任务结束；超时不取消任务
+
+```sh
+v-cli art image task wait TASK
+```
+
+结构化能力：`art.image-run-wait`。
+
+- 位置参数 `TASK`：art 任务 ID（必填）
+- `--timeout <seconds>`：等待秒数，默认 3600
+
+- 读取外部运行状态
+
+### image task cancel
+
+取消单次任务并等待停止
+
+```sh
+v-cli art image task cancel TASK
+```
+
+结构化能力：`art.image-run-cancel`。
+
+- 位置参数 `TASK`：art 任务 ID（必填）
+
+- 取消单个任务
+- 按 prompt_id 中断本地任务
+- 保留服务进程
+
+### image shutdown
+
+停止当前工作区关联任务，核验共享队列和进程身份后关闭服务
+
+```sh
+v-cli art image shutdown
+```
+
+结构化能力：`art.image-shutdown`。
+
+
+- 停止配置范围内所有任务
+- 只取消关联任务；共享队列仍有其他任务时保留服务
+- 核验进程身份后关闭服务
+- 阻止 shutdown 期间的新任务
+
+### image config validate
+
+校验配置和 API workflow 的结构、连接与参数绑定
+
+```sh
+v-cli art image config validate
+```
+
+结构化能力：`art.image-config-validate`。
+
+- `--backend <id>`：仅检查指定后端
+
+- 只读校验，不启动服务、不调用模型
+
+### image doctor
+
+检测本地 ComfyUI 环境、节点与模型
+
+```sh
+v-cli art image doctor
+```
+
+结构化能力：`art.image-doctor`。
+
+- `--backend <id>`：仅检查指定后端
+- `--start`：无可用服务时按配置启动；不采样，检查后服务保留
+
+- 默认读取本地环境，不启动、不采样、不补齐 refs
+- --start 可启动并保留服务，写状态与日志；不采样
+- 远程后端只校验配置，不检查认证或云端连通性
+
+### image workflow list
+
+列出默认内置工作流及 API/UI 文件位置
+
+```sh
+v-cli art image workflow list
+```
+
+结构化能力：`art.image-workflow-list`。
+
+
+- 读取随包工作流清单，不依赖合法用户配置、不补 refs、不调用模型
+
+### image style create
+
+创建独立草稿对象
+
+```sh
+v-cli art image style create
+```
+
+结构化能力：`art.image-style-create`。
+
+- `--project <id>`：工程身份
+- `--input <file>`：结构化配置文件
+
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
+
+### image style list
+
+列出工程对象及任务展示状态
+
+```sh
+v-cli art image style list
+```
+
+结构化能力：`art.image-style-list`。
+
+- `--project <id>`：工程身份
+
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
+
+### image style read
+
+读取指定对象与版本
+
+```sh
+v-cli art image style read
+```
+
+结构化能力：`art.image-style-read`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
+
+### image style update
+
+校验预期版本及空闲状态后更新对象
+
+```sh
+v-cli art image style update
+```
+
+结构化能力：`art.image-style-update`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+- `--input <file>`：结构化配置文件
+
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
+
+### image style resolve
+
+记录用户选择并修订风格方案；input 为 {issueId,optionId,note}，不重新分析、不自动采用
+
+```sh
+v-cli art image style resolve
+```
+
+结构化能力：`art.image-style-resolve`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+- `--input <file>`：结构化配置文件
+
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
+
+### image style revise
+
+按用户要求修订完整规则方案；input 为 {rules,summary,note}，沿用未变化的参考证据，不调用模型或自动冻结
+
+```sh
+v-cli art image style revise
+```
+
+结构化能力：`art.image-style-revise`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+- `--input <file>`：JSON {rules,summary,note}；rules 为完整规则数组，每条 id/scope/strength/instruction/when，avoid 可含 negative 抽象排除表达数组
+
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
+
+### image style derive
+
+派生独立草稿，保留结构化规则与独立参考；当前冻结证据标记沿用，不继承核心、执行或授权
+
+```sh
+v-cli art image style derive
+```
+
+结构化能力：`art.image-style-derive`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
+
+### image style discard
+
+确认空闲后丢弃草稿并清理所属资源
+
+```sh
+v-cli art image style discard
+```
+
+结构化能力：`art.image-style-discard`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
+
+### image job create
+
+创建独立草稿对象
+
+```sh
+v-cli art image job create
+```
+
+结构化能力：`art.image-job-create`。
+
+- `--project <id>`：工程身份
+- `--input <file>`：结构化配置文件
+
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
+
+### image job list
+
+列出工程对象及任务展示状态
+
+```sh
+v-cli art image job list
+```
+
+结构化能力：`art.image-job-list`。
+
+- `--project <id>`：工程身份
+
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
+
+### image job read
+
+读取指定对象与版本
+
+```sh
+v-cli art image job read
+```
+
+结构化能力：`art.image-job-read`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
+
+### image job update
+
+校验预期版本及空闲状态后更新对象
+
+```sh
+v-cli art image job update
+```
+
+结构化能力：`art.image-job-update`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+- `--input <file>`：结构化配置文件
+
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
+
+### image job derive
+
+派生独立草稿，不继承执行、报告或定版
+
+```sh
+v-cli art image job derive
+```
+
+结构化能力：`art.image-job-derive`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
+
+### image job discard
+
+归档已停止的任务，保留配置、参考、收藏、图片与执行历史；可恢复到活跃列表
+
+```sh
+v-cli art image job discard
+```
+
+结构化能力：`art.image-job-discard`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+
+- 验证 revision、任务归属和停止确认；归档和恢复均保留原配置、收藏与所有历史文件，不自动执行
+
+### image job restore
+
+恢复已归档任务到活跃列表，保留原身份、配置与历史；不重新执行
+
+```sh
+v-cli art image job restore
+```
+
+结构化能力：`art.image-job-restore`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+
+- 验证 revision、任务归属和停止确认；归档和恢复均保留原配置、收藏与所有历史文件，不自动执行
+
+### image style adopt
+
+兼容旧草稿的报告采用入口；已保存规则保持当前版本，日常修改直接使用 style update
+
+```sh
+v-cli art image style adopt
+```
+
+结构化能力：`art.image-style-adopt`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+- `--note <text>`：采用说明
+
+- 来源匹配且冲突已解决；采用事务可恢复，核心只写一次
+
+### image style recover
+
+恢复已授权采用事务
+
+```sh
+v-cli art image style recover
+```
+
+结构化能力：`art.image-style-recover`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+
+- 不重新调用模型；核验核心和事务身份后完成状态提交
+
+### image project init
+
+新建版本 2 工程
+
+```sh
+v-cli art image project init
+```
+
+结构化能力：`art.image-project-init`。
+
+- `--project <id>`：工程身份
+- `--input <file>`：结构化配置文件
+
+- 工程存在拒绝覆写
+
+### image project upgrade
+
+显式一次性工程升级
+
+```sh
+v-cli art image project upgrade
+```
+
+结构化能力：`art.image-project-upgrade`。
+
+- `--project <id>`：工程身份
+- `--dry`：预检
+- `--mapping <file>`：旧共享参考的明确归属映射
+
+- 备份和原子替换，失败回滚；不猜参考归属
+
+### image reference list
+
+查看对象参考
+
+```sh
+v-cli art image reference list
+```
+
+结构化能力：`art.image-reference-list`。
+
+- `--project <id>`：工程身份
+- `--kind <style|task>`：对象粒度
+- `--id <id>`：对象身份
+
+- 只读
+
+### image reference import
+
+导入对象私有图片
+
+```sh
+v-cli art image reference import
+```
+
+结构化能力：`art.image-reference-import`。
+
+- `--project <id>`：工程身份
+- `--kind <style|task>`：对象粒度
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+- `--source <file>`：用户原图
+- `--category <name>`：四类静态参考之一
+- `--purposes <list>`：逗号分隔动态用途
+- `--note <text>`：参考说明
+- `--item-id <id>`：所属出图对象标识；未指定为任务共用
+
+- 校验图片、大小、路径；复制不修改原图；不支持直接参考时拒绝
+
+### image reference remove
+
+移除参考关联
+
+```sh
+v-cli art image reference remove
+```
+
+结构化能力：`art.image-reference-remove`。
+
+- `--project <id>`：工程身份
+- `--kind <style|task>`：对象粒度
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+- `--item <id>`：参考身份
+
+- 移除关联，保留历史证据资源
+
+### image candidate list
+
+查看真实候选及完整性
+
+```sh
+v-cli art image candidate list
+```
+
+结构化能力：`art.image-candidate-list`。
+
+- `--project <id>`：工程身份
+- `--job <id>`：配置任务身份
+- `--run <id>`：执行批次身份
+
+- 只读；校验批次计划和候选身份
+
+### image candidate favorites
+
+网格收藏夹的数据来源，列出工程中仍可用的收藏图片及源任务身份
+
+```sh
+v-cli art image candidate favorites --project <id>
+```
+
+结构化能力：`art.image-candidate-favorites`。
+
+- `--project <id>`：工程身份
+
+- 只读；忽略已删除的图片和已归档的任务
+
+### image candidate favorite
+
+设置图片收藏状态，不修改任务需求、版本、定版或运行状态
+
+```sh
+v-cli art image candidate favorite --project <id> --job <id> --run <id> --candidate <id> --value <true|false>
+```
+
+结构化能力：`art.image-candidate-favorite`。
+
+- `--project <id>`：工程身份
+- `--job <id>`：源任务身份
+- `--run <id>`：源批次身份
+- `--candidate <id>`：图片候选身份
+- `--value <true|false>`：true 收藏，false 取消收藏
+
+- 仅修改工程收藏记录；重复操作幂等，不启动分析或生成
+
+### image candidate finalizations
+
+查看资产定版
+
+```sh
+v-cli art image candidate finalizations
+```
+
+结构化能力：`art.image-candidate-finalizations`。
+
+- `--project <id>`：工程身份
+- `--job <id>`：配置任务身份
+
+- 只读
+
+### image candidate finalize
+
+按资产定版候选
+
+```sh
+v-cli art image candidate finalize
+```
+
+结构化能力：`art.image-candidate-finalize`。
+
+- `--project <id>`：工程身份
+- `--job <id>`：配置任务身份
+- `--run <id>`：执行批次身份
+- `--revision <number>`：预期对象版本
+- `--candidate <id>`：候选身份
+- `--actor <text>`：操作者
+- `--name <text>`：导出文件名；留空时使用 vant-gen-任务-资产-批次
+- `--replace`：明确替换已有定版
+
+- 生成完成与哈希有效；重复幂等，替换保留历史
+
+### image candidate delete
+
+删除候选及关联定版
+
+```sh
+v-cli art image candidate delete
+```
+
+结构化能力：`art.image-candidate-delete`。
+
+- `--project <id>`：工程身份
+- `--job <id>`：配置任务身份
+- `--run <id>`：执行批次身份
+- `--revision <number>`：预期对象版本
+- `--candidate <id>`：候选身份
+- `--actor <text>`：操作者
+- `--confirm`：明确确认删除影响
+
+- 运行和引用检查；先持久化删除记录，再清理私有文件
+
+### image job analyze
+
+分析任务动态参考，仅转写指定用途，不继承静态风格
+
+```sh
+v-cli art image job analyze
+```
+
+结构化能力：`art.image-job-analyze`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+- `--dry`：只读编译预演
+- `--operation <id>`：分析启动前登记的稳定操作身份
+
+- dry 不联网、不写参考目录；执行创建运行身份和不可变参考证据；远程停止不确定时保留资源
+
+### image task recover
+
+仅从唯一原运行登记恢复身份；绝不重新执行
+
+```sh
+v-cli art image task recover --project P --operation OPERATION
+```
+
+结构化能力：`art.image-run-recover`。
+
+- `--project <id>`：原工程身份
+- `--operation <id>`：启动前持久化的原操作身份
+
+- 读取外部运行状态
+
+### image reference update
+
+更新参考分类、任务用途与说明，版本校验并使分析失效
+
+```sh
+v-cli art image reference update --project P --kind style --id ID --revision N --item REF --input PATCH.json
+```
+
+结构化能力：`art.image-reference-update`。
+
+- `--project <id>`：工程身份
+- `--kind <kind>`：style 或 task
+- `--id <id>`：对象身份
+- `--revision <number>`：预期版本
+- `--item <id>`：参考身份
+- `--input <file>`：category/purposes/itemId/note/ignore 的字段补丁；itemId 为 null 时任务共用
+
+- 风格规则可编辑保存；任务不允许静态分类；不修改用户原图；旧证据保留
+
+### image job template
+
+只读返回工具权威的任务配置模板；生成任务使用已冻结核心的题材
+
+```sh
+v-cli art job template --project <id> --kind <generate|edit> [--core <id>]
+```
+
+结构化能力：`art.image-job-template`。
+
+- `--project <id>`：工程身份
+- `--kind <generate|edit>`：任务类型
+- `--core <id>`：生成任务的冻结核心身份
+
+- 只读返回模板；不创建任务或文件
+
+### image job from-candidate
+
+将已停止批次中的可用图片导入私有底图，创建独立编辑草稿，不要求定版通过、不运行
+
+```sh
+v-cli art job from-candidate --project <id> --id <task> --run <id> --candidate <id>
+```
+
+结构化能力：`art.image-job-from-candidate`。
+
+- `--project <id>`：工程身份
+- `--id <task>`：源任务身份
+- `--run <id>`：真实批次
+- `--candidate <id>`：可用图片的候选身份
+
+- 写入新的编辑草稿和私有底图；保留候选来源；不启动生成
+
+### image task resume
+
+仅恢复原上游任务的查询和下载，绝不重新提交
+
+```sh
+v-cli art image task resume TASK
+```
+
+结构化能力：`art.image-run-resume`。
+
+- 位置参数 `TASK`：art 任务 ID（必填）
+
+- 写入原任务状态
+- 查询原上游任务并下载已有产物
+- 提交结果未知时拒绝恢复
+
+### image environment guide
+
+本地环境部署指南
+
+```sh
+v-cli art image environment guide
+```
+
+结构化能力：`art.image-environment-guide`。
+
+- `--guide <id>`：部署指南标识；省略使用环境登记或推荐方案
+
+- 不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务
+
+### image environment list
+
+本地环境目录发现
+
+```sh
+v-cli art image environment list
+```
+
+结构化能力：`art.image-environment-list`。
+
+
+- 不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务
+
+### image environment prepare
+
+自动准备兼容 Python 运行时，保留已有环境
+
+```sh
+v-cli art image environment prepare
+```
+
+结构化能力：`art.image-environment-prepare`。
+
+- `--directory <value>`：本机环境根目录
+- `--endpoint <value>`：本机 HTTP 服务根地址
+- `--guide <id>`：部署指南标识；省略使用环境登记或推荐方案
+
+- 仅在目标目录创建运行时；复用兼容 Python，不兼容虚拟环境先改名保留，不修改全局 Python
+
+### image environment inspect
+
+本地环境只读检测
+
+```sh
+v-cli art image environment inspect
+```
+
+结构化能力：`art.image-environment-inspect`。
+
+- `--directory <value>`：本机环境根目录
+- `--endpoint <value>`：本机 HTTP 服务根地址
+- `--guide <id>`：部署指南标识；省略使用环境登记或推荐方案
+
+- 不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务
+
+### image environment verify
+
+本地环境确定性验收
+
+```sh
+v-cli art image environment verify
+```
+
+结构化能力：`art.image-environment-verify`。
+
+- `--directory <value>`：本机环境根目录
+- `--endpoint <value>`：本机 HTTP 服务根地址
+- `--guide <id>`：部署指南标识；省略使用环境登记或推荐方案
+
+- 不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务
+
+### image environment register
+
+本地环境验收并登记
+
+```sh
+v-cli art image environment register
+```
+
+结构化能力：`art.image-environment-register`。
+
+- `--directory <value>`：本机环境根目录
+- `--endpoint <value>`：本机 HTTP 服务根地址
+- `--guide <id>`：部署指南标识；省略使用环境登记或推荐方案
+
+- 不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务
+
+### image environment unregister
+
+本地环境解除登记
+
+```sh
+v-cli art image environment unregister
+```
+
+结构化能力：`art.image-environment-unregister`。
+
+- `--directory <value>`：本机环境根目录
+
+- 不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务
+
+### image style export
+
+导出冻结风格及必要参考，不复制运行状态
+
+```sh
+v-cli art image style export
+```
+
+结构化能力：`art.image-style-export`。
+
+- `--project <value>`：工程身份
+- `--id <value>`：冻结风格身份
+- `--out <value>`：风格包输出文件
+
+- 冻结风格包只读；不覆盖已有文件；修改请派生草稿；只导出明确引用的参考图片
+
+### image style import
+
+导入固定版本的共享冻结风格，保留原身份和版本
+
+```sh
+v-cli art image style import
+```
+
+结构化能力：`art.image-style-import`。
+
+- `--project <value>`：目标工程
+- `--file <value>`：风格包文件
+
+- 冻结风格包只读；不覆盖已有文件；修改请派生草稿；只导出明确引用的参考图片
+
+### image style sources
+
+只读列出多个冻结风格来源并报告不可用目录和身份冲突
+
+```sh
+v-cli art image style sources
+```
+
+结构化能力：`art.image-style-sources`。
+
+- `--input <value>`：来源目录列表 JSON 文件
+
+- 冻结风格包只读；不覆盖已有文件；修改请派生草稿；只导出明确引用的参考图片
+
+### image conversation start
+
+编译并幂等提交会话出图，不创建项目任务
+
+```sh
+v-cli art image conversation start --config <path> --input <path>
+```
+
+结构化能力：`art.image-conversation-start`。
+
+- `--config <path>`：隔离配置路径
+- `--input <path>`：结构化会话请求 JSON
+
+- bounded
+- idempotent
+- no-job-create
+
+### image conversation status
+
+查询原运行与真实产物
+
+```sh
+v-cli art image conversation status --config <path> --session <id> --request <id>
+```
+
+结构化能力：`art.image-conversation-status`。
+
+- `--config <path>`：隔离配置路径
+- `--session <id>`：会话身份
+- `--request <id>`：原请求身份
+
+- bounded
+- idempotent
+- no-job-create
+
+### image conversation cancel
+
+取消原运行
+
+```sh
+v-cli art image conversation cancel --config <path> --session <id> --request <id>
+```
+
+结构化能力：`art.image-conversation-cancel`。
+
+- `--config <path>`：隔离配置路径
+- `--session <id>`：会话身份
+- `--request <id>`：原请求身份
+
+- bounded
+- idempotent
+- no-job-create
+
+### image conversation resume
+
+仅恢复原上游身份，不重新提交
+
+```sh
+v-cli art image conversation resume --config <path> --session <id> --request <id>
+```
+
+结构化能力：`art.image-conversation-resume`。
+
+- `--config <path>`：隔离配置路径
+- `--session <id>`：会话身份
+- `--request <id>`：原请求身份
+
+- bounded
+- idempotent
+- no-job-create
+
+### image conversation close
+
+宿主退出时停止本请求的worker，保留外部共享服务
+
+```sh
+v-cli art image conversation close --config <path> --session <id> --request <id>
+```
+
+结构化能力：`art.image-conversation-close`。
+
+- `--config <path>`：隔离配置路径
+- `--session <id>`：会话身份
+- `--request <id>`：原请求身份
+
+- bounded
+- idempotent
+- no-job-create
+
+### image style migration-complete
+
+校验当前迁移草稿并完成配置迁移；input 为 {note}，不分析、不生成或定版
+
+```sh
+v-cli art image style migration-complete
+```
+
+结构化能力：`art.image-style-migration-complete`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+- `--input <file>`：JSON {rules,summary,note}；rules 为完整规则数组，每条 id/scope/strength/instruction/when，avoid 可含 negative 抽象排除表达数组
+
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
+
+### image job migration-complete
+
+校验当前迁移草稿并完成配置迁移；input 为 {note}，不分析、不生成或定版
+
+```sh
+v-cli art image job migration-complete
+```
+
+结构化能力：`art.image-job-migration-complete`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：对象身份
+- `--revision <number>`：预期对象版本
+- `--input <file>`：JSON {rules,summary,note}；rules 为完整规则数组，每条 id/scope/strength/instruction/when，avoid 可含 negative 抽象排除表达数组
+
+- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
+
+### video describe
+
+读取视频业务与输入契约
+
+```sh
+v-cli art video describe [--input <file>]
+```
+
+结构化能力：`art.video-describe`。
+
+- `--input <file>`：可选；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+
+- 只读查询，不登记业务写入意图；可能执行本地媒体/进程检查
+- 可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video snapshot
+
+读取视频项目快照
+
+```sh
+v-cli art video snapshot [--input <file>]
+```
+
+结构化能力：`art.video-snapshot`。
+
+- `--input <file>`：可选；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+
+- 只读查询，不登记业务写入意图；可能执行本地媒体/进程检查
+- 可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video settings get
+
+读取视频设置及CAS版本
+
+```sh
+v-cli art video settings get [--input <file>]
+```
+
+结构化能力：`art.video-settings-get`。
+
+- `--input <file>`：可选；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+
+- 只读查询，不登记业务写入意图；可能执行本地媒体/进程检查
+- 可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video settings save
+
+按expectedRevision保存视频设置
+
+```sh
+v-cli art video settings save --input <file> --operation <id>
+```
+
+结构化能力：`art.video-settings-save`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video settings presets h3
+
+读取H3视频模型预设
+
+```sh
+v-cli art video settings presets h3 [--input <file>]
+```
+
+结构化能力：`art.video-settings-presets-h3`。
+
+- `--input <file>`：可选；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+
+- 只读查询，不登记业务写入意图；可能执行本地媒体/进程检查
+- 不提交远端模型生成
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video runtime status
+
+核对本地视频运行时状态
+
+```sh
+v-cli art video runtime status [--input <file>]
+```
+
+结构化能力：`art.video-runtime-status`。
+
+- `--input <file>`：可选；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+
+- 只读查询，不登记业务写入意图；可能执行本地媒体/进程检查
+- 可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video runtime start
+
+显式启动本地视频运行时
+
+```sh
+v-cli art video runtime start [--input <file>] --operation <id>
+```
+
+结构化能力：`art.video-runtime-start`。
+
+- `--input <file>`：可选；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video runtime stop
+
+核对所有权后显式停止本地视频运行时
+
+```sh
+v-cli art video runtime stop [--input <file>] --operation <id>
+```
+
+结构化能力：`art.video-runtime-stop`。
+
+- `--input <file>`：可选；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video task list
+
+视频通道 task list；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video task list [--input <file>]
+```
+
+结构化能力：`art.video-task-list`。
+
+- `--input <file>`：可选；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+
+- 只读查询，不登记业务写入意图；可能执行本地媒体/进程检查
+- 不提交远端模型生成
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video task read
+
+视频通道 task read；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video task read --input <file>
+```
+
+结构化能力：`art.video-task-read`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+
+- 只读查询，不登记业务写入意图；可能执行本地媒体/进程检查
+- 不提交远端模型生成
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video task create
+
+视频通道 task create；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video task create --input <file> --operation <id>
+```
+
+结构化能力：`art.video-task-create`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 不提交远端模型生成
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video task rename
+
+视频通道 task rename；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video task rename --input <file> --operation <id>
+```
+
+结构化能力：`art.video-task-rename`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 不提交远端模型生成
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video task archive
+
+视频通道 task archive；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video task archive --input <file> --operation <id>
+```
+
+结构化能力：`art.video-task-archive`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 不提交远端模型生成
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video operation create
+
+视频通道 operation create；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video operation create --input <file> --operation <id>
+```
+
+结构化能力：`art.video-operation-create`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video operation update
+
+视频通道 operation update；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video operation update --input <file> --operation <id>
+```
+
+结构化能力：`art.video-operation-update`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video operation rename
+
+视频通道 operation rename；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video operation rename --input <file> --operation <id>
+```
+
+结构化能力：`art.video-operation-rename`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 不提交远端模型生成
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video operation derive
+
+视频通道 operation derive；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video operation derive --input <file> --operation <id>
+```
+
+结构化能力：`art.video-operation-derive`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video operation validate
+
+视频通道 operation validate；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video operation validate --input <file>
+```
+
+结构化能力：`art.video-operation-validate`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+
+- 只读查询，不登记业务写入意图；可能执行本地媒体/进程检查
+- 可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video operation run
+
+视频通道 operation run；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video operation run --input <file> --operation <id>
+```
+
+结构化能力：`art.video-operation-run`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video operation resume
+
+视频通道 operation resume；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video operation resume --input <file> --operation <id>
+```
+
+结构化能力：`art.video-operation-resume`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video operation cancel
+
+视频通道 operation cancel；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video operation cancel --input <file> --operation <id>
+```
+
+结构化能力：`art.video-operation-cancel`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video operation accept
+
+视频通道 operation accept；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video operation accept --input <file> --operation <id>
+```
+
+结构化能力：`art.video-operation-accept`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 不提交远端模型生成
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video operation bind
+
+视频通道 operation bind；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video operation bind --input <file> --operation <id>
+```
+
+结构化能力：`art.video-operation-bind`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 不提交远端模型生成
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video script read
+
+视频通道 script read；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video script read --input <file>
+```
+
+结构化能力：`art.video-script-read`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+
+- 只读查询，不登记业务写入意图；可能执行本地媒体/进程检查
+- 不提交远端模型生成
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video script update
+
+视频通道 script update；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video script update --input <file> --operation <id>
+```
+
+结构化能力：`art.video-script-update`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 不提交远端模型生成
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video script plan
+
+视频通道 script plan；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video script plan --input <file>
+```
+
+结构化能力：`art.video-script-plan`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+
+- 只读查询，不登记业务写入意图；可能执行本地媒体/进程检查
+- 可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video script apply
+
+视频通道 script apply；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video script apply --input <file> --operation <id>
+```
+
+结构化能力：`art.video-script-apply`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video film compose
+
+视频通道 film compose；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video film compose --input <file> --operation <id>
+```
+
+结构化能力：`art.video-film-compose`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 不提交远端模型生成
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video film refine
+
+视频通道 film refine；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video film refine --input <file> --operation <id>
+```
+
+结构化能力：`art.video-film-refine`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video film preview
+
+视频通道 film preview；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video film preview --input <file> --operation <id>
+```
+
+结构化能力：`art.video-film-preview`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 不提交远端模型生成
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video film adopt
+
+视频通道 film adopt；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video film adopt --input <file> --operation <id>
+```
+
+结构化能力：`art.video-film-adopt`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 不提交远端模型生成
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video film undo
+
+视频通道 film undo；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video film undo --input <file> --operation <id>
+```
+
+结构化能力：`art.video-film-undo`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 不提交远端模型生成
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video material list
+
+视频通道 material list；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video material list [--input <file>]
+```
+
+结构化能力：`art.video-material-list`。
+
+- `--input <file>`：可选；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+
+- 只读查询，不登记业务写入意图；可能执行本地媒体/进程检查
+- 不提交远端模型生成
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video material import
+
+视频通道 material import；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video material import --input <file> --operation <id>
+```
+
+结构化能力：`art.video-material-import`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 不提交远端模型生成
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video material import-file
+
+视频通道 material import-file；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video material import-file --input <file> --operation <id>
+```
+
+结构化能力：`art.video-material-import-file`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 不提交远端模型生成
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video material upload
+
+视频通道 material upload；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video material upload --input <file> --operation <id>
+```
+
+结构化能力：`art.video-material-upload`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 不提交远端模型生成
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video material hide
+
+视频通道 material hide；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video material hide --input <file> --operation <id>
+```
+
+结构化能力：`art.video-material-hide`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+- `--operation <id>`：必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投
+
+- 写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图
+- 不提交远端模型生成
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video image
+
+视频通道 image；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video image --input <file>
+```
+
+结构化能力：`art.video-image`。
+
+- `--input <file>`：必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+
+- 只读查询，不登记业务写入意图；可能执行本地媒体/进程检查
+- 不提交远端模型生成
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video media status
+
+视频通道 media status；输入由video describe公布的业务契约校验
+
+```sh
+v-cli art video media status [--input <file>]
+```
+
+结构化能力：`art.video-media-status`。
+
+- `--input <file>`：可选；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造
+
+- 只读查询，不登记业务写入意图；可能执行本地媒体/进程检查
+- 不提交远端模型生成
+- 状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功
+
+### video execution status
+
+核对原CLI/宿主视频意图及回执
+
+```sh
+v-cli art video execution status --operation <id>
+```
+
+结构化能力：`art.video-execution-status`。
+
+- `--operation <id>`：必填；原CLI操作身份或返回的video-UUID，只核对原回执
+
+- 只读查询，不登记业务写入意图；可能执行本地媒体/进程检查
+- 不提交远端模型生成
+- 读取DSH与CLI共享的请求、回执目录；executing按unknown核对
+
+### style sample-job
+
+创建仅使用当前文字规则的样张任务；count 为每个主题候选数（1～4），不自动生成
+
+```sh
+v-cli art style sample-job --project ID --id STYLE --revision N
+```
+
+结构化能力：`art.style-sample-job`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：风格身份
+- `--revision <number>`：预期风格版本
+- `--name <name>`：任务名称（可选）
+- `--count <number>`：每个主题候选数，1～4；三个主题共 3 × count 张，默认 1
+
+- 保存或建任务不发起生成；版本冲突重新读取；样张仅作绘制语言参考，不能保证隔离无关特征
+
+### style sample-select
+
+样张定版：将有效候选自动加入当前风格运行时参考；按图片内容哈希去重，重复操作不新增
+
+```sh
+v-cli art style sample-select --project ID --id STYLE --revision N --job VALUE --run VALUE --candidate VALUE
+```
+
+结构化能力：`art.style-sample-select`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：风格身份
+- `--revision <number>`：预期风格版本
+- `--job <id>`：源任务
+- `--run <id>`：源运行
+- `--candidate <id>`：候选身份
+- `--note <text>`：样张说明（可选）
+
+- 保存或建任务不发起生成；版本冲突重新读取；样张仅作绘制语言参考，不能保证隔离无关特征
+
+### style sample-remove
+
+取消样张定版并移除当前运行时参考；保留历史计划依赖的图片文件
+
+```sh
+v-cli art style sample-remove --project ID --id STYLE --revision N --sample VALUE
+```
+
+结构化能力：`art.style-sample-remove`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：风格身份
+- `--revision <number>`：预期风格版本
+- `--sample <id>`：样张身份
+
+- 保存或建任务不发起生成；版本冲突重新读取；样张仅作绘制语言参考，不能保证隔离无关特征
+
+### image style sample-job
+
+创建仅使用当前文字规则的样张任务；count 为每个主题候选数（1～4），不自动生成
+
+```sh
+v-cli art image style sample-job --project ID --id STYLE --revision N
+```
+
+结构化能力：`art.image-style-sample-job`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：风格身份
+- `--revision <number>`：预期风格版本
+- `--name <name>`：任务名称（可选）
+- `--count <number>`：每个主题候选数，1～4；三个主题共 3 × count 张，默认 1
+
+- 保存或建任务不发起生成；版本冲突重新读取；样张仅作绘制语言参考，不能保证隔离无关特征
+
+### image style sample-select
+
+样张定版：将有效候选自动加入当前风格运行时参考；按图片内容哈希去重，重复操作不新增
+
+```sh
+v-cli art image style sample-select --project ID --id STYLE --revision N --job VALUE --run VALUE --candidate VALUE
+```
+
+结构化能力：`art.image-style-sample-select`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：风格身份
+- `--revision <number>`：预期风格版本
+- `--job <id>`：源任务
+- `--run <id>`：源运行
+- `--candidate <id>`：候选身份
+- `--note <text>`：样张说明（可选）
+
+- 保存或建任务不发起生成；版本冲突重新读取；样张仅作绘制语言参考，不能保证隔离无关特征
+
+### image style sample-remove
+
+取消样张定版并移除当前运行时参考；保留历史计划依赖的图片文件
+
+```sh
+v-cli art image style sample-remove --project ID --id STYLE --revision N --sample VALUE
+```
+
+结构化能力：`art.image-style-sample-remove`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：风格身份
+- `--revision <number>`：预期风格版本
+- `--sample <id>`：样张身份
+
+- 保存或建任务不发起生成；版本冲突重新读取；样张仅作绘制语言参考，不能保证隔离无关特征
 
 ## 结果验证
 

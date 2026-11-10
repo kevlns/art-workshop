@@ -28,7 +28,8 @@ test('explicit decision converges without another model request; adoption retain
  const core=loadCore('cellgame',record.id,root);assert.match(corePrompt(core),/默认冷影，允许同色相压暗/);assert.match(corePrompt(core),/任务指定透明或发光物体时/);
  assert.equal(core.report.decisions[0].note,'用户选择按主体调整');
  const derived=await deriveObject(settings,'cellgame','style',record.id,frozen.revision);assert.match(JSON.stringify(derived.config.rules),/阴影|冷影/);assert.equal(derived.report.data.provenance.method,'inherited-frozen');
- await assert.rejects(resolveStyleIssue(settings,'cellgame',record.id,frozen.revision,{issueId:'shadow-choice',optionId:'strict',note:'change'}),/只读/);
+ const changed=await resolveStyleIssue(settings,'cellgame',record.id,frozen.revision,{issueId:'shadow-choice',optionId:'strict',note:'change'});
+ assert.equal(changed.id,frozen.id);assert.equal(changed.revision,frozen.revision+1);
 }));
 test('changing the draft preserves evidence and decisions but prevents adopting or deciding on stale report',()=>fixture(async(root,settings,record)=>{
  const decided=await resolveStyleIssue(settings,'cellgame',record.id,1,{issueId:'shadow-choice',optionId:'flexible',note:'用户确认'});

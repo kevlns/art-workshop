@@ -1,0 +1,63 @@
+{
+  "source": "C:/Projects/dsh-vant",
+  "extractedAt": "2026-11-04",
+  "files": [
+    {
+      "path": "packages/core/video/atomic.js",
+      "sha256": "f91775f07a4691477df9c1cae3c2365d1d960523ae7bab34dd63ec4ff6dd16e6"
+    },
+    {
+      "path": "packages/core/video/contract-local-media.js",
+      "sha256": "4cfbd1b12af01d881dd235afb34f8ce55f3a38a89514240ff9d78a46ad802e80"
+    },
+    {
+      "path": "packages/core/video/contract-story.js",
+      "sha256": "5c93fb7938aab4b7c214c384182f766d696c037f5863aeb8ec11e441beda3d78"
+    },
+    {
+      "path": "packages/core/video/contract-video.js",
+      "sha256": "0d277988d1521b4a5bca91b0532cfec4a211d1bfe69c61c33c5f0eca874ec5de"
+    },
+    {
+      "path": "packages/core/video/contracts.js",
+      "sha256": "7d8cc3159cc7dba36cd6fef5112dec805310f9d8995ee03cb1b43599afd2b69c"
+    },
+    {
+      "path": "packages/core/video/h3.js",
+      "sha256": "e4838dc943e4f1cc3d2bef6a7c175f94e9e87badd331d3673fe545f956dc611f"
+    },
+    {
+      "path": "packages/core/video/local-runtime.js",
+      "sha256": "c681e38743fa7742fc3a637656c989219e6f7c9f350e3bc877eac88751bbe891"
+    },
+    {
+      "path": "packages/core/video/media.js",
+      "sha256": "934b9212b48814b0b6ed4b1157db92ff0e2285957038e9c5e420ca051a2be975"
+    },
+    {
+      "path": "packages/core/video/models.js",
+      "sha256": "1d1e45fea85725f13cf5d4eaa6a406f7598507d978202c646cf7705473ac0ca3"
+    },
+    {
+      "path": "packages/core/video/process.js",
+      "sha256": "ceb66843867f03b8cc21aec17ed6fcb9497a4bc72ec02c17960977585258c079"
+    },
+    {
+      "path": "packages/core/video/resource.js",
+      "sha256": "97c73e75e2e3864b139c39c271c79a4de5593350d3862322d6808da501cd22ca"
+    },
+    {
+      "path": "packages/core/video/service.js",
+      "sha256": "900accd435bb8ceb31bb419cfadd96e806f513c6111c97646411f940eaa5cb68"
+    },
+    {
+      "path": "packages/core/video/workflow.js",
+      "sha256": "83a72af550ad5a03399a8b6a6b8ec2a0f9a306ae85be4e6cb913c816b16f6007"
+    }
+  ],
+  "changes": [
+    "Portable ESM module paths",
+    "Package-owned safe project path",
+    "Local runtime SDK defaults to the same art-workshop package"
+  ]
+}

@@ -18,23 +18,27 @@ art 工程与输入结构，适用于当前随包实现。
 
 project.json 必须声明 schemaVersion=2、revision、id、name、analysisModel、execution、cores、defaultCore。工程身份与目录匹配，核心必须属于同一工程。
 
-projects/<projectId>/styles/<styleId>/style.json 与 tasks/<taskId>/task.json 使用 schema=art-workshop/style 或 art-workshop/task，schemaVersion=2、稳定 id、project、展示 name、revision、status、createdAt/updatedAt、config、references 和 report。正式风格的 core.json 不可原地覆写。任务的 config.kind 是 generate/edit，不能改身份与类型。
+projects/<projectId>/styles/<styleId>/style.json 与 tasks/<taskId>/task.json 使用 schema=art-workshop/style 或 art-workshop/task，schemaVersion=2、稳定 id、project、展示 name、revision、status、createdAt/updatedAt、config、references 和 report。风格允许直接编辑保存；core.json 是当前可执行快照，历史核心保存在同目录 core-history/<coreHash>.json。内部 frozen 状态不代表只读。任务的 config.kind 是 generate/edit，不能改身份与类型。
 
 参考记录包括 id、所属对象、对象内相对 path、SHA256、来源、category/purposes、usage、note、ignore。风格三类：style、palette、rendering。任务用途：subject、composition、pose、identity-color、surface、scene-light、text。sources 只放编辑底图。
 
+风格 samples 数组按图片内容 hash 去重，保存样张定版后的运行时参考：id、path、hash、rulesHash、jobId、runId、candidateId、itemId、note、createdAt、model、backend。path 位于风格 samples 目录，文件独立复制；规则哈希仅绑定 rules，styleView 返回 stale 投影用于显示当前匹配状态。core.approvedSamples 保存该版本的样张快照。移除当前采用关系保留历史图片，规则改变不会改写旧样张。
+
+style sample-job 的可选 count 为 1～4 的整数，表示三个默认主体各自的候选数量，保存为 config.execution.perValue；创建普通生成任务，source.kind=style-sample，记录 styleId、revision、rulesHash 和 coreHash，config.styleReferenceMode=text-only。style sample-select 只接受当前风格规则对应的已停止成功候选，样张定版不执行资产导出。style sample-remove 移除当前样张身份。
+
 ### 需求与计划
 
-风格 config 包含 description、constraints、rules 与 analysis（均按需要填写）。rules 每条为 id、scope、strength、instruction、when，avoid 可含 negative 抽象排除表达数组；条件写入 when，职责见 [风格规则](core-guidance.md)。report.evidenceHash 绑定参考与分析配置；provenance.method 区分模型分析、inherited-frozen 沿用冻结证据和 user-rules 用户修订。规则修订保留原报告与依据，采用后生成独立核心哈希。
+风格 config 包含 description、constraints、rules 与 analysis（均按需要填写）。rules 每条为 id、scope、strength、instruction、when，avoid 可含 negative 抽象排除表达数组；条件写入 when，职责见 [风格规则](core-guidance.md)。有效 config.rules 保存后生效，报告 recommendation.rules 只是建议。report.evidenceHash 绑定参考与分析配置，原报告与用户修订依据保留，不把保存解释成重新分析。
 
-生成 config 包括 project、kind、core、execution、analysis、generation、items，以及互斥的 profile 或内联 asset 规格；实体及效果有稳定 id、数量、颜色、角色与关系。具体主体、构图、动作不冻结进风格。规格定义资产约束、设计基准与检查要点，内联规格属于当前任务，编译时形成同一不可变快照。编辑 config 的 items 明确 source、changes、preserve、mustRead、seed。
+生成 config 包括 project、kind、core、styleReferenceMode、execution、analysis、generation、items，以及互斥的 profile 或内联 asset 规格；实体及效果有稳定 id、数量、颜色、角色与关系。styleReferenceMode 为 approved（默认）或 text-only，分别选择当前运行时参考或仅文字规则，编辑任务也支持该字段。具体主体、构图、动作由任务决定。规格定义资产约束、设计基准与检查要点，内联规格属于当前任务，编译时形成同一不可变快照。编辑 config 的 items 明确 source、changes、preserve、mustRead、seed。
 
 生成实体可选 material 描述物理材质，按原文进入主体行。composition 的 lightDirection/lightQuality 由资产规格 allowedOverrides 成对提供非空词表，defaults 成对提供词表内默认值。有效值按规格、任务、variant 顺序覆盖，允许单项覆盖；未开放时携带光照键报错。新 custom 模板开放光照，既有规格不自动改写。
 
 mustRead 保持视觉特征字符串数组。生成和编辑 item 均可选 textSpecs 数组，每项为 {content,hierarchy,zone,fontHint?}：准确文字、层级、位置或载体为必填描述，字形可选，均不限制字数。草稿允许暂缺或留空，编译检查完整性。相同文字的不同位置、层级、字形保留，完全相同项仅在编译输出去重。生成禁文字规格仅拒绝非空 textSpecs，不拒绝视觉特征；编辑任务按底图和修改/保留集处理。文字要求独立编译为画面文字规格段，有文字规格时追加文字保真负向；候选 checks.content 保持字符串数组，accepted 只代表技术完整性。
 
-job read/list 的 resolvedAsset 是当前有效规格只读投影，assetError 是解析失败说明；两者不属于 config，不能保存为需求。新编译计划带 compilerVersion=4 并参与 planHash；版本不作为执行准入门槛，已有计划缺字段时保留缺席，后端重绑定不补版本。
+job read/list 的 resolvedAsset 是当前有效规格只读投影，assetError 是解析失败说明；两者不属于 config，不能保存为需求。新编译计划带 compilerVersion=5 并参与 planHash；版本不作为执行准入门槛，已有计划缺字段时保留缺席，后端重绑定不补版本。
 
-plan 包括 schema=art-workshop/plan、module/project/job、sources、snapshots、refs、execution、items、planHash。sources 绑定 taskRevision、taskConfigHash 和 coreHash；项目/核心/profile/任务形成快照。项含 inputHash、实际尺寸和 seed。透明背景为 {type:"transparent"}；生成配置位于 composition.background，编辑配置位于 changes 中 target=background 的 value。预案项 output 固定 PNG、透明背景及处理版本并参与哈希；含完全透明区域的原生 alpha 保留，否则从边缘核实洋红底色，容许模型色偏，处理与外边界连通的底色及混合边缘。接近不透明的 alpha 噪声不视为透明背景。记录 outputProcessing，保留原图和透明 PNG。任何来源或哈希变化拒绝运行。
+plan 包括 schema=art-workshop/plan、module/project/job、sources、snapshots、refs、execution、items、planHash。styleReferences 记录 mode、status、rulesHash、staleCount 和采用样张的 id/hash；样张输入进入 refs 与 item.imageArgs 并参与计划哈希，原始分析参考不作为图片输入。sources 绑定 taskRevision、taskConfigHash 和 coreHash；项目/核心/profile/任务形成快照。项含 inputHash、实际尺寸和 seed。透明背景为 {type:"transparent"}；生成配置位于 composition.background，编辑配置位于 changes 中 target=background 的 value。预案项 output 固定 PNG、透明背景及处理版本并参与哈希；含完全透明区域的原生 alpha 保留，否则从边缘核实洋红底色，容许模型色偏，处理与外边界连通的底色及混合边缘。接近不透明的 alpha 噪声不视为透明背景。记录 outputProcessing，保留原图和透明 PNG。任何来源或哈希变化拒绝运行。
 
 analysis 为 {provider,model}，风格和任务分别保存视觉分析实例。generation 为 {backend,remote?,options?}，remote 为 {provider,model}；选中后端的模型进入执行与请求快照，旧 execution.model 不覆盖所选后端。options 为当前任务的本地采样覆盖 {steps?,cfg?,sampler?,scheduler?}，合并到冻结方案 backend.options，进入实际 ComfyUI 请求；远程后端拒绝这些字段。新任务本地推荐默认值为 steps=25、cfg=3、sampler=euler、scheduler=simple，内置工作流相同。显式值及历史计划保留。省略字段沿用后端或工作流默认值，数值 0 不视为省略。任务切换模型、后端或采样参数会改变配置哈希，必须重新编译。凭据由宿主按实例注入，不保存在配置。
 
@@ -53,7 +57,7 @@ task recover 根据工程和 operationId 找回唯一原执行；task resume 沿
 
 
 
-风格报告与 core.json 使用 schemaVersion=3。recommendation.rules 保存带主题、强度和条件的定性规则，issues 保存具体决策选项，decisions 保存已确认取舍，notes 保存不阻塞的提醒。style list/read 返回 review（ready、stale、openIssues、reason、有效 recommendation）及 compatibility。对象存储使用 schemaVersion=2。详细字段见 core-guidance.md。
+风格报告与 core.json 使用 schemaVersion=3。recommendation.rules 保存带主题、强度和条件的建议，issues 保存具体决策选项，decisions 保存已确认取舍，notes 保存不阻塞的提醒。style list/read 返回 review（ready、stale、openIssues、reason、有效 recommendation）及 compatibility；review 是报告状态，不限制用户直接保存有效规则。对象存储使用 schemaVersion=2。详细字段见 core-guidance.md。
 
 ## 执行边界
 

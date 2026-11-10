@@ -3,7 +3,7 @@
   "package": "@kevlns/art-workshop",
   "command": "art",
   "bin": "art-workshop",
-  "description": "管理项目风格、参考图、图片生成、编辑和定版。支持本地 ComfyUI 与远程图片模型。",
+  "description": "管理图片与视频两个独立制作通道；图片旧命令兼容，视频复用项目状态、CAS及原执行身份。",
   "platforms": [
     "win32",
     "linux",
@@ -11,20 +11,17 @@
   ],
   "runtime": {
     "node": ">=20.9",
-    "imageProvider": "bailian CLI or lazy ComfyUI backend; task lifecycle and shutdown"
+    "imageProvider": "bailian CLI or lazy ComfyUI backend; task lifecycle and shutdown",
+    "videoProvider": "Node.js >=22.13; local ComfyUI plus FFmpeg; no implicit start or generation"
   },
   "environment": [
     {
       "name": "ART_WORKSHOP_CONFIG",
       "description": "外部本地配置文件路径；未指定时使用用户配置目录/art-workshop/config.json"
-    },
-    {
-      "name": "CODEX_HOME",
-      "description": "可选 Codex 配置目录，用于随包 skill 同步"
     }
   ],
   "agent": {
-    "whenToUse": "先读取对象和版本，编译并预演后在授权范围后台执行。风格分析有独立运行身份，采用检查报告来源；任务空闲才可编辑，停止未确认保留资源。生成完成仅做技术完整性校验，用户定版，不要求人工三维评分。",
+    "whenToUse": "读取对象和版本，保存规则即更新当前风格。按规则生成样张，在图片卡片上定版后自动加入风格运行时参考；原始分主题参考只用于分析。生成先编译预演，未知运行只恢复原身份。",
     "globalOptions": [
       {
         "flags": "--config <file>",
@@ -74,7 +71,8 @@
         },
         "safety": [
           "无配置读取、目录初始化、网络或模型调用"
-        ]
+        ],
+        "capabilityId": "art.help"
       },
       {
         "path": [
@@ -96,7 +94,8 @@
         "safety": [
           "查询与预演不创建参考目录",
           "无网络调用"
-        ]
+        ],
+        "capabilityId": "art.config-path"
       },
       {
         "path": [
@@ -118,7 +117,8 @@
         "safety": [
           "查询与预演不创建参考目录",
           "无网络调用"
-        ]
+        ],
+        "capabilityId": "art.config-show"
       },
       {
         "path": [
@@ -141,7 +141,8 @@
           "查询与预演不创建参考目录",
           "无网络调用",
           "写入外部本地配置"
-        ]
+        ],
+        "capabilityId": "art.config-init"
       },
       {
         "path": [
@@ -168,7 +169,8 @@
         "safety": [
           "查询与预演不创建参考目录",
           "无网络调用"
-        ]
+        ],
+        "capabilityId": "art.refs-guide"
       },
       {
         "path": [
@@ -190,7 +192,8 @@
         "safety": [
           "查询与预演不创建参考目录",
           "无网络调用"
-        ]
+        ],
+        "capabilityId": "art.agent-index"
       },
       {
         "path": [
@@ -212,39 +215,43 @@
         "safety": [
           "查询与预演不创建参考目录",
           "无网络调用"
-        ]
+        ],
+        "capabilityId": "art.agent-docs"
       },
       {
         "path": [
           "agent",
-          "init"
+          "export"
         ],
-        "usage": "art-workshop agent init [--directory <dir>] [--dry]",
-        "description": "将随包 skill 同步到目标下已有 Agent 技能目录",
+        "usage": "art-workshop agent export --host codex --directory <DIR> [--dry]",
+        "description": "显式导出技能到指定宿主目录；默认安装不导出",
         "arguments": [],
         "options": [
           {
-            "flags": "--directory <dir>",
-            "description": "同步目标根目录，默认 cwd"
+            "flags": "--host <HOST>",
+            "description": "目标宿主 codex 或 claude"
+          },
+          {
+            "flags": "--directory <DIR>",
+            "description": "明确指定导出目录"
           },
           {
             "flags": "--dry",
-            "description": "只读预演，不联网、不创建参考目录"
+            "description": "仅预演"
           }
         ],
         "output": {
           "format": "json",
-          "description": "将随包 skill 同步到目标下已有 Agent 技能目录"
+          "description": "显式导出技能到指定宿主目录；默认安装不导出"
         },
         "exitCodes": {
           "0": "成功；验收状态以返回内容为准",
           "1": "参数、配置、计划或执行失败"
         },
         "safety": [
-          "查询与预演不创建参考目录",
-          "无网络调用",
-          "覆盖同名随包 skill 和 runtime.json，保留扩展文件"
-        ]
+          "仅显式请求时导出，不扫描用户目录，不生成安装绝对路径回执"
+        ],
+        "capabilityId": "art.agent-export"
       },
       {
         "path": [
@@ -265,7 +272,8 @@
         "safety": [
           "查询与预演不创建参考目录",
           "无网络调用"
-        ]
+        ],
+        "capabilityId": "art.list"
       },
       {
         "path": [
@@ -307,7 +315,8 @@
         },
         "safety": [
           "dry 不联网、不写参考目录；执行创建运行身份和不可变参考证据；远程停止不确定时保留资源"
-        ]
+        ],
+        "capabilityId": "art.style-analyze"
       },
       {
         "path": [
@@ -338,7 +347,8 @@
         "safety": [
           "查询与预演不创建参考目录",
           "无网络调用"
-        ]
+        ],
+        "capabilityId": "art.style-validate"
       },
       {
         "path": [
@@ -369,7 +379,8 @@
         "safety": [
           "查询与预演不创建参考目录",
           "无网络调用"
-        ]
+        ],
+        "capabilityId": "art.style-show"
       },
       {
         "path": [
@@ -400,7 +411,8 @@
         "safety": [
           "查询与预演不创建参考目录",
           "无网络调用"
-        ]
+        ],
+        "capabilityId": "art.generate-show"
       },
       {
         "path": [
@@ -444,7 +456,8 @@
           "查询与预演不创建参考目录",
           "无网络调用",
           "指定 out 时写入外部计划文件"
-        ]
+        ],
+        "capabilityId": "art.generate-plan"
       },
       {
         "path": [
@@ -530,7 +543,8 @@
           "本地非 dry 可启动任务和 ComfyUI 服务并采样，不调用百炼生图",
           "真实执行写入外部图片、manifest、任务状态和诊断",
           "dry 只展示请求，不启动或探测服务、不上传、不生成图片"
-        ]
+        ],
+        "capabilityId": "art.generate-start"
       },
       {
         "path": [
@@ -561,7 +575,8 @@
         "safety": [
           "查询与预演不创建参考目录",
           "无网络调用"
-        ]
+        ],
+        "capabilityId": "art.edit-show"
       },
       {
         "path": [
@@ -605,7 +620,8 @@
           "查询与预演不创建参考目录",
           "无网络调用",
           "指定 out 时写入外部计划文件"
-        ]
+        ],
+        "capabilityId": "art.edit-plan"
       },
       {
         "path": [
@@ -691,7 +707,8 @@
           "本地非 dry 可启动任务和 ComfyUI 服务并采样，不调用百炼生图",
           "真实执行写入外部图片、manifest、任务状态和诊断",
           "dry 只展示请求，不启动或探测服务、不上传、不生成图片"
-        ]
+        ],
+        "capabilityId": "art.edit-start"
       },
       {
         "path": [
@@ -717,7 +734,8 @@
         },
         "safety": [
           "只读；不调用模型、不写入评分或定版记录"
-        ]
+        ],
+        "capabilityId": "art.check"
       },
       {
         "path": [
@@ -749,7 +767,8 @@
         "safety": [
           "查询与预演不创建参考目录",
           "无网络调用"
-        ]
+        ],
+        "capabilityId": "art.compare"
       },
       {
         "path": [
@@ -775,7 +794,8 @@
         },
         "safety": [
           "读取外部运行状态"
-        ]
+        ],
+        "capabilityId": "art.run-list"
       },
       {
         "path": [
@@ -802,7 +822,8 @@
         },
         "safety": [
           "读取外部运行状态"
-        ]
+        ],
+        "capabilityId": "art.run-status"
       },
       {
         "path": [
@@ -834,7 +855,8 @@
         },
         "safety": [
           "读取外部运行状态"
-        ]
+        ],
+        "capabilityId": "art.run-wait"
       },
       {
         "path": [
@@ -863,7 +885,8 @@
           "取消单个任务",
           "按 prompt_id 中断本地任务",
           "保留服务进程"
-        ]
+        ],
+        "capabilityId": "art.run-cancel"
       },
       {
         "path": [
@@ -886,7 +909,8 @@
           "只取消关联任务；共享队列仍有其他任务时保留服务",
           "核验进程身份后关闭服务",
           "阻止 shutdown 期间的新任务"
-        ]
+        ],
+        "capabilityId": "art.shutdown"
       },
       {
         "path": [
@@ -912,7 +936,8 @@
         },
         "safety": [
           "只读校验，不启动服务、不调用模型"
-        ]
+        ],
+        "capabilityId": "art.config-validate"
       },
       {
         "path": [
@@ -943,7 +968,8 @@
           "默认读取本地环境，不启动、不采样、不补齐 refs",
           "--start 可启动并保留服务，写状态与日志；不采样",
           "远程后端只校验配置，不检查认证或云端连通性"
-        ]
+        ],
+        "capabilityId": "art.doctor"
       },
       {
         "path": [
@@ -964,7 +990,8 @@
         },
         "safety": [
           "读取随包工作流清单，不依赖合法用户配置、不补 refs、不调用模型"
-        ]
+        ],
+        "capabilityId": "art.workflow-list"
       },
       {
         "path": [
@@ -993,8 +1020,9 @@
           "1": "校验、版本冲突或执行失败"
         },
         "safety": [
-          "查询不写入；修改验证 revision、归属和停止确认；冻结风格只读"
-        ]
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.style-create"
       },
       {
         "path": [
@@ -1019,8 +1047,9 @@
           "1": "校验、版本冲突或执行失败"
         },
         "safety": [
-          "查询不写入；修改验证 revision、归属和停止确认；冻结风格只读"
-        ]
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.style-list"
       },
       {
         "path": [
@@ -1049,8 +1078,9 @@
           "1": "校验、版本冲突或执行失败"
         },
         "safety": [
-          "查询不写入；修改验证 revision、归属和停止确认；冻结风格只读"
-        ]
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.style-read"
       },
       {
         "path": [
@@ -1058,7 +1088,7 @@
           "update"
         ],
         "usage": "art-workshop style update",
-        "description": "校验预期版本及空闲状态后更新对象",
+        "description": "保存风格名称、规则与配置；已保存风格可随时修改，更新当前执行版本并保留历史快照",
         "arguments": [],
         "options": [
           {
@@ -1087,8 +1117,9 @@
           "1": "校验、版本冲突或执行失败"
         },
         "safety": [
-          "查询不写入；修改验证 revision、归属和停止确认；冻结风格只读"
-        ]
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.style-update"
       },
       {
         "path": [
@@ -1125,8 +1156,9 @@
           "1": "校验、版本冲突或执行失败"
         },
         "safety": [
-          "查询不写入；修改验证 revision、归属和停止确认；冻结风格只读"
-        ]
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.style-resolve"
       },
       {
         "path": [
@@ -1134,7 +1166,7 @@
           "revise"
         ],
         "usage": "art-workshop style revise",
-        "description": "按用户要求修订完整规则方案；input 为 {rules,summary,note}，沿用未变化的参考证据，不调用模型或自动冻结",
+        "description": "保存完整规则修订 {rules,summary,note}；不要求先有分析报告，不调用模型",
         "arguments": [],
         "options": [
           {
@@ -1163,8 +1195,9 @@
           "1": "校验、版本冲突或执行失败"
         },
         "safety": [
-          "查询不写入；修改验证 revision、归属和停止确认；冻结风格只读"
-        ]
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.style-revise"
       },
       {
         "path": [
@@ -1197,8 +1230,9 @@
           "1": "校验、版本冲突或执行失败"
         },
         "safety": [
-          "查询不写入；修改验证 revision、归属和停止确认；冻结风格只读"
-        ]
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.style-derive"
       },
       {
         "path": [
@@ -1231,8 +1265,9 @@
           "1": "校验、版本冲突或执行失败"
         },
         "safety": [
-          "查询不写入；修改验证 revision、归属和停止确认；冻结风格只读"
-        ]
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.style-discard"
       },
       {
         "path": [
@@ -1261,8 +1296,9 @@
           "1": "校验、版本冲突或执行失败"
         },
         "safety": [
-          "查询不写入；修改验证 revision、归属和停止确认；冻结风格只读"
-        ]
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.job-create"
       },
       {
         "path": [
@@ -1287,8 +1323,9 @@
           "1": "校验、版本冲突或执行失败"
         },
         "safety": [
-          "查询不写入；修改验证 revision、归属和停止确认；冻结风格只读"
-        ]
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.job-list"
       },
       {
         "path": [
@@ -1317,8 +1354,9 @@
           "1": "校验、版本冲突或执行失败"
         },
         "safety": [
-          "查询不写入；修改验证 revision、归属和停止确认；冻结风格只读"
-        ]
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.job-read"
       },
       {
         "path": [
@@ -1355,8 +1393,9 @@
           "1": "校验、版本冲突或执行失败"
         },
         "safety": [
-          "查询不写入；修改验证 revision、归属和停止确认；冻结风格只读"
-        ]
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.job-update"
       },
       {
         "path": [
@@ -1389,8 +1428,9 @@
           "1": "校验、版本冲突或执行失败"
         },
         "safety": [
-          "查询不写入；修改验证 revision、归属和停止确认；冻结风格只读"
-        ]
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.job-derive"
       },
       {
         "path": [
@@ -1424,7 +1464,8 @@
         },
         "safety": [
           "验证 revision、任务归属和停止确认；归档和恢复均保留原配置、收藏与所有历史文件，不自动执行"
-        ]
+        ],
+        "capabilityId": "art.job-discard"
       },
       {
         "path": [
@@ -1458,7 +1499,8 @@
         },
         "safety": [
           "验证 revision、任务归属和停止确认；归档和恢复均保留原配置、收藏与所有历史文件，不自动执行"
-        ]
+        ],
+        "capabilityId": "art.job-restore"
       },
       {
         "path": [
@@ -1466,7 +1508,7 @@
           "adopt"
         ],
         "usage": "art-workshop style adopt",
-        "description": "采用当前有效报告并冻结",
+        "description": "兼容旧草稿的报告采用入口；已保存规则保持当前版本，日常修改直接使用 style update",
         "arguments": [],
         "options": [
           {
@@ -1496,7 +1538,8 @@
         },
         "safety": [
           "来源匹配且冲突已解决；采用事务可恢复，核心只写一次"
-        ]
+        ],
+        "capabilityId": "art.style-adopt"
       },
       {
         "path": [
@@ -1526,7 +1569,8 @@
         },
         "safety": [
           "不重新调用模型；核验核心和事务身份后完成状态提交"
-        ]
+        ],
+        "capabilityId": "art.style-recover"
       },
       {
         "path": [
@@ -1556,7 +1600,8 @@
         },
         "safety": [
           "工程存在拒绝覆写"
-        ]
+        ],
+        "capabilityId": "art.project-init"
       },
       {
         "path": [
@@ -1590,7 +1635,8 @@
         },
         "safety": [
           "备份和原子替换，失败回滚；不猜参考归属"
-        ]
+        ],
+        "capabilityId": "art.project-upgrade"
       },
       {
         "path": [
@@ -1624,7 +1670,8 @@
         },
         "safety": [
           "只读"
-        ]
+        ],
+        "capabilityId": "art.reference-list"
       },
       {
         "path": [
@@ -1682,7 +1729,8 @@
         },
         "safety": [
           "校验图片、大小、路径；复制不修改原图；不支持直接参考时拒绝"
-        ]
+        ],
+        "capabilityId": "art.reference-import"
       },
       {
         "path": [
@@ -1724,7 +1772,8 @@
         },
         "safety": [
           "移除关联，保留历史证据资源"
-        ]
+        ],
+        "capabilityId": "art.reference-remove"
       },
       {
         "path": [
@@ -1758,7 +1807,8 @@
         },
         "safety": [
           "只读；校验批次计划和候选身份"
-        ]
+        ],
+        "capabilityId": "art.candidate-list"
       },
       {
         "path": [
@@ -1784,7 +1834,8 @@
         },
         "safety": [
           "只读；忽略已删除的图片和已归档的任务"
-        ]
+        ],
+        "capabilityId": "art.candidate-favorites"
       },
       {
         "path": [
@@ -1826,7 +1877,8 @@
         },
         "safety": [
           "仅修改工程收藏记录；重复操作幂等，不启动分析或生成"
-        ]
+        ],
+        "capabilityId": "art.candidate-favorite"
       },
       {
         "path": [
@@ -1856,7 +1908,8 @@
         },
         "safety": [
           "只读"
-        ]
+        ],
+        "capabilityId": "art.candidate-finalizations"
       },
       {
         "path": [
@@ -1910,7 +1963,8 @@
         },
         "safety": [
           "生成完成与哈希有效；重复幂等，替换保留历史"
-        ]
+        ],
+        "capabilityId": "art.candidate-finalize"
       },
       {
         "path": [
@@ -1960,7 +2014,8 @@
         },
         "safety": [
           "运行和引用检查；先持久化删除记录，再清理私有文件"
-        ]
+        ],
+        "capabilityId": "art.candidate-delete"
       },
       {
         "path": [
@@ -2002,7 +2057,8 @@
         },
         "safety": [
           "dry 不联网、不写参考目录；执行创建运行身份和不可变参考证据；远程停止不确定时保留资源"
-        ]
+        ],
+        "capabilityId": "art.job-analyze"
       },
       {
         "path": [
@@ -2038,7 +2094,8 @@
         },
         "safety": [
           "读取外部运行状态"
-        ]
+        ],
+        "capabilityId": "art.run-recover"
       },
       {
         "path": [
@@ -2083,8 +2140,9 @@
           "1": "校验、占用或版本冲突"
         },
         "safety": [
-          "冻结风格只读；任务不允许静态分类；不修改用户原图；旧证据保留"
-        ]
+          "风格规则可编辑保存；任务不允许静态分类；不修改用户原图；旧证据保留"
+        ],
+        "capabilityId": "art.reference-update"
       },
       {
         "path": [
@@ -2118,7 +2176,8 @@
         },
         "safety": [
           "只读返回模板；不创建任务或文件"
-        ]
+        ],
+        "capabilityId": "art.job-template"
       },
       {
         "path": [
@@ -2156,7 +2215,8 @@
         },
         "safety": [
           "写入新的编辑草稿和私有底图；保留候选来源；不启动生成"
-        ]
+        ],
+        "capabilityId": "art.job-from-candidate"
       },
       {
         "path": [
@@ -2185,7 +2245,8 @@
           "写入原任务状态",
           "查询原上游任务并下载已有产物",
           "提交结果未知时拒绝恢复"
-        ]
+        ],
+        "capabilityId": "art.run-resume"
       },
       {
         "path": [
@@ -2211,7 +2272,8 @@
         "exitCodes": {
           "0": "成功",
           "1": "验收或执行失败"
-        }
+        },
+        "capabilityId": "art.environment-guide"
       },
       {
         "path": [
@@ -2232,7 +2294,8 @@
         "exitCodes": {
           "0": "成功",
           "1": "验收或执行失败"
-        }
+        },
+        "capabilityId": "art.environment-list"
       },
       {
         "path": [
@@ -2266,7 +2329,8 @@
         "exitCodes": {
           "0": "成功",
           "1": "验收或执行失败"
-        }
+        },
+        "capabilityId": "art.environment-prepare"
       },
       {
         "path": [
@@ -2300,7 +2364,8 @@
         "exitCodes": {
           "0": "成功",
           "1": "验收或执行失败"
-        }
+        },
+        "capabilityId": "art.environment-inspect"
       },
       {
         "path": [
@@ -2334,7 +2399,8 @@
         "exitCodes": {
           "0": "成功",
           "1": "验收或执行失败"
-        }
+        },
+        "capabilityId": "art.environment-verify"
       },
       {
         "path": [
@@ -2368,7 +2434,8 @@
         "exitCodes": {
           "0": "成功",
           "1": "验收或执行失败"
-        }
+        },
+        "capabilityId": "art.environment-register"
       },
       {
         "path": [
@@ -2394,7 +2461,8 @@
         "exitCodes": {
           "0": "成功",
           "1": "验收或执行失败"
-        }
+        },
+        "capabilityId": "art.environment-unregister"
       },
       {
         "path": [
@@ -2428,7 +2496,8 @@
         },
         "safety": [
           "冻结风格包只读；不覆盖已有文件；修改请派生草稿；只导出明确引用的参考图片"
-        ]
+        ],
+        "capabilityId": "art.style-export"
       },
       {
         "path": [
@@ -2458,7 +2527,8 @@
         },
         "safety": [
           "冻结风格包只读；不覆盖已有文件；修改请派生草稿；只导出明确引用的参考图片"
-        ]
+        ],
+        "capabilityId": "art.style-import"
       },
       {
         "path": [
@@ -2484,8 +2554,4687 @@
         },
         "safety": [
           "冻结风格包只读；不覆盖已有文件；修改请派生草稿；只导出明确引用的参考图片"
+        ],
+        "capabilityId": "art.style-sources"
+      },
+      {
+        "path": [
+          "conversation",
+          "start"
+        ],
+        "usage": "art-workshop conversation start --config <path> --input <path>",
+        "description": "编译并幂等提交会话出图，不创建项目任务",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--config <path>",
+            "description": "隔离配置路径"
+          },
+          {
+            "flags": "--input <path>",
+            "description": "结构化会话请求 JSON"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "请求身份、运行状态、停止确认与哈希产物"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "输入或运行错误"
+        },
+        "safety": [
+          "bounded",
+          "idempotent",
+          "no-job-create"
+        ],
+        "capabilityId": "art.conversation-start"
+      },
+      {
+        "path": [
+          "conversation",
+          "status"
+        ],
+        "usage": "art-workshop conversation status --config <path> --session <id> --request <id>",
+        "description": "查询原运行与真实产物",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--config <path>",
+            "description": "隔离配置路径"
+          },
+          {
+            "flags": "--session <id>",
+            "description": "会话身份"
+          },
+          {
+            "flags": "--request <id>",
+            "description": "原请求身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "请求身份、运行状态、停止确认与哈希产物"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "输入或运行错误"
+        },
+        "safety": [
+          "bounded",
+          "idempotent",
+          "no-job-create"
+        ],
+        "capabilityId": "art.conversation-status"
+      },
+      {
+        "path": [
+          "conversation",
+          "cancel"
+        ],
+        "usage": "art-workshop conversation cancel --config <path> --session <id> --request <id>",
+        "description": "取消原运行",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--config <path>",
+            "description": "隔离配置路径"
+          },
+          {
+            "flags": "--session <id>",
+            "description": "会话身份"
+          },
+          {
+            "flags": "--request <id>",
+            "description": "原请求身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "请求身份、运行状态、停止确认与哈希产物"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "输入或运行错误"
+        },
+        "safety": [
+          "bounded",
+          "idempotent",
+          "no-job-create"
+        ],
+        "capabilityId": "art.conversation-cancel"
+      },
+      {
+        "path": [
+          "conversation",
+          "resume"
+        ],
+        "usage": "art-workshop conversation resume --config <path> --session <id> --request <id>",
+        "description": "仅恢复原上游身份，不重新提交",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--config <path>",
+            "description": "隔离配置路径"
+          },
+          {
+            "flags": "--session <id>",
+            "description": "会话身份"
+          },
+          {
+            "flags": "--request <id>",
+            "description": "原请求身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "请求身份、运行状态、停止确认与哈希产物"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "输入或运行错误"
+        },
+        "safety": [
+          "bounded",
+          "idempotent",
+          "no-job-create"
+        ],
+        "capabilityId": "art.conversation-resume"
+      },
+      {
+        "path": [
+          "conversation",
+          "close"
+        ],
+        "usage": "art-workshop conversation close --config <path> --session <id> --request <id>",
+        "description": "宿主退出时停止本请求的worker，保留外部共享服务",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--config <path>",
+            "description": "隔离配置路径"
+          },
+          {
+            "flags": "--session <id>",
+            "description": "会话身份"
+          },
+          {
+            "flags": "--request <id>",
+            "description": "原请求身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "请求身份、运行状态、停止确认与哈希产物"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "输入或运行错误"
+        },
+        "safety": [
+          "bounded",
+          "idempotent",
+          "no-job-create"
+        ],
+        "capabilityId": "art.conversation-close"
+      },
+      {
+        "path": [
+          "style",
+          "migration-complete"
+        ],
+        "usage": "art-workshop style migration-complete",
+        "description": "校验当前迁移草稿并完成配置迁移；input 为 {note}，不分析、不生成或定版",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          },
+          {
+            "flags": "--input <file>",
+            "description": "JSON {rules,summary,note}；rules 为完整规则数组，每条 id/scope/strength/instruction/when，avoid 可含 negative 抽象排除表达数组"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "校验预期版本及空闲状态后更新对象"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.style-migration-complete"
+      },
+      {
+        "path": [
+          "job",
+          "migration-complete"
+        ],
+        "usage": "art-workshop job migration-complete",
+        "description": "校验当前迁移草稿并完成配置迁移；input 为 {note}，不分析、不生成或定版",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          },
+          {
+            "flags": "--input <file>",
+            "description": "JSON {rules,summary,note}；rules 为完整规则数组，每条 id/scope/strength/instruction/when，avoid 可含 negative 抽象排除表达数组"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "校验预期版本及空闲状态后更新对象"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.job-migration-complete"
+      },
+      {
+        "path": [
+          "image",
+          "help"
+        ],
+        "usage": "art-workshop image help",
+        "description": "显示命令入口与 v-cli 发现方式",
+        "arguments": [],
+        "options": [],
+        "output": {
+          "format": "text",
+          "description": "显示命令入口与 v-cli 发现方式"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "无配置读取、目录初始化、网络或模型调用"
+        ],
+        "capabilityId": "art.image-help"
+      },
+      {
+        "path": [
+          "image",
+          "config",
+          "path"
+        ],
+        "usage": "art-workshop image config path",
+        "description": "显示本地配置文件路径",
+        "arguments": [],
+        "options": [],
+        "output": {
+          "format": "text",
+          "description": "显示本地配置文件路径"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "查询与预演不创建参考目录",
+          "无网络调用"
+        ],
+        "capabilityId": "art.image-config-path"
+      },
+      {
+        "path": [
+          "image",
+          "config",
+          "show"
+        ],
+        "usage": "art-workshop image config show",
+        "description": "显示生效的本地配置和外部资源路径",
+        "arguments": [],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "显示生效的本地配置和外部资源路径"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "查询与预演不创建参考目录",
+          "无网络调用"
+        ],
+        "capabilityId": "art.image-config-show"
+      },
+      {
+        "path": [
+          "image",
+          "config",
+          "init"
+        ],
+        "usage": "art-workshop image config init",
+        "description": "配置不存在时创建本地模板；已存在时读取，不覆盖",
+        "arguments": [],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "配置不存在时创建本地模板；已存在时读取，不覆盖"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "查询与预演不创建参考目录",
+          "无网络调用",
+          "写入外部本地配置"
+        ],
+        "capabilityId": "art.image-config-init"
+      },
+      {
+        "path": [
+          "image",
+          "refs",
+          "guide"
+        ],
+        "usage": "art-workshop image refs guide [--project <id>]",
+        "description": "解释参考分类目录的用途与推荐图片样式",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程 ID；未指定时使用本地 defaultProject，不跨工程回退"
+          }
+        ],
+        "output": {
+          "format": "text",
+          "description": "解释参考分类目录的用途与推荐图片样式"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "查询与预演不创建参考目录",
+          "无网络调用"
+        ],
+        "capabilityId": "art.image-refs-guide"
+      },
+      {
+        "path": [
+          "image",
+          "agent",
+          "index"
+        ],
+        "usage": "art-workshop image agent index",
+        "description": "发现模块、工程、核心、任务与随包 skill",
+        "arguments": [],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "发现模块、工程、核心、任务与随包 skill"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "查询与预演不创建参考目录",
+          "无网络调用"
+        ],
+        "capabilityId": "art.image-agent-index"
+      },
+      {
+        "path": [
+          "image",
+          "agent",
+          "docs"
+        ],
+        "usage": "art-workshop image agent docs",
+        "description": "输出全部随包模式、配置、工程、命令、诊断与核心指南",
+        "arguments": [],
+        "options": [],
+        "output": {
+          "format": "text",
+          "description": "输出全部随包模式、配置、工程、命令、诊断与核心指南"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "查询与预演不创建参考目录",
+          "无网络调用"
+        ],
+        "capabilityId": "art.image-agent-docs"
+      },
+      {
+        "path": [
+          "image",
+          "agent",
+          "export"
+        ],
+        "usage": "art-workshop image agent export --host codex --directory <DIR> [--dry]",
+        "description": "显式导出技能到指定宿主目录；默认安装不导出",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--host <HOST>",
+            "description": "目标宿主 codex 或 claude"
+          },
+          {
+            "flags": "--directory <DIR>",
+            "description": "明确指定导出目录"
+          },
+          {
+            "flags": "--dry",
+            "description": "仅预演"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "显式导出技能到指定宿主目录；默认安装不导出"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "仅显式请求时导出，不扫描用户目录，不生成安装绝对路径回执"
+        ],
+        "capabilityId": "art.image-agent-export"
+      },
+      {
+        "path": [
+          "image",
+          "list"
+        ],
+        "usage": "art-workshop image list",
+        "description": "列出外部工作目录中的工程",
+        "arguments": [],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "列出外部工作目录中的工程"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "查询与预演不创建参考目录",
+          "无网络调用"
+        ],
+        "capabilityId": "art.image-list"
+      },
+      {
+        "path": [
+          "image",
+          "style",
+          "analyze"
+        ],
+        "usage": "art-workshop image style analyze",
+        "description": "草稿风格后台分析",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          },
+          {
+            "flags": "--dry",
+            "description": "只读编译预演"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "分析启动前登记的稳定操作身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "草稿风格后台分析"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "dry 不联网、不写参考目录；执行创建运行身份和不可变参考证据；远程停止不确定时保留资源"
+        ],
+        "capabilityId": "art.image-style-analyze"
+      },
+      {
+        "path": [
+          "image",
+          "style",
+          "validate"
+        ],
+        "usage": "art-workshop image style validate [--project <id>] [--report <file>]",
+        "description": "校验报告及核心规则的一致性",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程 ID；未指定时使用本地 defaultProject，不跨工程回退"
+          },
+          {
+            "flags": "--report <file>",
+            "description": "风格报告 JSON，相对路径基于 workspace"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "校验报告及核心规则的一致性"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "查询与预演不创建参考目录",
+          "无网络调用"
+        ],
+        "capabilityId": "art.image-style-validate"
+      },
+      {
+        "path": [
+          "image",
+          "style",
+          "show"
+        ],
+        "usage": "art-workshop image style show [--project <id>] [--core <id>]",
+        "description": "读取当前工程的指定冻结核心并验证完整性",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程 ID；未指定时使用本地 defaultProject，不跨工程回退"
+          },
+          {
+            "flags": "--core <id>",
+            "description": "工程内冻结核心 ID；显式选择与任务绑定冲突时拒绝执行"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "读取当前工程的指定冻结核心并验证完整性"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "查询与预演不创建参考目录",
+          "无网络调用"
+        ],
+        "capabilityId": "art.image-style-show"
+      },
+      {
+        "path": [
+          "image",
+          "generate",
+          "show"
+        ],
+        "usage": "art-workshop image generate show [--project <id>] [--job <id>]",
+        "description": "读取文生图任务",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程 ID；未指定时使用本地 defaultProject，不跨工程回退"
+          },
+          {
+            "flags": "--job <id>",
+            "description": "工程内任务 ID"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "读取文生图任务"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "查询与预演不创建参考目录",
+          "无网络调用"
+        ],
+        "capabilityId": "art.image-generate-show"
+      },
+      {
+        "path": [
+          "image",
+          "generate",
+          "plan"
+        ],
+        "usage": "art-workshop image generate plan [--project <id>] [--job <id>] [--core <id>] [--out <file>]",
+        "description": "编译文生图计划，明确来源及真实请求",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程 ID；未指定时使用本地 defaultProject，不跨工程回退"
+          },
+          {
+            "flags": "--job <id>",
+            "description": "工程内任务 ID"
+          },
+          {
+            "flags": "--core <id>",
+            "description": "工程内冻结核心 ID；显式选择与任务绑定冲突时拒绝执行"
+          },
+          {
+            "flags": "--out <file>",
+            "description": "可选外部输出文件；相对路径基于 workspace"
+          },
+          {
+            "flags": "--backend <id>",
+            "description": "新计划选择配置中的远程/本地后端 ID；冻结计划不能覆盖"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "编译文生图计划，明确来源及真实请求"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "查询与预演不创建参考目录",
+          "无网络调用",
+          "指定 out 时写入外部计划文件"
+        ],
+        "capabilityId": "art.image-generate-plan"
+      },
+      {
+        "path": [
+          "image",
+          "generate",
+          "run"
+        ],
+        "usage": "art-workshop image generate run [--plan <file>] [--project <id>] [--job <id>] [--core <id>] [--item <id>] [--variant <id>] [--explore] [--offset <n>] [--limit <n>] [--dry]",
+        "description": "执行或预演文生图计划",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--plan <file>",
+            "description": "冻结计划文件；不能同时指定 project/job/core/explore"
+          },
+          {
+            "flags": "--project <id>",
+            "description": "工程 ID；未指定时使用本地 defaultProject，不跨工程回退"
+          },
+          {
+            "flags": "--job <id>",
+            "description": "工程内任务 ID"
+          },
+          {
+            "flags": "--core <id>",
+            "description": "工程内冻结核心 ID；显式选择与任务绑定冲突时拒绝执行"
+          },
+          {
+            "flags": "--item <id>",
+            "description": "选择单体"
+          },
+          {
+            "flags": "--variant <id>",
+            "description": "选择候选，默认 base"
+          },
+          {
+            "flags": "--explore",
+            "description": "执行全部候选；仅在从任务编译时使用"
+          },
+          {
+            "flags": "--offset <n>",
+            "description": "选择起始偏移，默认 0"
+          },
+          {
+            "flags": "--limit <n>",
+            "description": "执行数量上限"
+          },
+          {
+            "flags": "--dry",
+            "description": "只读预演所选请求；不联网、不启动服务、不上传、不创建参考目录"
+          },
+          {
+            "flags": "--backend <id>",
+            "description": "选择统一配置中的后端；冻结计划不允许覆盖"
+          },
+          {
+            "flags": "--background",
+            "description": "后台执行并返回 taskId"
+          },
+          {
+            "flags": "--all-variants",
+            "description": "执行冻结预案中的全部构图候选；不能与 --variant 同用"
+          },
+          {
+            "flags": "--retry-run <id>",
+            "description": "原批次停止已确认后，仅重试明确失败项；成功项不重做"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "启动前持久化的稳定操作身份；丢失回执时按原身份 recover"
+          }
+        ],
+        "output": {
+          "format": "stdout",
+          "description": "执行或预演文生图计划"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "查询与预演不创建参考目录",
+          "远程非 dry 通过登记的协议适配器调用模型，可能产生费用，按已有任务授权执行",
+          "本地非 dry 可启动任务和 ComfyUI 服务并采样，不调用百炼生图",
+          "真实执行写入外部图片、manifest、任务状态和诊断",
+          "dry 只展示请求，不启动或探测服务、不上传、不生成图片"
+        ],
+        "capabilityId": "art.image-generate-start"
+      },
+      {
+        "path": [
+          "image",
+          "edit",
+          "show"
+        ],
+        "usage": "art-workshop image edit show [--project <id>] [--job <id>]",
+        "description": "读取图编辑任务",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程 ID；未指定时使用本地 defaultProject，不跨工程回退"
+          },
+          {
+            "flags": "--job <id>",
+            "description": "工程内任务 ID"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "读取图编辑任务"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "查询与预演不创建参考目录",
+          "无网络调用"
+        ],
+        "capabilityId": "art.image-edit-show"
+      },
+      {
+        "path": [
+          "image",
+          "edit",
+          "plan"
+        ],
+        "usage": "art-workshop image edit plan [--project <id>] [--job <id>] [--core <id>] [--out <file>]",
+        "description": "编译图编辑计划，明确来源及真实请求",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程 ID；未指定时使用本地 defaultProject，不跨工程回退"
+          },
+          {
+            "flags": "--job <id>",
+            "description": "工程内任务 ID"
+          },
+          {
+            "flags": "--core <id>",
+            "description": "工程内冻结核心 ID；显式选择与任务绑定冲突时拒绝执行"
+          },
+          {
+            "flags": "--out <file>",
+            "description": "可选外部输出文件；相对路径基于 workspace"
+          },
+          {
+            "flags": "--backend <id>",
+            "description": "新计划选择配置中的远程/本地后端 ID；冻结计划不能覆盖"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "编译图编辑计划，明确来源及真实请求"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "查询与预演不创建参考目录",
+          "无网络调用",
+          "指定 out 时写入外部计划文件"
+        ],
+        "capabilityId": "art.image-edit-plan"
+      },
+      {
+        "path": [
+          "image",
+          "edit",
+          "run"
+        ],
+        "usage": "art-workshop image edit run [--plan <file>] [--project <id>] [--job <id>] [--core <id>] [--item <id>] [--variant <id>] [--explore] [--offset <n>] [--limit <n>] [--dry]",
+        "description": "执行或预演图编辑计划",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--plan <file>",
+            "description": "冻结计划文件；不能同时指定 project/job/core/explore"
+          },
+          {
+            "flags": "--project <id>",
+            "description": "工程 ID；未指定时使用本地 defaultProject，不跨工程回退"
+          },
+          {
+            "flags": "--job <id>",
+            "description": "工程内任务 ID"
+          },
+          {
+            "flags": "--core <id>",
+            "description": "工程内冻结核心 ID；显式选择与任务绑定冲突时拒绝执行"
+          },
+          {
+            "flags": "--item <id>",
+            "description": "选择单体"
+          },
+          {
+            "flags": "--variant <id>",
+            "description": "选择候选，默认 base"
+          },
+          {
+            "flags": "--explore",
+            "description": "执行全部候选；仅在从任务编译时使用"
+          },
+          {
+            "flags": "--offset <n>",
+            "description": "选择起始偏移，默认 0"
+          },
+          {
+            "flags": "--limit <n>",
+            "description": "执行数量上限"
+          },
+          {
+            "flags": "--dry",
+            "description": "只读预演所选请求；不联网、不启动服务、不上传、不创建参考目录"
+          },
+          {
+            "flags": "--backend <id>",
+            "description": "选择统一配置中的后端；冻结计划不允许覆盖"
+          },
+          {
+            "flags": "--background",
+            "description": "后台执行并返回 taskId"
+          },
+          {
+            "flags": "--all-variants",
+            "description": "执行冻结预案中的全部构图候选；不能与 --variant 同用"
+          },
+          {
+            "flags": "--retry-run <id>",
+            "description": "原批次停止已确认后，仅重试明确失败项；成功项不重做"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "启动前持久化的稳定操作身份；丢失回执时按原身份 recover"
+          }
+        ],
+        "output": {
+          "format": "stdout",
+          "description": "执行或预演图编辑计划"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "查询与预演不创建参考目录",
+          "远程非 dry 通过登记的协议适配器调用模型，可能产生费用，按已有任务授权执行",
+          "本地非 dry 可启动任务和 ComfyUI 服务并采样，不调用百炼生图",
+          "真实执行写入外部图片、manifest、任务状态和诊断",
+          "dry 只展示请求，不启动或探测服务、不上传、不生成图片"
+        ],
+        "capabilityId": "art.image-edit-start"
+      },
+      {
+        "path": [
+          "image",
+          "check"
+        ],
+        "usage": "art-workshop image check RUN",
+        "description": "核验运行计划、执行归属、产物与文件哈希；不进行人工评分",
+        "arguments": [
+          {
+            "name": "RUN",
+            "description": "运行目录或 manifest 路径，按 output 解析",
+            "required": true
+          }
+        ],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "核验运行计划、执行归属、产物与文件哈希；不进行人工评分"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "只读；不调用模型、不写入评分或定版记录"
+        ],
+        "capabilityId": "art.image-check"
+      },
+      {
+        "path": [
+          "image",
+          "compare"
+        ],
+        "usage": "art-workshop image compare BEFORE AFTER",
+        "description": "比较两份计划或执行记录的核心、执行配置和单体变更",
+        "arguments": [
+          {
+            "name": "BEFORE",
+            "description": "前一份计划/执行记录 JSON，按 workspace 解析",
+            "required": true
+          },
+          {
+            "name": "AFTER",
+            "description": "后一份计划/执行记录 JSON，按 workspace 解析",
+            "required": true
+          }
+        ],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "比较两份计划或执行记录的核心、执行配置和单体变更"
+        },
+        "exitCodes": {
+          "0": "成功；验收状态以返回内容为准",
+          "1": "参数、配置、计划或执行失败"
+        },
+        "safety": [
+          "查询与预演不创建参考目录",
+          "无网络调用"
+        ],
+        "capabilityId": "art.image-compare"
+      },
+      {
+        "path": [
+          "image",
+          "task",
+          "list"
+        ],
+        "usage": "art-workshop image task list",
+        "description": "列出任务状态",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "仅列出指定工程运行"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "列出任务状态"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "失败；未确认停止时保留服务并报告"
+        },
+        "safety": [
+          "读取外部运行状态"
+        ],
+        "capabilityId": "art.image-run-list"
+      },
+      {
+        "path": [
+          "image",
+          "task",
+          "status"
+        ],
+        "usage": "art-workshop image task status TASK",
+        "description": "查看单次任务及后端 prompt_id",
+        "arguments": [
+          {
+            "name": "TASK",
+            "required": true,
+            "description": "art 任务 ID"
+          }
+        ],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "查看单次任务及后端 prompt_id"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "失败；未确认停止时保留服务并报告"
+        },
+        "safety": [
+          "读取外部运行状态"
+        ],
+        "capabilityId": "art.image-run-status"
+      },
+      {
+        "path": [
+          "image",
+          "task",
+          "wait"
+        ],
+        "usage": "art-workshop image task wait TASK",
+        "description": "等待任务结束；超时不取消任务",
+        "arguments": [
+          {
+            "name": "TASK",
+            "required": true,
+            "description": "art 任务 ID"
+          }
+        ],
+        "options": [
+          {
+            "flags": "--timeout <seconds>",
+            "description": "等待秒数，默认 3600"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "等待任务结束；超时不取消任务"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "失败；未确认停止时保留服务并报告"
+        },
+        "safety": [
+          "读取外部运行状态"
+        ],
+        "capabilityId": "art.image-run-wait"
+      },
+      {
+        "path": [
+          "image",
+          "task",
+          "cancel"
+        ],
+        "usage": "art-workshop image task cancel TASK",
+        "description": "取消单次任务并等待停止",
+        "arguments": [
+          {
+            "name": "TASK",
+            "required": true,
+            "description": "art 任务 ID"
+          }
+        ],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "取消单次任务并等待停止"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "失败；未确认停止时保留服务并报告"
+        },
+        "safety": [
+          "取消单个任务",
+          "按 prompt_id 中断本地任务",
+          "保留服务进程"
+        ],
+        "capabilityId": "art.image-run-cancel"
+      },
+      {
+        "path": [
+          "image",
+          "shutdown"
+        ],
+        "usage": "art-workshop image shutdown",
+        "description": "停止当前工作区关联任务，核验共享队列和进程身份后关闭服务",
+        "arguments": [],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "停止当前工作区关联任务，核验共享队列和进程身份后关闭服务"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "失败；未确认停止时保留服务并报告"
+        },
+        "safety": [
+          "停止配置范围内所有任务",
+          "只取消关联任务；共享队列仍有其他任务时保留服务",
+          "核验进程身份后关闭服务",
+          "阻止 shutdown 期间的新任务"
+        ],
+        "capabilityId": "art.image-shutdown"
+      },
+      {
+        "path": [
+          "image",
+          "config",
+          "validate"
+        ],
+        "usage": "art-workshop image config validate",
+        "description": "校验配置和 API workflow 的结构、连接与参数绑定",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--backend <id>",
+            "description": "仅检查指定后端"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "校验配置和 API workflow 的结构、连接与参数绑定"
+        },
+        "exitCodes": {
+          "0": "检查通过",
+          "1": "检查失败"
+        },
+        "safety": [
+          "只读校验，不启动服务、不调用模型"
+        ],
+        "capabilityId": "art.image-config-validate"
+      },
+      {
+        "path": [
+          "image",
+          "doctor"
+        ],
+        "usage": "art-workshop image doctor",
+        "description": "检测本地 ComfyUI 环境、节点与模型",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--backend <id>",
+            "description": "仅检查指定后端"
+          },
+          {
+            "flags": "--start",
+            "description": "无可用服务时按配置启动；不采样，检查后服务保留"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "检测本地 ComfyUI 环境、节点与模型"
+        },
+        "exitCodes": {
+          "0": "检查通过",
+          "1": "检查失败"
+        },
+        "safety": [
+          "默认读取本地环境，不启动、不采样、不补齐 refs",
+          "--start 可启动并保留服务，写状态与日志；不采样",
+          "远程后端只校验配置，不检查认证或云端连通性"
+        ],
+        "capabilityId": "art.image-doctor"
+      },
+      {
+        "path": [
+          "image",
+          "workflow",
+          "list"
+        ],
+        "usage": "art-workshop image workflow list",
+        "description": "列出默认内置工作流及 API/UI 文件位置",
+        "arguments": [],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "列出默认内置工作流及 API/UI 文件位置"
+        },
+        "exitCodes": {
+          "0": "检查通过",
+          "1": "检查失败"
+        },
+        "safety": [
+          "读取随包工作流清单，不依赖合法用户配置、不补 refs、不调用模型"
+        ],
+        "capabilityId": "art.image-workflow-list"
+      },
+      {
+        "path": [
+          "image",
+          "style",
+          "create"
+        ],
+        "usage": "art-workshop image style create",
+        "description": "创建独立草稿对象",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--input <file>",
+            "description": "结构化配置文件"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "创建独立草稿对象"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.image-style-create"
+      },
+      {
+        "path": [
+          "image",
+          "style",
+          "list"
+        ],
+        "usage": "art-workshop image style list",
+        "description": "列出工程对象及任务展示状态",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "列出工程对象及任务展示状态"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.image-style-list"
+      },
+      {
+        "path": [
+          "image",
+          "style",
+          "read"
+        ],
+        "usage": "art-workshop image style read",
+        "description": "读取指定对象与版本",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "读取指定对象与版本"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.image-style-read"
+      },
+      {
+        "path": [
+          "image",
+          "style",
+          "update"
+        ],
+        "usage": "art-workshop image style update",
+        "description": "校验预期版本及空闲状态后更新对象",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          },
+          {
+            "flags": "--input <file>",
+            "description": "结构化配置文件"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "校验预期版本及空闲状态后更新对象"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.image-style-update"
+      },
+      {
+        "path": [
+          "image",
+          "style",
+          "resolve"
+        ],
+        "usage": "art-workshop image style resolve",
+        "description": "记录用户选择并修订风格方案；input 为 {issueId,optionId,note}，不重新分析、不自动采用",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          },
+          {
+            "flags": "--input <file>",
+            "description": "结构化配置文件"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "校验预期版本及空闲状态后更新对象"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.image-style-resolve"
+      },
+      {
+        "path": [
+          "image",
+          "style",
+          "revise"
+        ],
+        "usage": "art-workshop image style revise",
+        "description": "按用户要求修订完整规则方案；input 为 {rules,summary,note}，沿用未变化的参考证据，不调用模型或自动冻结",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          },
+          {
+            "flags": "--input <file>",
+            "description": "JSON {rules,summary,note}；rules 为完整规则数组，每条 id/scope/strength/instruction/when，avoid 可含 negative 抽象排除表达数组"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "校验预期版本及空闲状态后更新对象"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.image-style-revise"
+      },
+      {
+        "path": [
+          "image",
+          "style",
+          "derive"
+        ],
+        "usage": "art-workshop image style derive",
+        "description": "派生独立草稿，保留结构化规则与独立参考；当前冻结证据标记沿用，不继承核心、执行或授权",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "派生独立草稿，不继承执行、报告或定版"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.image-style-derive"
+      },
+      {
+        "path": [
+          "image",
+          "style",
+          "discard"
+        ],
+        "usage": "art-workshop image style discard",
+        "description": "确认空闲后丢弃草稿并清理所属资源",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "确认空闲后丢弃草稿并清理所属资源"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.image-style-discard"
+      },
+      {
+        "path": [
+          "image",
+          "job",
+          "create"
+        ],
+        "usage": "art-workshop image job create",
+        "description": "创建独立草稿对象",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--input <file>",
+            "description": "结构化配置文件"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "创建独立草稿对象"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.image-job-create"
+      },
+      {
+        "path": [
+          "image",
+          "job",
+          "list"
+        ],
+        "usage": "art-workshop image job list",
+        "description": "列出工程对象及任务展示状态",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "列出工程对象及任务展示状态"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.image-job-list"
+      },
+      {
+        "path": [
+          "image",
+          "job",
+          "read"
+        ],
+        "usage": "art-workshop image job read",
+        "description": "读取指定对象与版本",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "读取指定对象与版本"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.image-job-read"
+      },
+      {
+        "path": [
+          "image",
+          "job",
+          "update"
+        ],
+        "usage": "art-workshop image job update",
+        "description": "校验预期版本及空闲状态后更新对象",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          },
+          {
+            "flags": "--input <file>",
+            "description": "结构化配置文件"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "校验预期版本及空闲状态后更新对象"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.image-job-update"
+      },
+      {
+        "path": [
+          "image",
+          "job",
+          "derive"
+        ],
+        "usage": "art-workshop image job derive",
+        "description": "派生独立草稿，不继承执行、报告或定版",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "派生独立草稿，不继承执行、报告或定版"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.image-job-derive"
+      },
+      {
+        "path": [
+          "image",
+          "job",
+          "discard"
+        ],
+        "usage": "art-workshop image job discard",
+        "description": "归档已停止的任务，保留配置、参考、收藏、图片与执行历史；可恢复到活跃列表",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "归档已停止的任务，保留配置、参考、收藏、图片与执行历史；可恢复到活跃列表"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "验证 revision、任务归属和停止确认；归档和恢复均保留原配置、收藏与所有历史文件，不自动执行"
+        ],
+        "capabilityId": "art.image-job-discard"
+      },
+      {
+        "path": [
+          "image",
+          "job",
+          "restore"
+        ],
+        "usage": "art-workshop image job restore",
+        "description": "恢复已归档任务到活跃列表，保留原身份、配置与历史；不重新执行",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "恢复已归档任务到活跃列表，保留原身份、配置与历史；不重新执行"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "验证 revision、任务归属和停止确认；归档和恢复均保留原配置、收藏与所有历史文件，不自动执行"
+        ],
+        "capabilityId": "art.image-job-restore"
+      },
+      {
+        "path": [
+          "image",
+          "style",
+          "adopt"
+        ],
+        "usage": "art-workshop image style adopt",
+        "description": "兼容旧草稿的报告采用入口；已保存规则保持当前版本，日常修改直接使用 style update",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          },
+          {
+            "flags": "--note <text>",
+            "description": "采用说明"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "采用当前有效报告并冻结"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "来源匹配且冲突已解决；采用事务可恢复，核心只写一次"
+        ],
+        "capabilityId": "art.image-style-adopt"
+      },
+      {
+        "path": [
+          "image",
+          "style",
+          "recover"
+        ],
+        "usage": "art-workshop image style recover",
+        "description": "恢复已授权采用事务",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "恢复已授权采用事务"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "不重新调用模型；核验核心和事务身份后完成状态提交"
+        ],
+        "capabilityId": "art.image-style-recover"
+      },
+      {
+        "path": [
+          "image",
+          "project",
+          "init"
+        ],
+        "usage": "art-workshop image project init",
+        "description": "新建版本 2 工程",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--input <file>",
+            "description": "结构化配置文件"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "新建版本 2 工程"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "工程存在拒绝覆写"
+        ],
+        "capabilityId": "art.image-project-init"
+      },
+      {
+        "path": [
+          "image",
+          "project",
+          "upgrade"
+        ],
+        "usage": "art-workshop image project upgrade",
+        "description": "显式一次性工程升级",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--dry",
+            "description": "预检"
+          },
+          {
+            "flags": "--mapping <file>",
+            "description": "旧共享参考的明确归属映射"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "显式一次性工程升级"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "备份和原子替换，失败回滚；不猜参考归属"
+        ],
+        "capabilityId": "art.image-project-upgrade"
+      },
+      {
+        "path": [
+          "image",
+          "reference",
+          "list"
+        ],
+        "usage": "art-workshop image reference list",
+        "description": "查看对象参考",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--kind <style|task>",
+            "description": "对象粒度"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "查看对象参考"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "只读"
+        ],
+        "capabilityId": "art.image-reference-list"
+      },
+      {
+        "path": [
+          "image",
+          "reference",
+          "import"
+        ],
+        "usage": "art-workshop image reference import",
+        "description": "导入对象私有图片",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--kind <style|task>",
+            "description": "对象粒度"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          },
+          {
+            "flags": "--source <file>",
+            "description": "用户原图"
+          },
+          {
+            "flags": "--category <name>",
+            "description": "四类静态参考之一"
+          },
+          {
+            "flags": "--purposes <list>",
+            "description": "逗号分隔动态用途"
+          },
+          {
+            "flags": "--note <text>",
+            "description": "参考说明"
+          },
+          {
+            "flags": "--item-id <id>",
+            "description": "所属出图对象标识；未指定为任务共用"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "导入对象私有图片"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "校验图片、大小、路径；复制不修改原图；不支持直接参考时拒绝"
+        ],
+        "capabilityId": "art.image-reference-import"
+      },
+      {
+        "path": [
+          "image",
+          "reference",
+          "remove"
+        ],
+        "usage": "art-workshop image reference remove",
+        "description": "移除参考关联",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--kind <style|task>",
+            "description": "对象粒度"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          },
+          {
+            "flags": "--item <id>",
+            "description": "参考身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "移除参考关联"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "移除关联，保留历史证据资源"
+        ],
+        "capabilityId": "art.image-reference-remove"
+      },
+      {
+        "path": [
+          "image",
+          "candidate",
+          "list"
+        ],
+        "usage": "art-workshop image candidate list",
+        "description": "查看真实候选及完整性",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--job <id>",
+            "description": "配置任务身份"
+          },
+          {
+            "flags": "--run <id>",
+            "description": "执行批次身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "查看真实候选及完整性"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "只读；校验批次计划和候选身份"
+        ],
+        "capabilityId": "art.image-candidate-list"
+      },
+      {
+        "path": [
+          "image",
+          "candidate",
+          "favorites"
+        ],
+        "usage": "art-workshop image candidate favorites --project <id>",
+        "description": "网格收藏夹的数据来源，列出工程中仍可用的收藏图片及源任务身份",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "收藏图片、源任务名称、资产及批次身份"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验或读取失败"
+        },
+        "safety": [
+          "只读；忽略已删除的图片和已归档的任务"
+        ],
+        "capabilityId": "art.image-candidate-favorites"
+      },
+      {
+        "path": [
+          "image",
+          "candidate",
+          "favorite"
+        ],
+        "usage": "art-workshop image candidate favorite --project <id> --job <id> --run <id> --candidate <id> --value <true|false>",
+        "description": "设置图片收藏状态，不修改任务需求、版本、定版或运行状态",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--job <id>",
+            "description": "源任务身份"
+          },
+          {
+            "flags": "--run <id>",
+            "description": "源批次身份"
+          },
+          {
+            "flags": "--candidate <id>",
+            "description": "图片候选身份"
+          },
+          {
+            "flags": "--value <true|false>",
+            "description": "true 收藏，false 取消收藏"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "更新后的工程收藏列表"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验或写入失败"
+        },
+        "safety": [
+          "仅修改工程收藏记录；重复操作幂等，不启动分析或生成"
+        ],
+        "capabilityId": "art.image-candidate-favorite"
+      },
+      {
+        "path": [
+          "image",
+          "candidate",
+          "finalizations"
+        ],
+        "usage": "art-workshop image candidate finalizations",
+        "description": "查看资产定版",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--job <id>",
+            "description": "配置任务身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "查看资产定版"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "只读"
+        ],
+        "capabilityId": "art.image-candidate-finalizations"
+      },
+      {
+        "path": [
+          "image",
+          "candidate",
+          "finalize"
+        ],
+        "usage": "art-workshop image candidate finalize",
+        "description": "按资产定版候选",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--job <id>",
+            "description": "配置任务身份"
+          },
+          {
+            "flags": "--run <id>",
+            "description": "执行批次身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          },
+          {
+            "flags": "--candidate <id>",
+            "description": "候选身份"
+          },
+          {
+            "flags": "--actor <text>",
+            "description": "操作者"
+          },
+          {
+            "flags": "--name <text>",
+            "description": "导出文件名；留空时使用 vant-gen-任务-资产-批次"
+          },
+          {
+            "flags": "--replace",
+            "description": "明确替换已有定版"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "按资产定版候选"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "生成完成与哈希有效；重复幂等，替换保留历史"
+        ],
+        "capabilityId": "art.image-candidate-finalize"
+      },
+      {
+        "path": [
+          "image",
+          "candidate",
+          "delete"
+        ],
+        "usage": "art-workshop image candidate delete",
+        "description": "删除候选及关联定版",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--job <id>",
+            "description": "配置任务身份"
+          },
+          {
+            "flags": "--run <id>",
+            "description": "执行批次身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          },
+          {
+            "flags": "--candidate <id>",
+            "description": "候选身份"
+          },
+          {
+            "flags": "--actor <text>",
+            "description": "操作者"
+          },
+          {
+            "flags": "--confirm",
+            "description": "明确确认删除影响"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "删除候选及关联定版"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "运行和引用检查；先持久化删除记录，再清理私有文件"
+        ],
+        "capabilityId": "art.image-candidate-delete"
+      },
+      {
+        "path": [
+          "image",
+          "job",
+          "analyze"
+        ],
+        "usage": "art-workshop image job analyze",
+        "description": "分析任务动态参考，仅转写指定用途，不继承静态风格",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          },
+          {
+            "flags": "--dry",
+            "description": "只读编译预演"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "分析启动前登记的稳定操作身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "分析任务动态参考，仅转写指定用途，不继承静态风格"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "dry 不联网、不写参考目录；执行创建运行身份和不可变参考证据；远程停止不确定时保留资源"
+        ],
+        "capabilityId": "art.image-job-analyze"
+      },
+      {
+        "path": [
+          "image",
+          "task",
+          "recover"
+        ],
+        "usage": "art-workshop image task recover --project P --operation OPERATION",
+        "description": "仅从唯一原运行登记恢复身份；绝不重新执行",
+        "arguments": [],
+        "options": [
+          {
+            "name": "project",
+            "flags": "--project <id>",
+            "type": "string",
+            "required": true,
+            "description": "原工程身份"
+          },
+          {
+            "name": "operation",
+            "flags": "--operation <id>",
+            "type": "string",
+            "required": true,
+            "description": "启动前持久化的原操作身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "仅从唯一原运行登记恢复身份；绝不重新执行"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "失败；未确认停止时保留服务并报告"
+        },
+        "safety": [
+          "读取外部运行状态"
+        ],
+        "capabilityId": "art.image-run-recover"
+      },
+      {
+        "path": [
+          "image",
+          "reference",
+          "update"
+        ],
+        "usage": "art-workshop image reference update --project P --kind style --id ID --revision N --item REF --input PATCH.json",
+        "description": "更新参考分类、任务用途与说明，版本校验并使分析失效",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--kind <kind>",
+            "description": "style 或 task"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期版本"
+          },
+          {
+            "flags": "--item <id>",
+            "description": "参考身份"
+          },
+          {
+            "flags": "--input <file>",
+            "description": "category/purposes/itemId/note/ignore 的字段补丁；itemId 为 null 时任务共用"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "更新参考分类、任务用途与说明，版本校验并使分析失效"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、占用或版本冲突"
+        },
+        "safety": [
+          "风格规则可编辑保存；任务不允许静态分类；不修改用户原图；旧证据保留"
+        ],
+        "capabilityId": "art.image-reference-update"
+      },
+      {
+        "path": [
+          "image",
+          "job",
+          "template"
+        ],
+        "usage": "v-cli art job template --project <id> --kind <generate|edit> [--core <id>]",
+        "description": "只读返回工具权威的任务配置模板；生成任务使用已冻结核心的题材",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--kind <generate|edit>",
+            "description": "任务类型"
+          },
+          {
+            "flags": "--core <id>",
+            "description": "生成任务的冻结核心身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "只读返回工具权威的任务配置模板；生成任务使用已冻结核心的题材"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "只读返回模板；不创建任务或文件"
+        ],
+        "capabilityId": "art.image-job-template"
+      },
+      {
+        "path": [
+          "image",
+          "job",
+          "from-candidate"
+        ],
+        "usage": "v-cli art job from-candidate --project <id> --id <task> --run <id> --candidate <id>",
+        "description": "将已停止批次中的可用图片导入私有底图，创建独立编辑草稿，不要求定版通过、不运行",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <task>",
+            "description": "源任务身份"
+          },
+          {
+            "flags": "--run <id>",
+            "description": "真实批次"
+          },
+          {
+            "flags": "--candidate <id>",
+            "description": "可用图片的候选身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "将已停止批次中的可用图片导入私有底图，创建独立编辑草稿，不要求定版通过、不运行"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "写入新的编辑草稿和私有底图；保留候选来源；不启动生成"
+        ],
+        "capabilityId": "art.image-job-from-candidate"
+      },
+      {
+        "path": [
+          "image",
+          "task",
+          "resume"
+        ],
+        "usage": "art-workshop image task resume TASK",
+        "description": "仅恢复原上游任务的查询和下载，绝不重新提交",
+        "arguments": [
+          {
+            "name": "TASK",
+            "required": true,
+            "description": "art 任务 ID"
+          }
+        ],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "仅恢复原上游任务的查询和下载，绝不重新提交"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "失败；未确认停止时保留服务并报告"
+        },
+        "safety": [
+          "写入原任务状态",
+          "查询原上游任务并下载已有产物",
+          "提交结果未知时拒绝恢复"
+        ],
+        "capabilityId": "art.image-run-resume"
+      },
+      {
+        "path": [
+          "image",
+          "environment",
+          "guide"
+        ],
+        "description": "本地环境部署指南",
+        "usage": "art-workshop image environment guide",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--guide <id>",
+            "description": "部署指南标识；省略使用环境登记或推荐方案"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "环境事实与验收结果"
+        },
+        "safety": [
+          "不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务"
+        ],
+        "exitCodes": {
+          "0": "成功",
+          "1": "验收或执行失败"
+        },
+        "capabilityId": "art.image-environment-guide"
+      },
+      {
+        "path": [
+          "image",
+          "environment",
+          "list"
+        ],
+        "description": "本地环境目录发现",
+        "usage": "art-workshop image environment list",
+        "arguments": [],
+        "options": [],
+        "output": {
+          "format": "json",
+          "description": "环境事实与验收结果"
+        },
+        "safety": [
+          "不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务"
+        ],
+        "exitCodes": {
+          "0": "成功",
+          "1": "验收或执行失败"
+        },
+        "capabilityId": "art.image-environment-list"
+      },
+      {
+        "path": [
+          "image",
+          "environment",
+          "prepare"
+        ],
+        "description": "自动准备兼容 Python 运行时，保留已有环境",
+        "usage": "art-workshop image environment prepare",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--directory <value>",
+            "description": "本机环境根目录"
+          },
+          {
+            "flags": "--endpoint <value>",
+            "description": "本机 HTTP 服务根地址"
+          },
+          {
+            "flags": "--guide <id>",
+            "description": "部署指南标识；省略使用环境登记或推荐方案"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "环境事实与验收结果"
+        },
+        "safety": [
+          "仅在目标目录创建运行时；复用兼容 Python，不兼容虚拟环境先改名保留，不修改全局 Python"
+        ],
+        "exitCodes": {
+          "0": "成功",
+          "1": "验收或执行失败"
+        },
+        "capabilityId": "art.image-environment-prepare"
+      },
+      {
+        "path": [
+          "image",
+          "environment",
+          "inspect"
+        ],
+        "description": "本地环境只读检测",
+        "usage": "art-workshop image environment inspect",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--directory <value>",
+            "description": "本机环境根目录"
+          },
+          {
+            "flags": "--endpoint <value>",
+            "description": "本机 HTTP 服务根地址"
+          },
+          {
+            "flags": "--guide <id>",
+            "description": "部署指南标识；省略使用环境登记或推荐方案"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "环境事实与验收结果"
+        },
+        "safety": [
+          "不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务"
+        ],
+        "exitCodes": {
+          "0": "成功",
+          "1": "验收或执行失败"
+        },
+        "capabilityId": "art.image-environment-inspect"
+      },
+      {
+        "path": [
+          "image",
+          "environment",
+          "verify"
+        ],
+        "description": "本地环境确定性验收",
+        "usage": "art-workshop image environment verify",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--directory <value>",
+            "description": "本机环境根目录"
+          },
+          {
+            "flags": "--endpoint <value>",
+            "description": "本机 HTTP 服务根地址"
+          },
+          {
+            "flags": "--guide <id>",
+            "description": "部署指南标识；省略使用环境登记或推荐方案"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "环境事实与验收结果"
+        },
+        "safety": [
+          "不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务"
+        ],
+        "exitCodes": {
+          "0": "成功",
+          "1": "验收或执行失败"
+        },
+        "capabilityId": "art.image-environment-verify"
+      },
+      {
+        "path": [
+          "image",
+          "environment",
+          "register"
+        ],
+        "description": "本地环境验收并登记",
+        "usage": "art-workshop image environment register",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--directory <value>",
+            "description": "本机环境根目录"
+          },
+          {
+            "flags": "--endpoint <value>",
+            "description": "本机 HTTP 服务根地址"
+          },
+          {
+            "flags": "--guide <id>",
+            "description": "部署指南标识；省略使用环境登记或推荐方案"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "环境事实与验收结果"
+        },
+        "safety": [
+          "不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务"
+        ],
+        "exitCodes": {
+          "0": "成功",
+          "1": "验收或执行失败"
+        },
+        "capabilityId": "art.image-environment-register"
+      },
+      {
+        "path": [
+          "image",
+          "environment",
+          "unregister"
+        ],
+        "description": "本地环境解除登记",
+        "usage": "art-workshop image environment unregister",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--directory <value>",
+            "description": "本机环境根目录"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "环境事实与验收结果"
+        },
+        "safety": [
+          "不执行安装、下载或采样；register 重新验收后登记，unregister 不删除安装文件或停止服务"
+        ],
+        "exitCodes": {
+          "0": "成功",
+          "1": "验收或执行失败"
+        },
+        "capabilityId": "art.image-environment-unregister"
+      },
+      {
+        "path": [
+          "image",
+          "style",
+          "export"
+        ],
+        "usage": "art-workshop image style export",
+        "description": "导出冻结风格及必要参考，不复制运行状态",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <value>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <value>",
+            "description": "冻结风格身份"
+          },
+          {
+            "flags": "--out <value>",
+            "description": "风格包输出文件"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "导出冻结风格及必要参考，不复制运行状态"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验失败"
+        },
+        "safety": [
+          "冻结风格包只读；不覆盖已有文件；修改请派生草稿；只导出明确引用的参考图片"
+        ],
+        "capabilityId": "art.image-style-export"
+      },
+      {
+        "path": [
+          "image",
+          "style",
+          "import"
+        ],
+        "usage": "art-workshop image style import",
+        "description": "导入固定版本的共享冻结风格，保留原身份和版本",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <value>",
+            "description": "目标工程"
+          },
+          {
+            "flags": "--file <value>",
+            "description": "风格包文件"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "导入固定版本的共享冻结风格，保留原身份和版本"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验失败"
+        },
+        "safety": [
+          "冻结风格包只读；不覆盖已有文件；修改请派生草稿；只导出明确引用的参考图片"
+        ],
+        "capabilityId": "art.image-style-import"
+      },
+      {
+        "path": [
+          "image",
+          "style",
+          "sources"
+        ],
+        "usage": "art-workshop image style sources",
+        "description": "只读列出多个冻结风格来源并报告不可用目录和身份冲突",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <value>",
+            "description": "来源目录列表 JSON 文件"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "只读列出多个冻结风格来源并报告不可用目录和身份冲突"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验失败"
+        },
+        "safety": [
+          "冻结风格包只读；不覆盖已有文件；修改请派生草稿；只导出明确引用的参考图片"
+        ],
+        "capabilityId": "art.image-style-sources"
+      },
+      {
+        "path": [
+          "image",
+          "conversation",
+          "start"
+        ],
+        "usage": "art-workshop image conversation start --config <path> --input <path>",
+        "description": "编译并幂等提交会话出图，不创建项目任务",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--config <path>",
+            "description": "隔离配置路径"
+          },
+          {
+            "flags": "--input <path>",
+            "description": "结构化会话请求 JSON"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "请求身份、运行状态、停止确认与哈希产物"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "输入或运行错误"
+        },
+        "safety": [
+          "bounded",
+          "idempotent",
+          "no-job-create"
+        ],
+        "capabilityId": "art.image-conversation-start"
+      },
+      {
+        "path": [
+          "image",
+          "conversation",
+          "status"
+        ],
+        "usage": "art-workshop image conversation status --config <path> --session <id> --request <id>",
+        "description": "查询原运行与真实产物",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--config <path>",
+            "description": "隔离配置路径"
+          },
+          {
+            "flags": "--session <id>",
+            "description": "会话身份"
+          },
+          {
+            "flags": "--request <id>",
+            "description": "原请求身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "请求身份、运行状态、停止确认与哈希产物"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "输入或运行错误"
+        },
+        "safety": [
+          "bounded",
+          "idempotent",
+          "no-job-create"
+        ],
+        "capabilityId": "art.image-conversation-status"
+      },
+      {
+        "path": [
+          "image",
+          "conversation",
+          "cancel"
+        ],
+        "usage": "art-workshop image conversation cancel --config <path> --session <id> --request <id>",
+        "description": "取消原运行",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--config <path>",
+            "description": "隔离配置路径"
+          },
+          {
+            "flags": "--session <id>",
+            "description": "会话身份"
+          },
+          {
+            "flags": "--request <id>",
+            "description": "原请求身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "请求身份、运行状态、停止确认与哈希产物"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "输入或运行错误"
+        },
+        "safety": [
+          "bounded",
+          "idempotent",
+          "no-job-create"
+        ],
+        "capabilityId": "art.image-conversation-cancel"
+      },
+      {
+        "path": [
+          "image",
+          "conversation",
+          "resume"
+        ],
+        "usage": "art-workshop image conversation resume --config <path> --session <id> --request <id>",
+        "description": "仅恢复原上游身份，不重新提交",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--config <path>",
+            "description": "隔离配置路径"
+          },
+          {
+            "flags": "--session <id>",
+            "description": "会话身份"
+          },
+          {
+            "flags": "--request <id>",
+            "description": "原请求身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "请求身份、运行状态、停止确认与哈希产物"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "输入或运行错误"
+        },
+        "safety": [
+          "bounded",
+          "idempotent",
+          "no-job-create"
+        ],
+        "capabilityId": "art.image-conversation-resume"
+      },
+      {
+        "path": [
+          "image",
+          "conversation",
+          "close"
+        ],
+        "usage": "art-workshop image conversation close --config <path> --session <id> --request <id>",
+        "description": "宿主退出时停止本请求的worker，保留外部共享服务",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--config <path>",
+            "description": "隔离配置路径"
+          },
+          {
+            "flags": "--session <id>",
+            "description": "会话身份"
+          },
+          {
+            "flags": "--request <id>",
+            "description": "原请求身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "请求身份、运行状态、停止确认与哈希产物"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "输入或运行错误"
+        },
+        "safety": [
+          "bounded",
+          "idempotent",
+          "no-job-create"
+        ],
+        "capabilityId": "art.image-conversation-close"
+      },
+      {
+        "path": [
+          "image",
+          "style",
+          "migration-complete"
+        ],
+        "usage": "art-workshop image style migration-complete",
+        "description": "校验当前迁移草稿并完成配置迁移；input 为 {note}，不分析、不生成或定版",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          },
+          {
+            "flags": "--input <file>",
+            "description": "JSON {rules,summary,note}；rules 为完整规则数组，每条 id/scope/strength/instruction/when，avoid 可含 negative 抽象排除表达数组"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "校验预期版本及空闲状态后更新对象"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.image-style-migration-complete"
+      },
+      {
+        "path": [
+          "image",
+          "job",
+          "migration-complete"
+        ],
+        "usage": "art-workshop image job migration-complete",
+        "description": "校验当前迁移草稿并完成配置迁移；input 为 {note}，不分析、不生成或定版",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "对象身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期对象版本"
+          },
+          {
+            "flags": "--input <file>",
+            "description": "JSON {rules,summary,note}；rules 为完整规则数组，每条 id/scope/strength/instruction/when，avoid 可含 negative 抽象排除表达数组"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "校验预期版本及空闲状态后更新对象"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验、版本冲突或执行失败"
+        },
+        "safety": [
+          "查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照"
+        ],
+        "capabilityId": "art.image-job-migration-complete"
+      },
+      {
+        "path": [
+          "video",
+          "describe"
+        ],
+        "capabilityId": "art.video-describe",
+        "usage": "art-workshop video describe [--input <file>]",
+        "description": "读取视频业务与输入契约",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "可选；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务读取结果；无自动生成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "只读查询，不登记业务写入意图；可能执行本地媒体/进程检查",
+          "可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
         ]
+      },
+      {
+        "path": [
+          "video",
+          "snapshot"
+        ],
+        "capabilityId": "art.video-snapshot",
+        "usage": "art-workshop video snapshot [--input <file>]",
+        "description": "读取视频项目快照",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "可选；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务读取结果；无自动生成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "只读查询，不登记业务写入意图；可能执行本地媒体/进程检查",
+          "可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "settings",
+          "get"
+        ],
+        "capabilityId": "art.video-settings-get",
+        "usage": "art-workshop video settings get [--input <file>]",
+        "description": "读取视频设置及CAS版本",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "可选；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务读取结果；无自动生成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "只读查询，不登记业务写入意图；可能执行本地媒体/进程检查",
+          "可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "settings",
+          "save"
+        ],
+        "capabilityId": "art.video-settings-save",
+        "usage": "art-workshop video settings save --input <file> --operation <id>",
+        "description": "按expectedRevision保存视频设置",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "settings",
+          "presets",
+          "h3"
+        ],
+        "capabilityId": "art.video-settings-presets-h3",
+        "usage": "art-workshop video settings presets h3 [--input <file>]",
+        "description": "读取H3视频模型预设",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "可选；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务读取结果；无自动生成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "只读查询，不登记业务写入意图；可能执行本地媒体/进程检查",
+          "不提交远端模型生成",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "runtime",
+          "status"
+        ],
+        "capabilityId": "art.video-runtime-status",
+        "usage": "art-workshop video runtime status [--input <file>]",
+        "description": "核对本地视频运行时状态",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "可选；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务读取结果；无自动生成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "只读查询，不登记业务写入意图；可能执行本地媒体/进程检查",
+          "可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "runtime",
+          "start"
+        ],
+        "capabilityId": "art.video-runtime-start",
+        "usage": "art-workshop video runtime start [--input <file>] --operation <id>",
+        "description": "显式启动本地视频运行时",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "可选；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "runtime",
+          "stop"
+        ],
+        "capabilityId": "art.video-runtime-stop",
+        "usage": "art-workshop video runtime stop [--input <file>] --operation <id>",
+        "description": "核对所有权后显式停止本地视频运行时",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "可选；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "task",
+          "list"
+        ],
+        "capabilityId": "art.video-task-list",
+        "usage": "art-workshop video task list [--input <file>]",
+        "description": "视频通道 task list；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "可选；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务读取结果；无自动生成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "只读查询，不登记业务写入意图；可能执行本地媒体/进程检查",
+          "不提交远端模型生成",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "task",
+          "read"
+        ],
+        "capabilityId": "art.video-task-read",
+        "usage": "art-workshop video task read --input <file>",
+        "description": "视频通道 task read；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务读取结果；无自动生成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "只读查询，不登记业务写入意图；可能执行本地媒体/进程检查",
+          "不提交远端模型生成",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "task",
+          "create"
+        ],
+        "capabilityId": "art.video-task-create",
+        "usage": "art-workshop video task create --input <file> --operation <id>",
+        "description": "视频通道 task create；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "不提交远端模型生成",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "task",
+          "rename"
+        ],
+        "capabilityId": "art.video-task-rename",
+        "usage": "art-workshop video task rename --input <file> --operation <id>",
+        "description": "视频通道 task rename；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "不提交远端模型生成",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "task",
+          "archive"
+        ],
+        "capabilityId": "art.video-task-archive",
+        "usage": "art-workshop video task archive --input <file> --operation <id>",
+        "description": "视频通道 task archive；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "不提交远端模型生成",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "operation",
+          "create"
+        ],
+        "capabilityId": "art.video-operation-create",
+        "usage": "art-workshop video operation create --input <file> --operation <id>",
+        "description": "视频通道 operation create；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "operation",
+          "update"
+        ],
+        "capabilityId": "art.video-operation-update",
+        "usage": "art-workshop video operation update --input <file> --operation <id>",
+        "description": "视频通道 operation update；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "operation",
+          "rename"
+        ],
+        "capabilityId": "art.video-operation-rename",
+        "usage": "art-workshop video operation rename --input <file> --operation <id>",
+        "description": "视频通道 operation rename；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "不提交远端模型生成",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "operation",
+          "derive"
+        ],
+        "capabilityId": "art.video-operation-derive",
+        "usage": "art-workshop video operation derive --input <file> --operation <id>",
+        "description": "视频通道 operation derive；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "operation",
+          "validate"
+        ],
+        "capabilityId": "art.video-operation-validate",
+        "usage": "art-workshop video operation validate --input <file>",
+        "description": "视频通道 operation validate；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务读取结果；无自动生成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "只读查询，不登记业务写入意图；可能执行本地媒体/进程检查",
+          "可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "operation",
+          "run"
+        ],
+        "capabilityId": "art.video-operation-run",
+        "usage": "art-workshop video operation run --input <file> --operation <id>",
+        "description": "视频通道 operation run；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "operation",
+          "resume"
+        ],
+        "capabilityId": "art.video-operation-resume",
+        "usage": "art-workshop video operation resume --input <file> --operation <id>",
+        "description": "视频通道 operation resume；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "operation",
+          "cancel"
+        ],
+        "capabilityId": "art.video-operation-cancel",
+        "usage": "art-workshop video operation cancel --input <file> --operation <id>",
+        "description": "视频通道 operation cancel；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "operation",
+          "accept"
+        ],
+        "capabilityId": "art.video-operation-accept",
+        "usage": "art-workshop video operation accept --input <file> --operation <id>",
+        "description": "视频通道 operation accept；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "不提交远端模型生成",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "operation",
+          "bind"
+        ],
+        "capabilityId": "art.video-operation-bind",
+        "usage": "art-workshop video operation bind --input <file> --operation <id>",
+        "description": "视频通道 operation bind；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "不提交远端模型生成",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "script",
+          "read"
+        ],
+        "capabilityId": "art.video-script-read",
+        "usage": "art-workshop video script read --input <file>",
+        "description": "视频通道 script read；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务读取结果；无自动生成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "只读查询，不登记业务写入意图；可能执行本地媒体/进程检查",
+          "不提交远端模型生成",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "script",
+          "update"
+        ],
+        "capabilityId": "art.video-script-update",
+        "usage": "art-workshop video script update --input <file> --operation <id>",
+        "description": "视频通道 script update；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "不提交远端模型生成",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "script",
+          "plan"
+        ],
+        "capabilityId": "art.video-script-plan",
+        "usage": "art-workshop video script plan --input <file>",
+        "description": "视频通道 script plan；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务读取结果；无自动生成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "只读查询，不登记业务写入意图；可能执行本地媒体/进程检查",
+          "可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "script",
+          "apply"
+        ],
+        "capabilityId": "art.video-script-apply",
+        "usage": "art-workshop video script apply --input <file> --operation <id>",
+        "description": "视频通道 script apply；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "film",
+          "compose"
+        ],
+        "capabilityId": "art.video-film-compose",
+        "usage": "art-workshop video film compose --input <file> --operation <id>",
+        "description": "视频通道 film compose；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "不提交远端模型生成",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "film",
+          "refine"
+        ],
+        "capabilityId": "art.video-film-refine",
+        "usage": "art-workshop video film refine --input <file> --operation <id>",
+        "description": "视频通道 film refine；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "可访问本机ComfyUI；启动与生成仍仅发生在显式对应动作",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "film",
+          "preview"
+        ],
+        "capabilityId": "art.video-film-preview",
+        "usage": "art-workshop video film preview --input <file> --operation <id>",
+        "description": "视频通道 film preview；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "不提交远端模型生成",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "film",
+          "adopt"
+        ],
+        "capabilityId": "art.video-film-adopt",
+        "usage": "art-workshop video film adopt --input <file> --operation <id>",
+        "description": "视频通道 film adopt；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "不提交远端模型生成",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "film",
+          "undo"
+        ],
+        "capabilityId": "art.video-film-undo",
+        "usage": "art-workshop video film undo --input <file> --operation <id>",
+        "description": "视频通道 film undo；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "不提交远端模型生成",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "material",
+          "list"
+        ],
+        "capabilityId": "art.video-material-list",
+        "usage": "art-workshop video material list [--input <file>]",
+        "description": "视频通道 material list；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "可选；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务读取结果；无自动生成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "只读查询，不登记业务写入意图；可能执行本地媒体/进程检查",
+          "不提交远端模型生成",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "material",
+          "import"
+        ],
+        "capabilityId": "art.video-material-import",
+        "usage": "art-workshop video material import --input <file> --operation <id>",
+        "description": "视频通道 material import；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "不提交远端模型生成",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "material",
+          "import-file"
+        ],
+        "capabilityId": "art.video-material-import-file",
+        "usage": "art-workshop video material import-file --input <file> --operation <id>",
+        "description": "视频通道 material import-file；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "不提交远端模型生成",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "material",
+          "upload"
+        ],
+        "capabilityId": "art.video-material-upload",
+        "usage": "art-workshop video material upload --input <file> --operation <id>",
+        "description": "视频通道 material upload；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "不提交远端模型生成",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "material",
+          "hide"
+        ],
+        "capabilityId": "art.video-material-hide",
+        "usage": "art-workshop video material hide --input <file> --operation <id>",
+        "description": "视频通道 material hide；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          },
+          {
+            "flags": "--operation <id>",
+            "description": "必填；稳定操作身份。先持久化原意图，重复同ID只核对原回执，unknown不换ID重投"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务结果与cliExecution身份；unknown时返回结构化失败，不声称产物完成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "写入与人工授权对应的稳定操作身份，按项目CAS与共享SQLite资源锁执行；失败或回执丢失保留原意图",
+          "不提交远端模型生成",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "image"
+        ],
+        "capabilityId": "art.video-image",
+        "usage": "art-workshop video image --input <file>",
+        "description": "视频通道 image；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "必填；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务读取结果；无自动生成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "只读查询，不登记业务写入意图；可能执行本地媒体/进程检查",
+          "不提交远端模型生成",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "media",
+          "status"
+        ],
+        "capabilityId": "art.video-media-status",
+        "usage": "art-workshop video media status [--input <file>]",
+        "description": "视频通道 media status；输入由video describe公布的业务契约校验",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--input <file>",
+            "description": "可选；工程内JSON对象文件，原样传递业务输入；CAS revision/expectedRevision 与 requestId 不由CLI补造"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务读取结果；无自动生成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "只读查询，不登记业务写入意图；可能执行本地媒体/进程检查",
+          "不提交远端模型生成",
+          "状态、提交身份与实际媒体产物分别核对；JSON返回不证明视频产出成功"
+        ]
+      },
+      {
+        "path": [
+          "video",
+          "execution",
+          "status"
+        ],
+        "capabilityId": "art.video-execution-status",
+        "usage": "art-workshop video execution status --operation <id>",
+        "description": "核对原CLI/宿主视频意图及回执",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--operation <id>",
+            "description": "必填；原CLI操作身份或返回的video-UUID，只核对原回执"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "原业务读取结果；无自动生成"
+        },
+        "exitCodes": {
+          "0": "调用返回；视频完成状态以原运行与媒体证据为准",
+          "1": "参数、版本、权限、路径、业务或回执核对失败；unknown禁止重投"
+        },
+        "safety": [
+          "只读查询，不登记业务写入意图；可能执行本地媒体/进程检查",
+          "不提交远端模型生成",
+          "读取DSH与CLI共享的请求、回执目录；executing按unknown核对"
+        ]
+      },
+      {
+        "path": [
+          "style",
+          "sample-job"
+        ],
+        "usage": "art-workshop style sample-job --project ID --id STYLE --revision N",
+        "description": "创建仅使用当前文字规则的样张任务；count 为每个主题候选数（1～4），不自动生成",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "风格身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期风格版本"
+          },
+          {
+            "flags": "--name <name>",
+            "description": "任务名称（可选）"
+          },
+          {
+            "flags": "--count <number>",
+            "description": "每个主题候选数，1～4；三个主题共 3 × count 张，默认 1"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "任务或更新后的风格对象"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验或版本冲突"
+        },
+        "safety": [
+          "保存或建任务不发起生成；版本冲突重新读取；样张仅作绘制语言参考，不能保证隔离无关特征"
+        ],
+        "capabilityId": "art.style-sample-job"
+      },
+      {
+        "path": [
+          "style",
+          "sample-select"
+        ],
+        "usage": "art-workshop style sample-select --project ID --id STYLE --revision N --job VALUE --run VALUE --candidate VALUE",
+        "description": "样张定版：将有效候选自动加入当前风格运行时参考；按图片内容哈希去重，重复操作不新增",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "风格身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期风格版本"
+          },
+          {
+            "flags": "--job <id>",
+            "description": "源任务"
+          },
+          {
+            "flags": "--run <id>",
+            "description": "源运行"
+          },
+          {
+            "flags": "--candidate <id>",
+            "description": "候选身份"
+          },
+          {
+            "flags": "--note <text>",
+            "description": "样张说明（可选）"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "任务或更新后的风格对象"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验或版本冲突"
+        },
+        "safety": [
+          "保存或建任务不发起生成；版本冲突重新读取；样张仅作绘制语言参考，不能保证隔离无关特征"
+        ],
+        "capabilityId": "art.style-sample-select"
+      },
+      {
+        "path": [
+          "style",
+          "sample-remove"
+        ],
+        "usage": "art-workshop style sample-remove --project ID --id STYLE --revision N --sample VALUE",
+        "description": "取消样张定版并移除当前运行时参考；保留历史计划依赖的图片文件",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "风格身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期风格版本"
+          },
+          {
+            "flags": "--sample <id>",
+            "description": "样张身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "任务或更新后的风格对象"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验或版本冲突"
+        },
+        "safety": [
+          "保存或建任务不发起生成；版本冲突重新读取；样张仅作绘制语言参考，不能保证隔离无关特征"
+        ],
+        "capabilityId": "art.style-sample-remove"
+      },
+      {
+        "path": [
+          "image",
+          "style",
+          "sample-job"
+        ],
+        "usage": "art-workshop image style sample-job --project ID --id STYLE --revision N",
+        "description": "创建仅使用当前文字规则的样张任务；count 为每个主题候选数（1～4），不自动生成",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "风格身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期风格版本"
+          },
+          {
+            "flags": "--name <name>",
+            "description": "任务名称（可选）"
+          },
+          {
+            "flags": "--count <number>",
+            "description": "每个主题候选数，1～4；三个主题共 3 × count 张，默认 1"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "任务或更新后的风格对象"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验或版本冲突"
+        },
+        "safety": [
+          "保存或建任务不发起生成；版本冲突重新读取；样张仅作绘制语言参考，不能保证隔离无关特征"
+        ],
+        "capabilityId": "art.image-style-sample-job"
+      },
+      {
+        "path": [
+          "image",
+          "style",
+          "sample-select"
+        ],
+        "usage": "art-workshop image style sample-select --project ID --id STYLE --revision N --job VALUE --run VALUE --candidate VALUE",
+        "description": "样张定版：将有效候选自动加入当前风格运行时参考；按图片内容哈希去重，重复操作不新增",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "风格身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期风格版本"
+          },
+          {
+            "flags": "--job <id>",
+            "description": "源任务"
+          },
+          {
+            "flags": "--run <id>",
+            "description": "源运行"
+          },
+          {
+            "flags": "--candidate <id>",
+            "description": "候选身份"
+          },
+          {
+            "flags": "--note <text>",
+            "description": "样张说明（可选）"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "任务或更新后的风格对象"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验或版本冲突"
+        },
+        "safety": [
+          "保存或建任务不发起生成；版本冲突重新读取；样张仅作绘制语言参考，不能保证隔离无关特征"
+        ],
+        "capabilityId": "art.image-style-sample-select"
+      },
+      {
+        "path": [
+          "image",
+          "style",
+          "sample-remove"
+        ],
+        "usage": "art-workshop image style sample-remove --project ID --id STYLE --revision N --sample VALUE",
+        "description": "取消样张定版并移除当前运行时参考；保留历史计划依赖的图片文件",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--project <id>",
+            "description": "工程身份"
+          },
+          {
+            "flags": "--id <id>",
+            "description": "风格身份"
+          },
+          {
+            "flags": "--revision <number>",
+            "description": "预期风格版本"
+          },
+          {
+            "flags": "--sample <id>",
+            "description": "样张身份"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "任务或更新后的风格对象"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "校验或版本冲突"
+        },
+        "safety": [
+          "保存或建任务不发起生成；版本冲突重新读取；样张仅作绘制语言参考，不能保证隔离无关特征"
+        ],
+        "capabilityId": "art.image-style-sample-remove"
       }
     ]
-  }
+  },
+  "skills": [
+    {
+      "id": "art-workshop",
+      "path": "skills/art-workshop/SKILL.md"
+    }
+  ]
 }

@@ -1,9 +1,13 @@
 {
   "name": "@kevlns/art-workshop",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": false,
-  "description": "管理项目风格、参考图、图片生成、编辑和定版。支持本地 ComfyUI 与远程图片模型。",
+  "description": "统一管理图片工坊与视频工坊：项目风格、图片生成编辑、剧本镜头、视频生成与成片精修。",
   "type": "module",
+  "exports": {
+    "./video": "./lib/video.mjs",
+    "./*": "./*"
+  },
   "bin": {
     "art-workshop": "art-workshop.mjs"
   },
@@ -12,17 +16,15 @@
     "lib/",
     "rules/",
     "skills/",
-    "scripts/sync-skill.mjs",
     "README.md",
     "LICENSE",
     "v-cli.plugin.json",
     "AGENTS.md",
     "workflows/",
-    "docs/"
+    "docs/",
+    "adapters/"
   ],
   "scripts": {
-    "postinstall": "node scripts/sync-skill.mjs",
-    "skill:sync": "node scripts/sync-skill.mjs",
     "test": "node scripts/test.mjs",
     "pack:guard": "node scripts/pack-guard.mjs",
     "check": "npm run docs:style && npm run docs:check && npm test && npm run pack:guard",
@@ -53,6 +55,7 @@
   "dependencies": {
     "bailian-cli": "2.2.1",
     "bailian-cli-core": "2.2.1",
-    "sharp": "^0.35.5"
+    "sharp": "^0.35.5",
+    "zod": "4.6.7"
   }
 }

@@ -43,9 +43,10 @@ test('derive and user rule revision retain evidence and adopted origin, with no 
  const frozen=await adoptStyle(settings,'cellgame',draft.id,revised.revision);
  assert.equal(frozen.status,'frozen');assert.match(corePrompt(loadCore('cellgame',frozen.id,root)),/默认减少绘画噪点/);
  assert.deepEqual(readFileSync(file),bytes);
- await assert.rejects(reviseStyleRules(settings,'cellgame',frozen.id,frozen.revision,{rules,summary:'x',note:'x'}),/只读/);
+ const edited=await reviseStyleRules(settings,'cellgame',frozen.id,frozen.revision,{rules,summary:'x',note:'x'});
+ assert.equal(edited.revision,frozen.revision+1);assert.equal(edited.id,frozen.id);
 }));
-test('manual revision rejects changed evidence, unresolved decisions and stale revisions',()=>fixture(async(root,settings)=>{
+test('manual revision preserves old evidence while allowing edits and retaining revision checks',()=>fixture(async(root,settings)=>{
  const source=readObject(root,'cellgame','style','cellgame');
  const draft=await deriveObject(settings,'cellgame','style','cellgame',source.revision);
  const input={rules:draft.config.rules,summary:'风格概述',note:'用户要求'};
@@ -53,11 +54,13 @@ test('manual revision rejects changed evidence, unresolved decisions and stale r
  const options=[{id:'keep',label:'保持',remove:[],upsert:[]},{id:'change',label:'修改',remove:[],upsert:[]}];
  draft.report.data.issues=[{id:'pending',question:'两种绘制方式需要选择',reopenReason:'',options}];
  writeJson(objectFile(root,'cellgame','style',draft.id),draft);
- await assert.rejects(reviseStyleRules(settings,'cellgame',draft.id,draft.revision,input),/未确认/);
+ const chosen=await reviseStyleRules(settings,'cellgame',draft.id,draft.revision,input);
+ assert.equal(chosen.config.rules.length,input.rules.length);assert.equal(chosen.reviewHistory.at(-1).previousReport.data.issues.length,1);
  draft.report.data.issues=[];
  draft.config.analysis={provider:'new-provider',model:'changed-model'};
  writeJson(objectFile(root,'cellgame','style',draft.id),draft);
- await assert.rejects(reviseStyleRules(settings,'cellgame',draft.id,draft.revision,input),/证据已变化/);
+ const updated=await reviseStyleRules(settings,'cellgame',draft.id,draft.revision,input);
+ assert.equal(updated.config.analysis.model,'changed-model');assert.equal(updated.report.data.provenance.method,'user-rules');
 }));
 test('real CLI revises rules without starting an analysis worker',()=>fixture(async(root,settings)=>{
  const source=readObject(root,'cellgame','style','cellgame');

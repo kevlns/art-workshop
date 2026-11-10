@@ -28,7 +28,7 @@ test('工具权威模板绑定真实核心且不限定主体题材，填写后�
  const created=await createObject(settings,'cellgame','task',{name:'from template',config});
  const plan=compileGenerate({projectId:'cellgame',jobId:created.id,root});assert.equal(plan.items.length,1);
  assert.deepEqual(jobTemplate(root,'cellgame',{kind:'edit'}).items[0].changes,[]);
- assert.throws(()=>jobTemplate(root,'cellgame',{}),/冻结核心/);
+ assert.throws(()=>jobTemplate(root,'cellgame',{}),/已保存风格/);
 }));
 test('编辑任务保留私有底图时仍保存工作区相对路径，不复制底图或改写配置',()=>fixture(async(root,settings)=>{
  const original=join(root,'source.png');writeFileSync(original,png);
@@ -83,7 +83,7 @@ test('style derivation owns image copies; discard preserves source and sibling',
  const imported=await importReference(settings,'cellgame','style',style.id,1,{source:original,category:'rendering'});
  const derived=await deriveObject(settings,'cellgame','style',style.id,imported.revision);
  await discardObject(settings,'cellgame','style',style.id,imported.revision);
- assert.equal(existsSync(join(objectDirectory(root,'cellgame','style',style.id),'refs')),false);
+ assert.equal(existsSync(join(objectDirectory(root,'cellgame','style',style.id),'refs')),true,'archival retains historical reference bytes');
  assert.deepEqual(readFileSync(original),png);assert.deepEqual(readFileSync(join(objectDirectory(root,'cellgame','style',derived.id),derived.references[0].path)),png);
  assert.equal(derived.report,null);assert.equal(derived.status,'draft');
  await assert.rejects(updateObject(settings,'cellgame','style',style.id,3,{name:'revive'}),/放弃/);

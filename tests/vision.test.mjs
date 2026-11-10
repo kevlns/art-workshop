@@ -33,3 +33,18 @@ test('transport loss is uncertain, whereas rejection before dispatch is settled'
  await assert.rejects(callVision(['text','chat','--model','one','--message','style'],options),/不会自动重发/);assert.equal(uncertain,1);
  }finally{if(previousConfig===undefined)delete process.env.ART_VISION_CONFIG;else process.env.ART_VISION_CONFIG=previousConfig;if(previousKey===undefined)delete process.env.ART_VISION_KEY;else process.env.ART_VISION_KEY=previousKey;}
 });
+
+test('configured output budgets are not silently capped and reasoning-only truncation preserves diagnostics',async()=>{
+ const previousConfig=process.env.ART_VISION_CONFIG,previousKey=process.env.ART_VISION_KEY;
+ process.env.ART_VISION_CONFIG=JSON.stringify({baseUrl:'https://example.test/v1',api:'openai-completions',maxTokens:131072});process.env.ART_VISION_KEY='PRIVATE';
+ try {
+  let evidence,requests=0;
+  await assert.rejects(callVision(['text','chat','--model','one','--message','Return report'],{
+   onEvidence:value=>{evidence=value;},transport:async(_url,request)=>{
+    requests++;assert.equal(JSON.parse(request.body).max_tokens,131072);
+    return new Response(JSON.stringify({choices:[{finish_reason:'length',message:{content:null,reasoning_content:'unfinished'}}]}));
+   },
+  }),error=>error.code==='OUTPUT_TRUNCATED'&&error.effectiveMaxTokens===131072);
+  assert.equal(requests,1);assert.deepEqual(evidence,{text:'',effectiveMaxTokens:131072,truncated:true});
+ }finally{if(previousConfig===undefined)delete process.env.ART_VISION_CONFIG;else process.env.ART_VISION_CONFIG=previousConfig;if(previousKey===undefined)delete process.env.ART_VISION_KEY;else process.env.ART_VISION_KEY=previousKey;}
+});

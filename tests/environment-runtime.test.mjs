@@ -4,6 +4,13 @@ import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync,existsSync} from
 import {tmpdir} from 'node:os';import {join} from 'node:path';import {createServer} from 'node:http';import {createHash} from 'node:crypto';
 import {inspectPython,compatiblePython,downloadChecked} from '../lib/environment-runtime.mjs';
 import {deploymentGuide} from '../lib/deployment-guide.mjs';
+
+test('pinned ComfyUI portable Python 3.13 is within the supported deployment range',()=>{
+ const contract=deploymentGuide().contract;
+ assert.equal(compatiblePython([3,13,14],contract),true);
+ assert.equal(compatiblePython([3,14,0],contract),false);
+ assert.equal(compatiblePython([3,10,9],contract),false);
+});
 test('runtime selects a compatible interpreter rather than the first existing executable',()=>{
  const root=mkdtempSync(join(tmpdir(),'art-python-selection-'));const contract=deploymentGuide().contract;
  try {for(const relative of contract.pythonCandidates){const file=join(root,relative);mkdirSync(join(file,'..'),{recursive:true});writeFileSync(file,'preserve');}

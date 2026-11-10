@@ -24,11 +24,12 @@ const file=root=>join(root,'projects/cellgame/tasks/white-cell/task.json');
 function change(root,fn){const record=readJson(file(root));fn(record.config);writeJson(file(root),record);}
 const local={generation:{defaultBackend:'local',backends:{local:{provider:'comfyui',model:'local.gguf',endpoints:['http://127.0.0.1:8188']}}}};
 
-test('pre-upgrade golden items retain exact hashes including prompt, negative, checks, brief and inputHash',()=>fixture(root=>{
+test('v5 changes only the style section heading in pre-upgrade golden item content',()=>fixture(root=>{
  const golden=readJson(new URL('./fixtures/compiler-golden.json',import.meta.url));
  for(const [jobId,expected] of Object.entries(golden)){
   const plan=compileGenerate({root,projectId:'cellgame',jobId});
-  assert.equal(hash(plan.items),expected,jobId);assert.equal(plan.compilerVersion,4);validatePlan(plan);
+  const previous=plan.items.map(({inputHash,...item})=>{item.prompt=item.prompt.replace('【当前风格规则】','【静态冻结风格】');return {...item,inputHash:hash({...item,execution:item.execution??plan.execution})};});
+  assert.equal(hash(previous),expected,jobId);assert.equal(plan.compilerVersion,5);validatePlan(plan);
  }
  const before=readFileSync(file(root),'utf8');
  const view=taskObjectView(root,readObject(root,'cellgame','task','white-cell'));
@@ -89,7 +90,7 @@ test('editing accepts text without a core and request adapters retain complete p
  const editFile=join(root,'projects/cellgame/tasks/edit-white-background/task.json'),record=readJson(editFile);
  writeFileSync(join(root,'source.png'),'fixture');record.config.core=null;record.config.items[0].source='source.png';record.config.items[0].textSpecs=[spec];writeJson(editFile,record);
  const edit=compileEdit({root,projectId:'cellgame',jobId:record.id});
- assert.equal(edit.compilerVersion,4);assert.equal(edit.items[0].negativeBlock,'文字扭曲, 笔画错乱, 模糊小字');
+ assert.equal(edit.compilerVersion,5);assert.equal(edit.items[0].negativeBlock,'文字扭曲, 笔画错乱, 模糊小字');
  const native=compileRemoteRequest({...edit,execution:{...edit.execution,model:'qwen-image-3.0-pro'}},edit.items[0]);
  assert.match(native.prompt,/开始游戏/);assert.equal(native.negativePrompt,edit.items[0].negativeBlock);
  const merged=compileRemoteRequest({...edit,execution:{...edit.execution,model:'wan2.7-image'}},edit.items[0]);
