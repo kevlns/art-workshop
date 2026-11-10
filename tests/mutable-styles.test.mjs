@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import {mkdtempSync,cpSync,rmSync,readFileSync,mkdirSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {createObject,readObject,updateObject,discardObject,deriveObject,mutateObject,styleView,assertPlanCurrent} from '../lib/workspace.mjs';
+import {confirmStyleConfig,createObject,readObject,updateObject,discardObject,deriveObject,mutateObject,styleView,assertPlanCurrent} from '../lib/workspace.mjs';
 import {loadCore} from '../lib/core.mjs';
 import {compileGenerate} from '../lib/generate.mjs';
-import {EXAMPLE_CONFIG} from '../lib/style-contract.mjs';
-import {readJson,hash} from '../lib/shared.mjs';
+import {EXAMPLE_CONFIG,styleContractHash} from '../lib/style-contract.mjs';
+import {readJson} from '../lib/shared.mjs';
 import {sha256File} from '../lib/bl.mjs';
 import sharp from 'sharp';
 
@@ -17,13 +17,19 @@ async function fixture(fn){
  try{await fn(root,settings);}finally{rmSync(root,{recursive:true,force:true});}
 }
 
-test('saving rules immediately creates an executable style without analysis or adoption',()=>fixture(async(root,settings)=>{
- const saved=await createObject(settings,'cellgame','style',{name:'直接保存',config:structuredClone(EXAMPLE_CONFIG)});
- assert.ok(saved.coreHash);assert.equal(saved.report,null);assert.equal(styleView(root,saved).format.canEdit,true);
- assert.deepEqual(loadCore('cellgame',saved.id,root).config.rules,EXAMPLE_CONFIG.rules);
- const changed=await updateObject(settings,'cellgame','style',saved.id,saved.revision,{config:{rules:[]}});
- assert.deepEqual(loadCore('cellgame',saved.id,root).config.rules,[]);assert.notEqual(changed.coreHash,saved.coreHash);
- await assert.rejects(updateObject(settings,'cellgame','style',saved.id,saved.revision,{name:'stale'}),/版本冲突/);
+test('saved draft confirms deterministically and changed text invalidates its previous contract',()=>fixture(async(root,settings)=>{
+ const draft=await createObject(settings,'cellgame','style',{name:'直接保存',config:{description:'水彩边缘',constraints:['保持松弛笔触']}});
+ assert.equal(styleView(root,draft).confirmation.status,'draft');
+ assert.throws(()=>loadCore('cellgame',draft.id,root),/尚未确认/);
+ const saved=await confirmStyleConfig(settings,'cellgame',draft.id,draft.revision);
+ assert.equal(styleView(root,saved).confirmation.status,'confirmed');
+ assert.equal(saved.report,null);
+ assert.deepEqual(loadCore('cellgame',saved.id,root).config,{...draft.config,rules:[]});
+ const changed=await updateObject(settings,'cellgame','style',saved.id,saved.revision,{config:{...saved.config,constraints:['更清晰的边缘']}});
+ assert.equal(changed.coreHash,saved.coreHash);
+ assert.equal(styleView(root,changed).confirmation.status,'stale');
+ assert.throws(()=>loadCore('cellgame',saved.id,root),/尚未确认/);
+ await assert.rejects(confirmStyleConfig(settings,'cellgame',saved.id,saved.revision),/版本冲突/);
 }));
 
 test('editing legacy saved styles retains exact historical core and invalidates pending plans',()=>fixture(async(root,settings)=>{
@@ -32,8 +38,10 @@ test('editing legacy saved styles retains exact historical core and invalidates 
  assert.doesNotThrow(()=>assertPlanCurrent(plan,settings));
  const view=styleView(root,before);assert.ok(view.config.rules.length);assert.equal(view.editable,true);
  const rules=structuredClone(view.config.rules);rules[0].instruction='采用水彩插画表现';
- const saved=await updateObject(settings,'cellgame','style',before.id,before.revision,{config:{...view.config,rules}});
+ let saved=await updateObject(settings,'cellgame','style',before.id,before.revision,{config:{...view.config,rules}});
  assert.equal(saved.id,before.id);assert.equal(saved.revision,before.revision+1);
+ assert.throws(()=>assertPlanCurrent(plan,settings),/尚未确认/);
+ saved=await confirmStyleConfig(settings,'cellgame',saved.id,saved.revision);
  assert.equal(loadCore('cellgame','cellgame',root).config.rules[0].instruction,'采用水彩插画表现');
  const archived=readJson(join(root,'projects/cellgame/styles/cellgame/core-history',original.coreHash+'.json'));
  assert.deepEqual(archived,original);assert.deepEqual(plan.snapshots.core,original);
@@ -50,7 +58,8 @@ test('style save rejects invalid fields before changing persisted core or record
 }));
 
 test('archiving a saved style preserves its rules and historical snapshots',()=>fixture(async(root,settings)=>{
- const saved=await createObject(settings,'cellgame','style',{name:'归档测试',config:structuredClone(EXAMPLE_CONFIG)});
+ const draft=await createObject(settings,'cellgame','style',{name:'归档测试',config:structuredClone(EXAMPLE_CONFIG)});
+ const saved=await confirmStyleConfig(settings,'cellgame',draft.id,draft.revision);
  const originalTask=readObject(root,'cellgame','task','white-cell'),job=await createObject(settings,'cellgame','task',{name:'归档前预案',config:{...originalTask.config,core:saved.id}});
  const plan=compileGenerate({projectId:'cellgame',jobId:job.id,root});
  const core=loadCore('cellgame',saved.id,root),archived=await discardObject(settings,'cellgame','style',saved.id,saved.revision);
@@ -62,10 +71,13 @@ test('archiving a saved style preserves its rules and historical snapshots',()=>
 
 test('copying a saved style keeps current rules, user config and independent approved images without a report',()=>fixture(async(root,settings)=>{
  let saved=await createObject(settings,'cellgame','style',{name:'复制源风格',config:{...structuredClone(EXAMPLE_CONFIG),description:'用户当前说明',constraints:['用户当前倾向']}});
+ saved=await confirmStyleConfig(settings,'cellgame',saved.id,saved.revision);
  const sourceDirectory=join(root,'projects/cellgame/styles',saved.id),samplePath='samples/sample-owned.png';mkdirSync(join(sourceDirectory,'samples'),{recursive:true});
  const bytes=await sharp({create:{width:16,height:16,channels:4,background:'#468'}}).png().toBuffer();writeFileSync(join(sourceDirectory,samplePath),bytes);
- saved=await mutateObject(settings,'cellgame','style',saved.id,saved.revision,record=>{record.samples=[{id:'sample-owned',path:samplePath,hash:sha256File(join(sourceDirectory,samplePath)),rulesHash:hash(record.config.rules),note:'认可当前规则'}];return record;});
- const copied=await deriveObject(settings,'cellgame','style',saved.id,saved.revision);
+ saved=await mutateObject(settings,'cellgame','style',saved.id,saved.revision,record=>{record.samples=[{id:'sample-owned',path:samplePath,hash:sha256File(join(sourceDirectory,samplePath)),rulesHash:styleContractHash(record.config),note:'认可当前规则'}];return record;});
+ let copied=await deriveObject(settings,'cellgame','style',saved.id,saved.revision);
+ assert.equal(styleView(root,copied).confirmation.status,'draft');
+ copied=await confirmStyleConfig(settings,'cellgame',copied.id,copied.revision);
  assert.equal(copied.report,null);assert.deepEqual(copied.config,saved.config);assert.deepEqual(copied.samples,saved.samples);
  const copyDirectory=join(root,'projects/cellgame/styles',copied.id);assert.deepEqual(readFileSync(join(copyDirectory,samplePath)),bytes);
  assert.deepEqual(loadCore('cellgame',copied.id,root).approvedSamples,copied.samples);
@@ -73,5 +85,5 @@ test('copying a saved style keeps current rules, user config and independent app
  const originalTask=readObject(root,'cellgame','task','white-cell'),job=await createObject(settings,'cellgame','task',{name:'复制风格生成',config:{...originalTask.config,core:copied.id}});
  const plan=compileGenerate({projectId:'cellgame',jobId:job.id,root});assert.equal(plan.items[0].imageArgs[0],join(copyDirectory,samplePath));
  const config=structuredClone(saved.config);config.rules=[];await updateObject(settings,'cellgame','style',saved.id,saved.revision,{config});
- assert.deepEqual(loadCore('cellgame',copied.id,root).config,copied.config.rules?{rules:copied.config.rules}:{});
+ assert.deepEqual(loadCore('cellgame',copied.id,root).config,copied.config);
 }));

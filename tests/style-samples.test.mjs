@@ -9,7 +9,7 @@ import sharp from 'sharp';
 import {compileGenerate} from '../lib/generate.mjs';
 import {compileEdit} from '../lib/edit.mjs';
 import {createStyleSampleJob,selectStyleSample,removeStyleSample} from '../lib/style-samples.mjs';
-import {readObject,updateObject,createObject,mutateObject,styleView,assertPlanCurrent,ownedPath,objectDirectory} from '../lib/workspace.mjs';
+import {confirmStyleConfig,readObject,updateObject,createObject,mutateObject,styleView,assertPlanCurrent,ownedPath,objectDirectory} from '../lib/workspace.mjs';
 import {executePlan} from '../lib/executor.mjs';
 import {writeJson,hash} from '../lib/shared.mjs';
 import {taskFile,runtimeRoot} from '../lib/runtime.mjs';
@@ -73,6 +73,7 @@ test('a current-rule candidate rebinds a stale identical image without another r
  let style=await selectStyleSample(settings,'cellgame','cellgame',1,{job:'white-cell',run:first.run,candidate:first.candidate.candidateId});
  const oldSample=style.samples[0],config=styleView(root,style).config;config.rules[0].instruction+='，轮廓明确';
  style=await updateObject(settings,'cellgame','style','cellgame',style.revision,{config});assert.equal(styleView(root,style).samples[0].stale,true);
+ style=await confirmStyleConfig(settings,'cellgame',style.id,style.revision);
  const task=readObject(root,'cellgame','task','white-cell');task.config.styleReferenceMode='text-only';await updateObject(settings,'cellgame','task',task.id,task.revision,{config:task.config});
  const second=await successfulCandidate(root,settings,{run:'task-current-rules'});
  style=await selectStyleSample(settings,'cellgame','cellgame',style.revision,{job:task.id,run:second.run,candidate:second.candidate.candidateId});
@@ -135,6 +136,7 @@ test('rule changes mark samples stale, reject implicit reuse and allow explicit 
  const config=styleView(root,style).config;config.rules[0].instruction+='，色块明确';
  style=await updateObject(settings,'cellgame','style','cellgame',style.revision,{config});
  assert.equal(styleView(root,style).samples[0].stale,true);
+ style=await confirmStyleConfig(settings,'cellgame',style.id,style.revision);
  assert.throws(()=>compileGenerate({projectId:'cellgame',jobId:'white-cell',root}),/待复核/);
  const task=readObject(root,'cellgame','task','white-cell');task.config.styleReferenceMode='text-only';
  await updateObject(settings,'cellgame','task',task.id,task.revision,{config:task.config});
@@ -165,7 +167,8 @@ test('shared style packages preserve approved images and can be edited after imp
 }));
 
 test('styles saved directly without an analysis report can be shared and remain executable after import',()=>fixture(async(root,settings)=>{
- const style=await createObject(settings,'cellgame','style',{name:'直接保存',config:{rules:[{id:'outline',scope:'outline',strength:'default',instruction:'清晰轮廓',when:''}]}});
+ const draft=await createObject(settings,'cellgame','style',{name:'直接保存',config:{rules:[{id:'outline',scope:'outline',strength:'default',instruction:'清晰轮廓',when:''}]}});
+ const style=await confirmStyleConfig(settings,'cellgame',draft.id,draft.revision);
  const file=join(root,'direct.style.json');exportStyleBundle(root,'cellgame',style.id,file);
  const imported=await importStyleBundle(settings,'cellgame',file);
  assert.equal(imported.report,null);assert.equal(styleView(root,imported).format.status,'current');
@@ -173,17 +176,33 @@ test('styles saved directly without an analysis report can be shared and remain 
  assert.doesNotThrow(()=>compileGenerate({projectId:'cellgame',jobId:job.id,root}));
 }));
 
-test('discussion-only rules compile directly and empty drafts cannot silently generate',()=>fixture(async(root,settings)=>{
- let style=await createObject(settings,'cellgame','style',{name:'Discussed',config:{description:'讨论上下文'}});
- await assert.rejects(createStyleSampleJob(settings,'cellgame',style.id,style.revision),/config.rules/);
- style=await updateObject(settings,'cellgame','style',style.id,style.revision,{config:{...style.config,rules:[]}});
- await assert.rejects(createStyleSampleJob(settings,'cellgame',style.id,style.revision),/config.rules/);
+test('custom sample scheme compiles confirmed prose and rules with validated editable subjects and size',()=>fixture(async(root,settings)=>{
+ let style=await createObject(settings,'cellgame','style',{name:'Discussed',config:{}});
+ await assert.rejects(createStyleSampleJob(settings,'cellgame',style.id,style.revision),/确认配置/);
+ await assert.rejects(confirmStyleConfig(settings,'cellgame',style.id,style.revision),/请填写风格描述/);
  const rules=[{id:'soft',scope:'shading',strength:'default',instruction:'少用硬边过渡',when:'背景区域'}, {id:'noise',scope:'brushwork',strength:'avoid',instruction:'杂乱笔触',when:'',negative:['杂乱笔触']}];
- style=await updateObject(settings,'cellgame','style',style.id,style.revision,{config:{...style.config,rules}});
+ style=await updateObject(settings,'cellgame','style',style.id,style.revision,{config:{description:'清晰色块',constraints:['光影边缘保持柔和'],rules}});
+ style=await confirmStyleConfig(settings,'cellgame',style.id,style.revision);
  assert.equal(style.report,null);
- const job=await createStyleSampleJob(settings,'cellgame',style.id,style.revision);
+ const subject={id:'mascot',name:'水晶吉祥物',appearance:'半透明的紫色小动物',intent:'验证晶体上的柔和高光'};
+ const scheme={subjects:[subject],width:768,height:512,generation:{backend:'local-qwen',options:{steps:18}}};
+ await assert.rejects(createStyleSampleJob(settings,'cellgame',style.id,style.revision,{scheme:{...scheme,subjects:[]}}),/1～8/);
+ await assert.rejects(createStyleSampleJob(settings,'cellgame',style.id,style.revision,{scheme:{...scheme,subjects:[subject,subject]}}),/身份重复/);
+ await assert.rejects(createStyleSampleJob(settings,'cellgame',style.id,style.revision,{scheme:{...scheme,width:9999}}),/样张宽度/);
+ const job=await createStyleSampleJob(settings,'cellgame',style.id,style.revision,{scheme,count:2});
+ assert.deepEqual(job.config.generation,scheme.generation);
+ assert.equal(job.config.items.length,1);
+ assert.equal(job.config.items[0].id,'mascot');
+ assert.deepEqual(job.source.subjectNames,{mascot:subject.name});
+ assert.deepEqual(job.config.items[0].mustRead,[subject.intent]);
+ assert.equal(job.config.execution.perValue,2);
  const plan=compileGenerate({root,projectId:'cellgame',jobId:job.id});
- assert.deepEqual(plan.snapshots.core.config.rules,rules);
+ assert.deepEqual(plan.snapshots.core.config,style.config);
+ assert.deepEqual(plan.items[0].design.requestedSize,{width:768,height:512});
+ assert.match(plan.items[0].prompt,/水晶吉祥物/);
+ assert.match(plan.items[0].prompt,/验证晶体上的柔和高光/);
+ assert.match(plan.items[0].prompt,/清晰色块/);
+ assert.match(plan.items[0].prompt,/光影边缘保持柔和/);
  assert.equal(plan.snapshots.core.revision,style.revision);
  for(const item of plan.items){assert.match(item.prompt,/背景区域/);assert.match(item.prompt,/少用硬边过渡/);assert.match(item.negativeBlock,/杂乱笔触/);assert.equal(item.imageArgs.length,0);}
  const before=JSON.stringify(plan);

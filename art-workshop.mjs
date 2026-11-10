@@ -6,7 +6,7 @@ import {readJson,writeJson} from './lib/shared.mjs';
 const args=process.argv.slice(2),pos=[],options={};
 const channel=['image','video'].includes(args[0])?args.shift():null;
 if(args.length===1&&['--version','-V'].includes(args[0])){console.log(readJson(new URL('./package.json',import.meta.url)).version);process.exit(0);}
-const imageHelp='art-workshop image: config path/show/init/validate | doctor [--backend ID] [--start] | workflow list | environment guide/list/prepare/inspect/verify/register/unregister | refs guide | agent index/docs/export | conversation start/status/cancel/resume | list | style export/import/sources/create/list/read/update/derive/discard/sample-job/sample-select/sample-remove/recover/show | generate show/plan/run | edit show/plan/run | task list/status/wait/cancel/recover/resume | shutdown | check RUN | project init/upgrade | job template/from-candidate/create/list/read/update/derive/discard/restore/analyze | reference import/list/update/remove | candidate list/favorites/favorite/finalize/delete/finalizations | compare PLAN PLAN\nrun --background 返回任务 ID；--backend 选择后端。shutdown 停止当前工作区关联任务，核验共享队列和进程身份后关闭本地服务。';
+const imageHelp='art-workshop image: config path/show/init/validate | doctor [--backend ID] [--start] | workflow list | environment guide/list/prepare/inspect/verify/register/unregister | refs guide | agent index/docs/export | conversation start/status/cancel/resume | list | style export/import/sources/create/list/read/update/confirm/derive/discard/sample-job/sample-select/sample-remove/recover/show | generate show/plan/run | edit show/plan/run | task list/status/wait/cancel/recover/resume | shutdown | check RUN | project init/upgrade | job template/from-candidate/create/list/read/update/derive/discard/restore/analyze | reference import/list/update/remove | candidate list/favorites/favorite/finalize/delete/finalizations | compare PLAN PLAN\nrun --background 返回任务 ID；--backend 选择后端。shutdown 停止当前工作区关联任务，核验共享队列和进程身份后关闭本地服务。';
 const videoHelp='art-workshop video: describe | snapshot | settings get/save/presets h3 | runtime status/start/stop | task list/read/create/rename/archive | operation create/update/rename/derive/validate/run/resume/cancel/accept/bind | script read/update/plan/apply | film compose/refine/preview/adopt/undo | material list/import/import-file/upload/hide | image | media status | execution status\n--workspace <工程根目录> --project <项目身份，默认 project> --input <工程内 JSON 对象文件> --operation <稳定CLI操作身份>\n所有写入必须传 --operation，重复同身份只核对原回执；execution status --operation 查询意图/回执。先 describe 读取业务输入契约；写入保留 revision/expectedRevision，生成必须传稳定 requestId。unknown 只查询原运行，不换 ID 重投。读取不会启动服务，runtime start/operation run/film 操作必须显式调用。';
 const help='art-workshop: image（图片）与 video（视频）两个独立通道。图片旧根命令继续兼容。\n'+imageHelp+'\n'+videoHelp+'\n也可用 v-cli art 调用；先 v-cli agent docs art，再 v-cli agent describe art --json 查看完整参数。';
 if(!args.length||args.length===1&&['--help','-h','help'].includes(args[0])){console.log(channel==='video'?videoHelp:channel==='image'?imageHelp:help);process.exit(0);}
@@ -62,7 +62,7 @@ const {backendDefaults,bindBackend,buildComfyRequest}=await import('./lib/backen
 const {startTask,taskStatus,taskView,recoverTask,resumeTask,waitTask,cancelTask,shutdown}=await import('./lib/tasks.mjs');
 const {runtimeRoot,tasks}=await import('./lib/runtime.mjs');
 const {validateConfiguration,doctor}=await import('./lib/diagnostics.mjs');
-const {finishMigration,createProject,createObject,listObjects,readObject,styleView,updateObject,deriveObject,discardObject,restoreTask,importReference,removeReference,updateReference,taskDisplayState,STYLE_CATEGORIES,TASK_PURPOSES}=await import('./lib/workspace.mjs');
+const {finishMigration,confirmStyleConfig,createProject,createObject,listObjects,readObject,styleView,updateObject,deriveObject,discardObject,restoreTask,importReference,removeReference,updateReference,taskDisplayState,STYLE_CATEGORIES,TASK_PURPOSES}=await import('./lib/workspace.mjs');
 const {startAnalysis,recoverStyleAdoption}=await import('./lib/style-lifecycle.mjs');
 const {candidates,finalize,deleteCandidate,finalizations,editFromCandidate}=await import('./lib/candidates.mjs');
 const {createStyleSampleJob,selectStyleSample,removeStyleSample}=await import('./lib/style-samples.mjs');
@@ -163,7 +163,8 @@ try {
   }
   else if(module==='style'){
     const projectId=required('project');
-    if(action==='sample-job')print(await createStyleSampleJob(settings,projectId,required('id'),Number(required('revision')),{name:options.name,...(options.count!==undefined?{count:Number(options.count)}:{})}));
+    if(action==='confirm')print(await confirmStyleConfig(settings,projectId,required('id'),Number(required('revision'))));
+    else if(action==='sample-job')print(await createStyleSampleJob(settings,projectId,required('id'),Number(required('revision')),{name:options.name,...(options.count!==undefined?{count:Number(options.count)}:{}),...(options.input?{scheme:readJson(path(options.input))}:{})}));
     else if(action==='sample-select')print(await selectStyleSample(settings,projectId,required('id'),Number(required('revision')),{job:required('job'),run:required('run'),candidate:required('candidate'),note:options.note}));
     else if(action==='sample-remove')print(await removeStyleSample(settings,projectId,required('id'),Number(required('revision')),required('sample')));
     else if(action==='recover')print(await recoverStyleAdoption(settings,projectId,required('id')));

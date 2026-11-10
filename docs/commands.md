@@ -3126,9 +3126,25 @@ v-cli art video execution status --operation <id>
 - 不提交远端模型生成
 - 读取DSH与CLI共享的请求、回执目录；executing按unknown核对
 
+### style confirm
+
+确认保存的风格描述、约束和绘制规则并确定性编译契约
+
+```sh
+v-cli art style confirm --project ID --id STYLE --revision N
+```
+
+结构化能力：`art.style-confirm`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：风格身份
+- `--revision <number>`：预期风格版本
+
+- 校验当前修订号；编译不启动模型，历史契约保持原样
+
 ### style sample-job
 
-创建仅使用当前文字规则的样张任务；count 为每个主题候选数（1～4），不自动生成
+为已确认风格创建样张任务；支持自定义主体、验证目标、尺寸和生成方案，不自动生成
 
 ```sh
 v-cli art style sample-job --project ID --id STYLE --revision N
@@ -3140,7 +3156,8 @@ v-cli art style sample-job --project ID --id STYLE --revision N
 - `--id <id>`：风格身份
 - `--revision <number>`：预期风格版本
 - `--name <name>`：任务名称（可选）
-- `--count <number>`：每个主题候选数，1～4；三个主题共 3 × count 张，默认 1
+- `--count <number>`：每个主题候选数，1～4，默认 1
+- `--input <file>`：可选样张方案 JSON：subjects（1～8 个含 id/name/appearance/intent 的主体）、width、height、generation
 
 - 保存或建任务不发起生成；版本冲突重新读取；样张仅作绘制语言参考，不能保证隔离无关特征
 
@@ -3181,9 +3198,25 @@ v-cli art style sample-remove --project ID --id STYLE --revision N --sample VALU
 
 - 保存或建任务不发起生成；版本冲突重新读取；样张仅作绘制语言参考，不能保证隔离无关特征
 
+### image style confirm
+
+确认保存的风格描述、约束和绘制规则并确定性编译契约
+
+```sh
+v-cli art image style confirm --project ID --id STYLE --revision N
+```
+
+结构化能力：`art.image-style-confirm`。
+
+- `--project <id>`：工程身份
+- `--id <id>`：风格身份
+- `--revision <number>`：预期风格版本
+
+- 校验当前修订号；编译不启动模型，历史契约保持原样
+
 ### image style sample-job
 
-创建仅使用当前文字规则的样张任务；count 为每个主题候选数（1～4），不自动生成
+为已确认风格创建样张任务；支持自定义主体、验证目标、尺寸和生成方案，不自动生成
 
 ```sh
 v-cli art image style sample-job --project ID --id STYLE --revision N
@@ -3195,7 +3228,8 @@ v-cli art image style sample-job --project ID --id STYLE --revision N
 - `--id <id>`：风格身份
 - `--revision <number>`：预期风格版本
 - `--name <name>`：任务名称（可选）
-- `--count <number>`：每个主题候选数，1～4；三个主题共 3 × count 张，默认 1
+- `--count <number>`：每个主题候选数，1～4，默认 1
+- `--input <file>`：可选样张方案 JSON：subjects（1～8 个含 id/name/appearance/intent 的主体）、width、height、generation
 
 - 保存或建任务不发起生成；版本冲突重新读取；样张仅作绘制语言参考，不能保证隔离无关特征
 

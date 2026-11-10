@@ -17,6 +17,8 @@ try{
   if(!run(['--help']).includes('v-cli art'))throw new Error('帮助缺少 v-cli 发现入口');
   const manifest=JSON.parse(readFileSync(join(root,'v-cli.plugin.json'),'utf8'));
   if(manifest.package!==info.name||manifest.command!=='art'||manifest.bin!=='art-workshop')throw new Error('随包插件身份不符');
+  if(!manifest.agent.commands.some(command=>command.capabilityId==='art.style-confirm'))throw new Error('安装包缺少风格确认编译能力');
+  if(!manifest.agent.commands.some(command=>command.capabilityId==='art.style-sample-job'&&command.options?.some(option=>/^--input(?:\s|$)/.test(option.flags))))throw new Error('安装包缺少可编辑样张方案');
   if(!existsSync(join(root,'AGENTS.md')))throw new Error('v-cli 随包规范缺失');
   const docs=run(['agent','docs']);
   const expectedDocs=readFileSync(join(root,'skills/art-workshop/SKILL.md'),'utf8');

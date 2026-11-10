@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdtempSync,cpSync,rmSync,readFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {createObject,readObject,deriveObject,updateObject,styleView,objectFile} from '../lib/workspace.mjs';
+import {confirmStyleConfig,createObject,readObject,deriveObject,updateObject,styleView,objectFile} from '../lib/workspace.mjs';
 import {validateReport,corePrompt,loadCore} from '../lib/core.mjs';
 import {EXAMPLE_CONFIG} from '../lib/style-contract.mjs';
 import {styleSourceHash,resolvedRecommendation} from '../lib/style-review.mjs';
@@ -20,8 +20,9 @@ async function fixture(fn){
  }finally{rmSync(root,{recursive:true,force:true});}
 }
 test('historical unresolved reports never block direct saved rules or overwrite evidence',()=>fixture(async(root,settings,record)=>{
- const saved=await updateObject(settings,'cellgame','style',record.id,record.revision,{config:{...record.config,...EXAMPLE_CONFIG}});
+ let saved=await updateObject(settings,'cellgame','style',record.id,record.revision,{config:{...record.config,...EXAMPLE_CONFIG}});
  assert.deepEqual(saved.report.data,record.report.data);assert.equal(saved.report.sourceHash,record.report.sourceHash);
+ saved=await confirmStyleConfig(settings,'cellgame',saved.id,saved.revision);
  assert.deepEqual(loadCore('cellgame',saved.id,root).config.rules,EXAMPLE_CONFIG.rules);
  await assert.rejects(updateObject(settings,'cellgame','style',saved.id,record.revision,{name:'stale'}),/版本/);
  const report=structuredClone(record.report.data);report.decisions=[{issueId:'shadow-choice',optionId:'flexible',fingerprint:'fake',note:'fake',decidedAt:'today'}];

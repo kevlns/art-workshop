@@ -71,7 +71,7 @@ Vant 系统模型配置统一保存 Provider 实例及凭据，工程只引用�
 
 ### 风格规则与样张
 
-风格的 config.rules 是可编辑配置，保存有效规则时维护当前核心与历史哈希快照，不需要先派生或采用。原始 style/palette/rendering 参考仅用于分析指定关注点；用户通过 style sample-select 认可的候选复制到风格 samples 目录，独立保存文件和规则哈希。候选的样张定版开关将图片加入或移出“风格配置 → 运行时参考”，按图片内容哈希去重。移除关系保留历史文件，不修改用户源图，不调用资产定版或导出。
+风格的 description、constraints 和 rules 均可编辑。保存后通过 style confirm 确认对应修订版，编译并保留契约快照。原始 style/palette/rendering 参考仅用于分析指定关注点；用户通过 style sample-select 认可的候选复制到风格 samples 目录，独立保存文件和规则哈希。候选的样张定版开关将图片加入或移出“风格配置 → 运行时参考”，按图片内容哈希去重。移除关系保留历史文件，不修改用户源图，不调用资产定版或导出。
 
 生成和编辑任务以 config.styleReferenceMode 选择 approved（默认）或 text-only。approved 使用匹配当前规则哈希的样张；从未采用样张时按规则生成并在预案标记 no-samples；已有样张全部过期时拒绝使用。text-only 明确仅使用文字规则。后端不支持图片输入时明确报错，不把已配置样张静默丢弃。打样任务固定 text-only，创建任务后仍需配置模型和执行预案。
 

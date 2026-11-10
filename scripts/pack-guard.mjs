@@ -10,7 +10,7 @@ for(const file of files)if(/(?:^|\/)(?:node_modules|tests|projects|refs|\.git)(?
 const pkg=JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8'));
 for(const file of ['lib/style-samples.mjs','lib/style-evidence.mjs','lib/style-report.mjs'])if(!files.includes(file))throw new Error('包缺少风格与样张能力 '+file);
 const manifest=JSON.parse(readFileSync(new URL('../v-cli.plugin.json',import.meta.url),'utf8'));
-for(const action of ['sample-job','sample-select','sample-remove'])if(!manifest.agent.commands.some(command=>command.path?.join(' ')==='style '+action))throw new Error('包缺少样张命令 '+action);
+for(const action of ['confirm','sample-job','sample-select','sample-remove'])if(!manifest.agent.commands.some(command=>command.path?.join(' ')==='style '+action))throw new Error('包缺少样张命令 '+action);
 if(pkg.exports?.['./video']!=='./lib/video.mjs'||pkg.dependencies?.zod!=='4.6.7')throw new Error('视频SDK导出或schema依赖未进入包契约');
 for(const doc of ['modes','configuration','data-formats','commands','deployment','troubleshooting','remote-models','model-architecture','core-guidance'])if(!files.includes('docs/'+doc+'.md'))throw new Error('包缺少指南 '+doc);
 for(const suffix of ['.api.json','.json'])if(!files.includes('workflows/vant-builtin-qwen-image-2.1-Q4-8GB'+suffix))throw new Error('包缺少内置工作流 '+suffix);

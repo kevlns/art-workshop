@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {deriveObject,updateObject,readObject,objectFile} from '../lib/workspace.mjs';
+import {confirmStyleConfig,deriveObject,updateObject,readObject,objectFile} from '../lib/workspace.mjs';
 import {analysisInput} from '../lib/style-lifecycle.mjs';
 import {corePrompt,loadCore} from '../lib/core.mjs';
 import {writeJson,hash} from '../lib/shared.mjs';
@@ -31,7 +31,8 @@ test('discussion rules save directly, preserve history and compile with conditio
  const source=readObject(root,'cellgame','style','cellgame');
  const draft=await deriveObject(settings,'cellgame','style',source.id,source.revision);
  const rules=[...draft.config.rules,{id:'texture',scope:'brushwork',strength:'default',instruction:'减少绘画噪点，保留任务要求的纹理',when:'小尺寸图标'}];
- const saved=await updateObject(settings,'cellgame','style',draft.id,draft.revision,{config:{...draft.config,description:'讨论上下文',constraints:['保留原意'],rules}});
+ let saved=await updateObject(settings,'cellgame','style',draft.id,draft.revision,{config:{...draft.config,description:'讨论上下文',constraints:['保留原意'],rules}});
+ saved=await confirmStyleConfig(settings,'cellgame',saved.id,saved.revision);
  assert.deepEqual(saved.report,draft.report);
  assert.deepEqual(loadCore('cellgame',saved.id,root).config.rules,rules);
  assert.match(corePrompt(loadCore('cellgame',saved.id,root)),/小尺寸图标/);

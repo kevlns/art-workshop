@@ -28,7 +28,7 @@ style sample-job 的可选 count 为 1～4 的整数，表示三个默认主体�
 
 ### 需求与计划
 
-风格 config 包含 description、constraints、rules 与 analysis（均按需要填写）。rules 每条为 id、scope、strength、instruction、when，avoid 可含 negative 抽象排除表达数组；条件写入 when，职责见 [风格规则](core-guidance.md)。有效 config.rules 保存后生效，报告 recommendation.rules 只是建议。report.evidenceHash 绑定参考与分析配置，原报告与用户修订依据保留，不把保存解释成重新分析。
+风格 config 包含可编辑的 description、constraints 和 rules。已有 analysis 字段作为历史分析配置保留。rules 每条为 id、scope、strength、instruction、when，avoid 可含 negative 抽象排除表达数组；条件写入 when，职责见 [风格规则](core-guidance.md)。style confirm 编译保存的描述、约束和规则。历史报告中的 recommendation.rules 只供参考。report.evidenceHash 绑定参考与分析配置，原报告与用户修订依据保留，不把保存解释成重新分析。
 
 生成 config 包括 project、kind、core、styleReferenceMode、execution、analysis、generation、items，以及互斥的 profile 或内联 asset 规格；实体及效果有稳定 id、数量、颜色、角色与关系。styleReferenceMode 为 approved（默认）或 text-only，分别选择当前运行时参考或仅文字规则，编辑任务也支持该字段。具体主体、构图、动作由任务决定。规格定义资产约束、设计基准与检查要点，内联规格属于当前任务，编译时形成同一不可变快照。编辑 config 的 items 明确 source、changes、preserve、mustRead、seed。
 
@@ -57,7 +57,7 @@ task recover 根据工程和 operationId 找回唯一原执行；task resume 沿
 
 
 
-风格报告与 core.json 使用 schemaVersion=3。recommendation.rules 保存带主题、强度和条件的建议，issues 保存具体决策选项，decisions 保存已确认取舍，notes 保存不阻塞的提醒。style list/read 返回 review（ready、stale、openIssues、reason、有效 recommendation）及 compatibility；review 是报告状态，不限制用户直接保存有效规则。对象存储使用 schemaVersion=2。详细字段见 core-guidance.md。
+风格报告与 core.json 使用 schemaVersion=3。recommendation.rules 保存带主题、强度和条件的建议，issues 保存具体决策选项，decisions 保存已确认取舍，notes 保存不阻塞的提醒。style list/read 返回 review（ready、stale、openIssues、reason、有效 recommendation）及 compatibility；confirmation 表示草稿（draft）、已确认（confirmed）或待重新确认（stale），并返回 ready 和 reason。review 是历史报告状态。对象存储使用 schemaVersion=2。详细字段见 core-guidance.md。
 
 ## 执行边界
 

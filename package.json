@@ -1,6 +1,6 @@
 {
   "name": "@kevlns/art-workshop",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "private": false,
   "description": "统一管理图片工坊与视频工坊：项目风格、图片生成编辑、剧本镜头、视频生成与成片精修。",
   "type": "module",

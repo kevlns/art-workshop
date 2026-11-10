@@ -23,7 +23,7 @@ art-workshop agent index
 任务参考只提取 purposes 指定且未被 ignore 排除的特征。用途范围外、用户已明确覆盖的背景和绘制差异不构成阻塞；conflicts 仅列范围内不可调和要求，uncertainties 仅列影响执行的关键缺失，两者为非空字符串数组，无问题用 []。不得删除用户参考或清空报告来绕过分析；应明确参考范围后重新分析，真正的未决取舍再交用户决定。
 
 工程对象使用 schemaVersion 2；读写前核实工程配置和当前 revision。
-风格和任务都有稳定 id 与 revision。UI、聊天和 CLI 共用对象；写入、派生与清理提交预期 revision，冲突重新读取。风格规则可随时增删修改并保存，包括已有正式风格；有效 rules 保存即同步可执行核心，不需要派生、分析或采用。历史核心快照和运行证据保留，修改后重新编译预案。派生仅用于独立方向，不继承批次、授权与对话。
+风格和任务都有稳定 id 与 revision。UI、聊天和 CLI 共用对象；写入、派生与清理提交预期 revision，冲突重新读取。风格规则可随时增删修改并保存，包括已有正式风格；保存修改后按用户意图确认配置，再编译生成预案。历史核心快照和运行证据保留，修改后重新编译预案。派生仅用于独立方向，不继承批次、授权与对话。
 风格静态参考只有 style、palette、rendering，只分析媒介、描绘、明暗、描边、笔触和色彩关系。具体造型、比例、结构、部件、身份色、材质与光源属于任务。任务动态参考只有 subject、composition、pose、identity-color、surface、scene-light、text；编辑底图另列。导入复制原图，不修改用户文件。未适配直接参考时拒绝，不隐式上传风格图片。
 
 ### 风格生命周期
@@ -34,7 +34,7 @@ art-workshop agent index
 
 ### 打样与样张定版
 
-保存规则后使用 style sample-job --project P --id STYLE --revision N 创建普通生成任务，可选 --count 1～4 指定每个默认主体的候选数量（共三个主体，写入 config.execution.perValue），任务固定 styleReferenceMode=text-only，source 记录规则和核心哈希。创建任务不启动生成；配置模型并按普通任务预案运行，用户不满意时直接修改规则重新打样，不从不合格结果中强行选图。
+确认配置后使用 style sample-job --project P --id STYLE --revision N --input FILE 创建样张任务。FILE 可填 subjects（1～8 个主体，每项 id、name、appearance、intent）、width、height（64～4096，缺省 512）和 generation。--count 取 1～4，表示每个主体的候选数。任务固定 styleReferenceMode=text-only，source 记录契约内容与核心哈希，创建后需要单独编译和执行。
 
 用户认可成功候选后使用 style sample-select --project P --id STYLE --revision N --job JOB --run RUN --candidate HASH，可选 --note 记录用途；图片独立复制到风格 samples 目录，保留规则哈希、来源与模型。style sample-remove --project P --id STYLE --revision N --sample SAMPLE 移除当前采用关系，历史文件保留。样张定版不调用 candidate finalize，不导出到 VantArtForge。
 
@@ -115,4 +115,4 @@ job read 返回的 resolvedAsset 是只读有效资产规格，assetError 表示
 
 MIT。Copyright © 2026 Vant。
 
-风格直接使用 style read/update 保存完整 config.rules，再 style sample-job 创建样张任务，通过 generate plan 编译契约与提示词后生成。没有独立风格分析、报告回填或采用步骤。可自由调整规则、条件、倾向、参考关注点和样张任务的主体与参数；描述与约束是讨论上下文，实际绘制契约以 config.rules 为准。空规则可保存草稿，打样需要有效规则。历史报告保留只读证据；style recover 仅用于完成原有中断事务，不能新建采用流程。
+风格使用 style read/update 保存完整描述、约束和绘制规则。按用户要求用 style confirm 校验当前 revision 并编译契约，无需独立风格分析或回填报告。已有内容必须原样保留。修改风格内容后，重新确认才能开始新样张；历史报告、契约与运行快照保留。style recover 仅用于完成已有的中断事务。

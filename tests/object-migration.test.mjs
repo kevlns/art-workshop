@@ -4,7 +4,7 @@ import {mkdtempSync,cpSync,rmSync,readFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {readJson,writeJson,hash} from '../lib/shared.mjs';
-import {readObject,listObjects,objectFile,objectFormat,deriveObject,updateObject,migrationSource,finishMigration,confirmMigration} from '../lib/workspace.mjs';
+import {confirmStyleConfig,readObject,listObjects,objectFile,objectFormat,deriveObject,updateObject,migrationSource,finishMigration,confirmMigration} from '../lib/workspace.mjs';
 import {compileGenerate} from '../lib/generate.mjs';
 import {createStyleSampleJob} from '../lib/style-samples.mjs';
 import {EXAMPLE_CONFIG} from '../lib/style-contract.mjs';
@@ -33,7 +33,7 @@ test('retired style migrates into a clean, version-checked draft; sample prepara
  let saved=await updateObject(settings,'cellgame','style',target.id,target.revision,{config:{description:'硬边数字卡通绘制语言',constraints:[],...EXAMPLE_CONFIG}});
  await assert.rejects(finishMigration(settings,'cellgame','style',target.id,target.revision,{note:'done'}),/版本冲突/);
  saved=await finishMigration(settings,'cellgame','style',target.id,saved.revision,{note:'仅迁移绘制语言，原配置保留为来源'});
- assert.equal(saved.migration.status,'ready');assert.equal((await createStyleSampleJob(settings,'cellgame',target.id,saved.revision)).source.kind,'style-sample');
+ assert.equal(saved.migration.status,'ready');saved=await confirmStyleConfig(settings,'cellgame',saved.id,saved.revision);assert.equal((await createStyleSampleJob(settings,'cellgame',target.id,saved.revision)).source.kind,'style-sample');
  saved=await confirmMigration(settings,'cellgame','style',target.id,saved.revision);assert.ok(saved.migration.confirmedAt);
  assert.equal(readFileSync(join(root,'projects/cellgame/styles/cellgame/core.json'),'utf8'),original);
 }));

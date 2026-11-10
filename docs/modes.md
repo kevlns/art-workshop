@@ -14,9 +14,9 @@
 
 创建风格，按 style、palette、rendering 分类导入分析参考。讨论澄清意图，按当前 revision 保存完整配置；规则可随时增删修改，有效 rules 保存后即可用于任务，无需派生或采用。style analyze 是可选辅助：--dry 只编译，实际 analyze 创建 taskId 与独立证据，逐图观察后生成建议报告。
 
-报告含 summary、observations、recommendation、issues、notes、decisions 和 provenance。recommendation.rules 是精炼建议，不自动替换已保存的 config.rules。issues 给出实质矛盾的可执行选项，用户选择后可通过 style resolve 记录；review.ready 只表示分析建议可采用，不是直接保存规则的前置条件。
+历史报告与参考观察可供讨论。当前风格由保存的描述、约束和绘制规则编译，用户确认配置后生成确定性契约。
 
-按明确要求使用 style update 保存规则，不为普通措辞修改重复分析；style revise 保留兼容入口并记录用户修订依据。每次保存维护当前核心与按哈希保留的历史快照，历史运行不覆写。derive 仅用于用户需要独立风格时，不是修改的必经步骤。
+使用 style update 保存配置，通过 style confirm 确认对应修订版。已确认契约按哈希保留，历史运行快照保持原样。derive 用于复制成独立风格。
 
 需要新增参考证据或分析复核时，复核复用未变化的图片观察并接收已有方案和决定。错误保留草稿和证据，本地完成后允许编辑；云端计算不确定性单独提示，见 [状态与恢复](troubleshooting.md)。
 
