@@ -4,7 +4,6 @@ import {mkdtempSync,cpSync,rmSync,readFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createObject,readObject,deriveObject,updateObject,styleView,objectFile} from '../lib/workspace.mjs';
-import {resolveStyleIssue,adoptStyle} from '../lib/style-lifecycle.mjs';
 import {validateReport,corePrompt,loadCore} from '../lib/core.mjs';
 import {EXAMPLE_CONFIG} from '../lib/style-contract.mjs';
 import {styleSourceHash,resolvedRecommendation} from '../lib/style-review.mjs';
@@ -20,40 +19,11 @@ async function fixture(fn){
  writeJson(objectFile(root,'cellgame','style',record.id),record);await fn(root,settings,record);
  }finally{rmSync(root,{recursive:true,force:true});}
 }
-test('explicit decision converges without another model request; adoption retains conditions and evidence',()=>fixture(async(root,settings,record)=>{
- await assert.rejects(adoptStyle(settings,'cellgame',record.id,1),/待决定/);
- const decided=await resolveStyleIssue(settings,'cellgame',record.id,1,{issueId:'shadow-choice',optionId:'flexible',note:'用户选择按主体调整'});
- assert.equal(styleView(root,decided).review.ready,true);assert.equal(decided.report.data.notes.length,1);
- const frozen=await adoptStyle(settings,'cellgame',record.id,decided.revision);assert.equal(frozen.status,'frozen');
- const core=loadCore('cellgame',record.id,root);assert.match(corePrompt(core),/默认冷影，允许同色相压暗/);assert.match(corePrompt(core),/任务指定透明或发光物体时/);
- assert.equal(core.report.decisions[0].note,'用户选择按主体调整');
- const derived=await deriveObject(settings,'cellgame','style',record.id,frozen.revision);assert.match(JSON.stringify(derived.config.rules),/阴影|冷影/);assert.equal(derived.report.data.provenance.method,'inherited-frozen');
- const changed=await resolveStyleIssue(settings,'cellgame',record.id,frozen.revision,{issueId:'shadow-choice',optionId:'strict',note:'change'});
- assert.equal(changed.id,frozen.id);assert.equal(changed.revision,frozen.revision+1);
-}));
-test('changing the draft preserves evidence and decisions but prevents adopting or deciding on stale report',()=>fixture(async(root,settings,record)=>{
- const decided=await resolveStyleIssue(settings,'cellgame',record.id,1,{issueId:'shadow-choice',optionId:'flexible',note:'用户确认'});
- const changed=await updateObject(settings,'cellgame','style',record.id,decided.revision,{config:{description:'修改需求'}});
- assert.deepEqual(changed.report.data,decided.report.data);assert.equal(changed.report.sourceHash,decided.report.sourceHash);assert.equal(styleView(root,changed).review.stale,true);
- await assert.rejects(adoptStyle(settings,'cellgame',record.id,changed.revision),/过期/);
- await assert.rejects(resolveStyleIssue(settings,'cellgame',record.id,changed.revision,{issueId:'shadow-choice',optionId:'strict',note:'用户确认'}),/复核/);
-}));
-test('old revisions and nonexistent options cannot silently mutate the draft',()=>fixture(async(root,settings,record)=>{
- const bytes=readFileSync(objectFile(root,'cellgame','style',record.id));
- await assert.rejects(resolveStyleIssue(settings,'cellgame',record.id,8,{issueId:'shadow-choice',optionId:'flexible',note:'yes'}),/版本/);
- await assert.rejects(resolveStyleIssue(settings,'cellgame',record.id,1,{issueId:'shadow-choice',optionId:'missing',note:'yes'}),/不存在/);
- assert.deepEqual(readFileSync(objectFile(root,'cellgame','style',record.id)),bytes);
-}));
-test('overlapping choices reopen superseded decisions instead of silently composing contradictions',()=>fixture(async(root,settings,record)=>{
- record.report.data.issues.push(issue('another-shadow'));writeJson(objectFile(root,'cellgame','style',record.id),record);
- const first=await resolveStyleIssue(settings,'cellgame',record.id,1,{issueId:'shadow-choice',optionId:'flexible',note:'用户确认'});
- const second=await resolveStyleIssue(settings,'cellgame',record.id,first.revision,{issueId:'another-shadow',optionId:'strict',note:'用户改选'});
- assert.deepEqual(styleView(root,second).review.openIssues,['shadow-choice']);assert.equal(second.reviewHistory.length,2);
- assert.equal(resolvedRecommendation(second.report.data).rules.find(r=>r.id==='shadow').strength,'required');
-}));
-test('report rejects forged decisions and preserves conditional exclusions',()=>fixture(async(root,settings,record)=>{
- const report=record.report.data;report.decisions=[{issueId:'shadow-choice',optionId:'flexible',fingerprint:'fake',note:'fake',decidedAt:'today'}];
+test('historical unresolved reports never block direct saved rules or overwrite evidence',()=>fixture(async(root,settings,record)=>{
+ const saved=await updateObject(settings,'cellgame','style',record.id,record.revision,{config:{...record.config,...EXAMPLE_CONFIG}});
+ assert.deepEqual(saved.report.data,record.report.data);assert.equal(saved.report.sourceHash,record.report.sourceHash);
+ assert.deepEqual(loadCore('cellgame',saved.id,root).config.rules,EXAMPLE_CONFIG.rules);
+ await assert.rejects(updateObject(settings,'cellgame','style',saved.id,record.revision,{name:'stale'}),/版本/);
+ const report=structuredClone(record.report.data);report.decisions=[{issueId:'shadow-choice',optionId:'flexible',fingerprint:'fake',note:'fake',decidedAt:'today'}];
  assert.throws(()=>validateReport(report,'cellgame'),/不匹配/);
- const config={rules:[{...rule,strength:'avoid',instruction:'额外发光',when:'不透明物体'}]};
- assert.match(corePrompt({config}),/不透明物体/);
 }));

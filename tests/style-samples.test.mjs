@@ -165,10 +165,29 @@ test('shared style packages preserve approved images and can be edited after imp
 }));
 
 test('styles saved directly without an analysis report can be shared and remain executable after import',()=>fixture(async(root,settings)=>{
- const style=await createObject(settings,'cellgame','style',{name:'直接保存',config:{rules:[]}});
+ const style=await createObject(settings,'cellgame','style',{name:'直接保存',config:{rules:[{id:'outline',scope:'outline',strength:'default',instruction:'清晰轮廓',when:''}]}});
  const file=join(root,'direct.style.json');exportStyleBundle(root,'cellgame',style.id,file);
  const imported=await importStyleBundle(settings,'cellgame',file);
  assert.equal(imported.report,null);assert.equal(styleView(root,imported).format.status,'current');
  const job=await createStyleSampleJob(settings,'cellgame',imported.id,imported.revision);
  assert.doesNotThrow(()=>compileGenerate({projectId:'cellgame',jobId:job.id,root}));
+}));
+
+test('discussion-only rules compile directly and empty drafts cannot silently generate',()=>fixture(async(root,settings)=>{
+ let style=await createObject(settings,'cellgame','style',{name:'Discussed',config:{description:'讨论上下文'}});
+ await assert.rejects(createStyleSampleJob(settings,'cellgame',style.id,style.revision),/config.rules/);
+ style=await updateObject(settings,'cellgame','style',style.id,style.revision,{config:{...style.config,rules:[]}});
+ await assert.rejects(createStyleSampleJob(settings,'cellgame',style.id,style.revision),/config.rules/);
+ const rules=[{id:'soft',scope:'shading',strength:'default',instruction:'少用硬边过渡',when:'背景区域'}, {id:'noise',scope:'brushwork',strength:'avoid',instruction:'杂乱笔触',when:'',negative:['杂乱笔触']}];
+ style=await updateObject(settings,'cellgame','style',style.id,style.revision,{config:{...style.config,rules}});
+ assert.equal(style.report,null);
+ const job=await createStyleSampleJob(settings,'cellgame',style.id,style.revision);
+ const plan=compileGenerate({root,projectId:'cellgame',jobId:job.id});
+ assert.deepEqual(plan.snapshots.core.config.rules,rules);
+ assert.equal(plan.snapshots.core.revision,style.revision);
+ for(const item of plan.items){assert.match(item.prompt,/背景区域/);assert.match(item.prompt,/少用硬边过渡/);assert.match(item.negativeBlock,/杂乱笔触/);assert.equal(item.imageArgs.length,0);}
+ const before=JSON.stringify(plan);
+ await updateObject(settings,'cellgame','style',style.id,style.revision,{config:{...style.config,rules:[rules[1]]}});
+ assert.throws(()=>assertPlanCurrent(plan,settings),/变化|版本|风格/);
+ assert.equal(JSON.stringify(plan),before);
 }));

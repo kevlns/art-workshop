@@ -61,9 +61,9 @@ test('old frozen contracts remain inspectable but cannot be adopted or executed'
  const view=styleView(root,readObject(root,'cellgame','style','cellgame'));
  assert.equal(view.compatibility.usable,false);
  assert.match(view.compatibility.reasons.join(''),/派生/);
- assert.throws(()=>loadCore('cellgame','cellgame',root),/重新分析/);
+ assert.throws(()=>loadCore('cellgame','cellgame',root),/重新整理保存规则/);
  const old=readJson(join(root,'projects/cellgame/reports/cellgame.json'));delete old.schemaVersion;
- assert.throws(()=>validateReport(old,'cellgame'),/重新分析/);
+ assert.throws(()=>validateReport(old,'cellgame'),/重新整理保存规则/);
  const historical=structuredClone(current);delete historical.snapshots.core.schemaVersion;delete historical.planHash;historical.planHash=hash(historical);
  assert.doesNotThrow(()=>validatePlan(historical),'history still verifies its original hash');
  assert.throws(()=>executePlan(historical,historical.items,{dry:true}),/旧风格计划/);

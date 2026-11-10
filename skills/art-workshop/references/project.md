@@ -29,10 +29,7 @@ art-workshop agent index
 ### 风格生命周期
 
 草稿可含 rules，每条为 id/scope/strength/instruction/when，avoid 可另填 negative 字符串数组。按媒介、描边、明暗、高光、笔触、刻画、配色整理，主题不必填满。required 必须遵守、default 默认倾向、avoid 必须避免；“默认少用”使用 default，不升级为禁止。条件保留在 when。风格负向只表达跨主体复用的抽象绘制语言，不排除具体主体、部件、身份色、物体纹理、材质或资产规格。negative 直接描述被排除的视觉特征，不加否定前缀；instruction 为同一规则的阅读说明，条件和例外写入 when。无条件且明确填写的 negative 编译为独立负向表达，条件规则连同排除表达保留在正向条件段；未填写 negative 的文字约束保留原文，不机械转换。支持负向参数的模型直接传递，不支持时由适配器并入排除段，不丢弃、不截断。
-规则编辑使用 style update --project ID --id STYLE --revision N --input FILE，输入完整 {name,config} 并保留未修改字段。有效 config.rules 直接生效，不因报告过期或未决分析项强制重新分析。style revise 保留为兼容修订入口，记录用户修订方案与依据；原报告和参考证据不变，不伪造新的分析。
 
-style create/read/update/derive/discard 管理风格；已有可执行风格也可 update。style analyze 是可选辅助，--dry 只读编译，不联网、启动服务或创建参考目录。实际 analyze 创建 taskId 与独立参考证据；task status/wait/cancel 控制执行，recover 查原登记，resume 仅按已记录的上游身份恢复查询与取回，不重新提交。
-报告绑定源配置、参考与模型。更新配置保留报告并标记需复核，源证据保持不变。报告 recommendation.rules 是分析建议，config.rules 才是已保存规则；用户要求回填时必须取得实际保存回执。issues 仅列需用户取舍的矛盾；style resolve 按实际选择修订建议，不清空问题绕过分析。review.ready 只表示建议可采用，不限制直接保存规则。style adopt/style recover 保留兼容报告采用及其原中断事务，不是编辑保存的前置步骤。
 退出风格配置先按宿主提供的保存或草稿机制处理未保存内容。分析与生成仍遵循原执行身份和停止确认；不能因切换页面或保存规则重投任务。
 
 ### 打样与样张定版
@@ -117,3 +114,5 @@ job read 返回的 resolvedAsset 是只读有效资产规格，assetError 表示
 ## 许可与版权
 
 MIT。Copyright © 2026 Vant。
+
+风格直接使用 style read/update 保存完整 config.rules，再 style sample-job 创建样张任务，通过 generate plan 编译契约与提示词后生成。没有独立风格分析、报告回填或采用步骤。可自由调整规则、条件、倾向、参考关注点和样张任务的主体与参数；描述与约束是讨论上下文，实际绘制契约以 config.rules 为准。空规则可保存草稿，打样需要有效规则。历史报告保留只读证据；style recover 仅用于完成原有中断事务，不能新建采用流程。

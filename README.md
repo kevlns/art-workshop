@@ -30,7 +30,7 @@ art-workshop image agent index
 
 图片命令以 `art-workshop image` 或 `v-cli art image` 开头；原有不带 `image` 的图片命令继续兼容。视频以 `art-workshop video` 或 `v-cli art video` 开头，`--workspace` 明确指定工程根目录，不复用图片对象工作区。两条通道的模型配置、任务身份和状态分别保存。完整调用、SDK 和失败模式见 [图片与视频通道](docs/channels.md)。
 
-1. 创建 schemaVersion 2 工程和风格，按关注点导入分析参考；直接填写并保存规则，也可先分析再保存建议。规则随时增删修改，保存有效规则即生效。
+1. 创建 schemaVersion 2 工程和风格，按关注点导入分析参考；直接填写并保存规则，讨论直接整理成 config.rules，无需独立分析报告。规则随时增删修改，保存有效规则即生效。
 2. 用 `style sample-job` 创建仅规则打样任务，--count 可指定每个主体生成 1～4 张候选，配置模型、编译预案并按任务授权生成。用户认可候选后用 `style sample-select` 完成样张定版并加入当前风格的运行时参考；不合适时修改规则重新打样。
 3. 用 `job template` 创建实际任务，填写需求，选择 `styleReferenceMode` 为 `approved`（运行时参考）或 `text-only`（仅规则）。动态参考先 `job analyze`；编辑底图单独绑定。
 4. 编译 `generate plan` 或 `edit plan`，保存并用 `run --plan ... --dry` 核对模型、尺寸、候选数、样张输入和参数转换，再按任务授权执行。

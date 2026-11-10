@@ -165,40 +165,6 @@ v-cli art list
 - 查询与预演不创建参考目录
 - 无网络调用
 
-### style analyze
-
-草稿风格后台分析
-
-```sh
-v-cli art style analyze
-```
-
-结构化能力：`art.style-analyze`。
-
-- `--project <id>`：工程身份
-- `--id <id>`：对象身份
-- `--revision <number>`：预期对象版本
-- `--dry`：只读编译预演
-- `--operation <id>`：分析启动前登记的稳定操作身份
-
-- dry 不联网、不写参考目录；执行创建运行身份和不可变参考证据；远程停止不确定时保留资源
-
-### style validate
-
-校验报告及核心规则的一致性
-
-```sh
-v-cli art style validate [--project <id>] [--report <file>]
-```
-
-结构化能力：`art.style-validate`。
-
-- `--project <id>`：工程 ID；未指定时使用本地 defaultProject，不跨工程回退
-- `--report <file>`：风格报告 JSON，相对路径基于 workspace
-
-- 查询与预演不创建参考目录
-- 无网络调用
-
 ### style show
 
 读取当前工程的指定冻结核心并验证完整性
@@ -561,40 +527,6 @@ v-cli art style update
 
 - 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
 
-### style resolve
-
-记录用户选择并修订风格方案；input 为 {issueId,optionId,note}，不重新分析、不自动采用
-
-```sh
-v-cli art style resolve
-```
-
-结构化能力：`art.style-resolve`。
-
-- `--project <id>`：工程身份
-- `--id <id>`：对象身份
-- `--revision <number>`：预期对象版本
-- `--input <file>`：结构化配置文件
-
-- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
-
-### style revise
-
-保存完整规则修订 {rules,summary,note}；不要求先有分析报告，不调用模型
-
-```sh
-v-cli art style revise
-```
-
-结构化能力：`art.style-revise`。
-
-- `--project <id>`：工程身份
-- `--id <id>`：对象身份
-- `--revision <number>`：预期对象版本
-- `--input <file>`：JSON {rules,summary,note}；rules 为完整规则数组，每条 id/scope/strength/instruction/when，avoid 可含 negative 抽象排除表达数组
-
-- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
-
 ### style derive
 
 派生独立草稿，保留结构化规则与独立参考；当前冻结证据标记沿用，不继承核心、执行或授权
@@ -735,23 +667,6 @@ v-cli art job restore
 - `--revision <number>`：预期对象版本
 
 - 验证 revision、任务归属和停止确认；归档和恢复均保留原配置、收藏与所有历史文件，不自动执行
-
-### style adopt
-
-兼容旧草稿的报告采用入口；已保存规则保持当前版本，日常修改直接使用 style update
-
-```sh
-v-cli art style adopt
-```
-
-结构化能力：`art.style-adopt`。
-
-- `--project <id>`：工程身份
-- `--id <id>`：对象身份
-- `--revision <number>`：预期对象版本
-- `--note <text>`：采用说明
-
-- 来源匹配且冲突已解决；采用事务可恢复，核心只写一次
 
 ### style recover
 
@@ -1462,40 +1377,6 @@ v-cli art image list
 - 查询与预演不创建参考目录
 - 无网络调用
 
-### image style analyze
-
-草稿风格后台分析
-
-```sh
-v-cli art image style analyze
-```
-
-结构化能力：`art.image-style-analyze`。
-
-- `--project <id>`：工程身份
-- `--id <id>`：对象身份
-- `--revision <number>`：预期对象版本
-- `--dry`：只读编译预演
-- `--operation <id>`：分析启动前登记的稳定操作身份
-
-- dry 不联网、不写参考目录；执行创建运行身份和不可变参考证据；远程停止不确定时保留资源
-
-### image style validate
-
-校验报告及核心规则的一致性
-
-```sh
-v-cli art image style validate [--project <id>] [--report <file>]
-```
-
-结构化能力：`art.image-style-validate`。
-
-- `--project <id>`：工程 ID；未指定时使用本地 defaultProject，不跨工程回退
-- `--report <file>`：风格报告 JSON，相对路径基于 workspace
-
-- 查询与预演不创建参考目录
-- 无网络调用
-
 ### image style show
 
 读取当前工程的指定冻结核心并验证完整性
@@ -1858,40 +1739,6 @@ v-cli art image style update
 
 - 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
 
-### image style resolve
-
-记录用户选择并修订风格方案；input 为 {issueId,optionId,note}，不重新分析、不自动采用
-
-```sh
-v-cli art image style resolve
-```
-
-结构化能力：`art.image-style-resolve`。
-
-- `--project <id>`：工程身份
-- `--id <id>`：对象身份
-- `--revision <number>`：预期对象版本
-- `--input <file>`：结构化配置文件
-
-- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
-
-### image style revise
-
-按用户要求修订完整规则方案；input 为 {rules,summary,note}，沿用未变化的参考证据，不调用模型或自动冻结
-
-```sh
-v-cli art image style revise
-```
-
-结构化能力：`art.image-style-revise`。
-
-- `--project <id>`：工程身份
-- `--id <id>`：对象身份
-- `--revision <number>`：预期对象版本
-- `--input <file>`：JSON {rules,summary,note}；rules 为完整规则数组，每条 id/scope/strength/instruction/when，avoid 可含 negative 抽象排除表达数组
-
-- 查询不写入；修改验证 revision、归属和停止确认；风格规则保存即更新，历史执行保留快照
-
 ### image style derive
 
 派生独立草稿，保留结构化规则与独立参考；当前冻结证据标记沿用，不继承核心、执行或授权
@@ -2032,23 +1879,6 @@ v-cli art image job restore
 - `--revision <number>`：预期对象版本
 
 - 验证 revision、任务归属和停止确认；归档和恢复均保留原配置、收藏与所有历史文件，不自动执行
-
-### image style adopt
-
-兼容旧草稿的报告采用入口；已保存规则保持当前版本，日常修改直接使用 style update
-
-```sh
-v-cli art image style adopt
-```
-
-结构化能力：`art.image-style-adopt`。
-
-- `--project <id>`：工程身份
-- `--id <id>`：对象身份
-- `--revision <number>`：预期对象版本
-- `--note <text>`：采用说明
-
-- 来源匹配且冲突已解决；采用事务可恢复，核心只写一次
 
 ### image style recover
 

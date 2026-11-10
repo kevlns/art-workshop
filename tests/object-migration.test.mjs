@@ -6,7 +6,8 @@ import {tmpdir} from 'node:os';
 import {readJson,writeJson,hash} from '../lib/shared.mjs';
 import {readObject,listObjects,objectFile,objectFormat,deriveObject,updateObject,migrationSource,finishMigration,confirmMigration} from '../lib/workspace.mjs';
 import {compileGenerate} from '../lib/generate.mjs';
-import {startAnalysis} from '../lib/style-lifecycle.mjs';
+import {createStyleSampleJob} from '../lib/style-samples.mjs';
+import {EXAMPLE_CONFIG} from '../lib/style-contract.mjs';
 
 async function fixture(fn){const root=mkdtempSync(join(tmpdir(),'art-migration-'));cpSync(new URL('./fixtures/projects/',import.meta.url),join(root,'projects'),{recursive:true});try{return await fn(root,{paths:{workspace:root,cache:join(root,'cache')}});}finally{rmSync(root,{recursive:true,force:true,maxRetries:10,retryDelay:50});}}
 function retire(root){const file=join(root,'projects/cellgame/styles/cellgame/core.json');const core=readJson(file);delete core.schemaVersion;delete core.coreHash;core.coreHash=hash(core);writeJson(file,core);return readFileSync(file,'utf8');}
@@ -23,16 +24,16 @@ test('retired core labels dependent tasks and blocks editing and compiling; norm
  assert.equal((await deriveObject(settings,'cellgame','task',task.id,task.revision)).id,migrated.id);
  await assert.rejects(finishMigration(settings,'cellgame','task',migrated.id,migrated.revision,{note:'done'}),/主体|需求|风格/);
 }));
-test('retired style migrates into a clean, version-checked draft; analysis requires verified completion',()=>fixture(async(root,settings)=>{
+test('retired style migrates into a clean, version-checked draft; sample preparation requires verified completion',()=>fixture(async(root,settings)=>{
  const original=retire(root),source=readObject(root,'cellgame','style','cellgame');
  const target=await deriveObject(settings,'cellgame','style',source.id,source.revision);
  assert.notEqual(target.id,source.id);assert.deepEqual(target.config,{description:'',constraints:[]});assert.equal(target.report,null);
  const snapshot=migrationSource(root,target);assert.equal(snapshot.core.id,source.id);assert.equal(snapshot.object.revision,source.revision);
- await assert.rejects(startAnalysis(settings,'cellgame',target.id,target.revision,{dry:true}),/迁移尚未完成/);
- let saved=await updateObject(settings,'cellgame','style',target.id,target.revision,{config:{description:'硬边数字卡通绘制语言',constraints:[]}});
+ await assert.rejects(createStyleSampleJob(settings,'cellgame',target.id,target.revision,{dry:true}),/迁移尚未完成/);
+ let saved=await updateObject(settings,'cellgame','style',target.id,target.revision,{config:{description:'硬边数字卡通绘制语言',constraints:[],...EXAMPLE_CONFIG}});
  await assert.rejects(finishMigration(settings,'cellgame','style',target.id,target.revision,{note:'done'}),/版本冲突/);
  saved=await finishMigration(settings,'cellgame','style',target.id,saved.revision,{note:'仅迁移绘制语言，原配置保留为来源'});
- assert.equal(saved.migration.status,'ready');assert.equal((await startAnalysis(settings,'cellgame',target.id,saved.revision,{dry:true})).remoteCalls,0);
+ assert.equal(saved.migration.status,'ready');assert.equal((await createStyleSampleJob(settings,'cellgame',target.id,saved.revision)).source.kind,'style-sample');
  saved=await confirmMigration(settings,'cellgame','style',target.id,saved.revision);assert.ok(saved.migration.confirmedAt);
  assert.equal(readFileSync(join(root,'projects/cellgame/styles/cellgame/core.json'),'utf8'),original);
 }));

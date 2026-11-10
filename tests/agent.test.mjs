@@ -13,7 +13,7 @@ test('distributed skill and discovery index use the current authority',()=>fixtu
  const manifest=JSON.parse(readFileSync(join(ROOT,'v-cli.plugin.json'),'utf8'));
  const index=agentIndex(ROOT,base);
  for(const module of index.modules)assert.deepEqual(module.actions,manifest.agent.commands.filter(command=>command.path[0]===module.name&&command.path.length===2).map(command=>command.path[1]));
- for(const action of ['revise','export','import','sources'])assert.ok(index.modules.find(module=>module.name==='style').actions.includes(action));
+ for(const action of ['update','sample-job','export','import','sources'])assert.ok(index.modules.find(module=>module.name==='style').actions.includes(action));
 }));
 function fixture(fn){const root=mkdtempSync(join(tmpdir(),'art-workshop-agent-'));try{return fn(root);}finally{rmSync(root,{recursive:true,force:true});}}
 test('显式导出保留完整脚本和宿主适配，默认不探测目录',()=>fixture(base=>{

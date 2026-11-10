@@ -4,8 +4,8 @@ import {mkdtempSync,cpSync,rmSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {analyzeStyle} from '../lib/analyze.mjs';
-import {deriveObject,createObject,readObject,objectFile} from '../lib/workspace.mjs';
-import {analysisInput,reviseStyleRules} from '../lib/style-lifecycle.mjs';
+import {deriveObject,createObject,readObject,objectFile,updateObject} from '../lib/workspace.mjs';
+import {analysisInput} from '../lib/style-lifecycle.mjs';
 import {readJson,writeJson,hash} from '../lib/shared.mjs';
 import {styleReviewState} from '../lib/style-review.mjs';
 
@@ -18,7 +18,7 @@ test('frozen derivation and user rule revision can be reanalyzed without a spuri
  const runner=()=>{calls++;return {text:JSON.stringify({...report(root),id:record.id})};};
  const result=await analyze(root,settings,record,{runner});assert.equal(calls,1);assert.equal(result.id,record.id);
  record.report={data:result,sourceRevision:record.revision,sourceHash:hash({config:record.config,references:record.references})};writeJson(objectFile(root,'cellgame','style',record.id),record);
- record=await reviseStyleRules(settings,'cellgame',record.id,record.revision,{rules:result.recommendation.rules,summary:'用户修订方案',note:'按用户要求整理'});
+ record=await updateObject(settings,'cellgame','style',record.id,record.revision,{config:{...record.config,rules:result.recommendation.rules}});
  await analyze(root,settings,record,{runner});assert.equal(calls,2);
 }));
 test('rules-only and reference-only inputs analyze, long reference notes survive intact',()=>fixture(async(root,settings)=>{
