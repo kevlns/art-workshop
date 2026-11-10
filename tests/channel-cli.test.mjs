@@ -1,3 +1,6 @@
+import {assertVideoRuntime} from '../lib/video/resource.mjs';
+const videoSupported=(()=>{try{assertVideoRuntime();return true;}catch{return false;}})();
+const videoTest=(name,run)=>test(name,{skip:videoSupported?false:'Video requires Node.js 22.13 or newer'},run);
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,readFile,rm,access,symlink} from 'node:fs/promises';
@@ -22,7 +25,7 @@ test('explicit image paths dispatch the existing implementation and preserve leg
  assert.equal(legacy.status,0,legacy.stdout+legacy.stderr);assert.equal(image.status,0,image.stdout+image.stderr);assert.deepEqual(image.value,legacy.value);
  await assert.rejects(access(join(root,'.vant')),{code:'ENOENT'});
 });
-test('video reads expose real contracts without loading image settings or starting a runtime',async t=>{
+videoTest('video reads expose real contracts without loading image settings or starting a runtime',async t=>{
  const root=await fixture(t),config=join(root,'broken.json');await writeFile(config,'broken');
  const result=call(root,['video','describe','--workspace',root],{ART_WORKSHOP_CONFIG:config});
  assert.equal(result.status,0,result.stdout+result.stderr);for(const action of actions)assert.ok(result.value.actions.includes(action),action);
@@ -30,7 +33,7 @@ test('video reads expose real contracts without loading image settings or starti
  const status=video(root,['runtime','status']);assert.equal(status.status,0,status.stdout+status.stderr);
  await assert.rejects(access(join(root,'.vant')),{code:'ENOENT'});
 });
-test('video task creation requires a durable operation identity and reuses the same original receipt',async t=>{
+videoTest('video task creation requires a durable operation identity and reuses the same original receipt',async t=>{
  const root=await fixture(t),input=join(root,'create.json');await writeFile(input,JSON.stringify({name:'CLI 视频任务'}));
  const absent=video(root,['task','create','--input','create.json']);assert.equal(absent.status,1);assert.equal(absent.value.code,'video-cli-operation-invalid');
  await assert.rejects(access(join(root,'.vant/video/project.json')),{code:'ENOENT'});
@@ -41,7 +44,7 @@ test('video task creation requires a durable operation identity and reuses the s
  await writeFile(input,JSON.stringify({name:'different intent'}));const conflict=video(root,['task','create','--input','create.json','--operation','authorized-create-one']);assert.equal(conflict.status,1);assert.equal(conflict.value.code,'video-operation-conflict');
  assert.equal(video(root,['task','list']).value.length,1);
 });
-test('video settings preserve CAS, safe project input paths, and structured stale-version failure',async t=>{
+videoTest('video settings preserve CAS, safe project input paths, and structured stale-version failure',async t=>{
  const root=await fixture(t),before=video(root,['settings','get']);assert.equal(before.status,0,before.stdout);assert.equal(before.value.revision,'missing');
  const request={settings:before.value.settings,expectedRevision:'missing'};await writeFile(join(root,'save.json'),JSON.stringify(request));
  const saved=video(root,['settings','save','--input','save.json','--operation','settings-save-one']);assert.equal(saved.status,0,saved.stdout+saved.stderr);assert.match(saved.value.revision,/^[a-f0-9]{64}$/);
