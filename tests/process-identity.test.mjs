@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {spawn} from 'node:child_process';
 import {inspectProcess} from '../lib/process-identity.mjs';
 import {stopIdentity} from '../lib/service.mjs';
 
@@ -14,7 +15,9 @@ test('process probe separates absence from permission, timeout and malformed res
     return result;
   }
   assert.equal((await confirmed(process.pid)).state,'running');
-  assert.equal((await confirmed(2147483647)).state,'missing');
+  const child=spawn(process.execPath,['-e',''],{stdio:'ignore',windowsHide:true});
+  await new Promise((resolve,reject)=>{child.once('error',reject);child.once('close',resolve);});
+  assert.equal((await confirmed(child.pid)).state,'missing');
   for(const code of ['EPERM','ETIMEDOUT'])assert.equal(inspectProcess(4242,()=>{throw Object.assign(new Error(code),{code});}).state,'unknown');
   if(process.platform==='win32'){
     assert.equal(inspectProcess(4242,()=>'bad json').state,'unknown');

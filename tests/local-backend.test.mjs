@@ -215,7 +215,7 @@ test('本地图编辑上传原图并连接编码器，保留动态输出尺寸',
 test('lost local worker resumes recorded prompt without new submission',async()=>fixture(async({plan,settings,runtime,endpoint})=>{
  const started=await startTask(plan,[plan.items[0]],settings);
  let original;
- for(let n=0;n<100;n++){original=taskStatus(runtime,started.taskId);if(original.promptId)break;await sleep(50);}
+ for(let n=0;n<100;n++){original=JSON.parse(readFileSync(join(runtime,'tasks',started.taskId+'.json')));if(original.promptId)break;await sleep(50);}
  assert.ok(original.promptId);
  process.kill(original.workerPid);
  await sleep(300);
@@ -237,7 +237,7 @@ test('serial local recovery preserves first download and never resubmits either 
  const plan=bindBackend(compileGenerate({projectId:'cellgame',jobId:'skills',root,localExecution:backendDefaults(settings)}),settings);
  const started=await startTask(plan,[plan.items[0]],settings);
  let original;
- for(let n=0;n<1200;n++){original=taskStatus(runtime,started.taskId);if(original.promptId==='prompt-2')break;await sleep(50);}
+ for(let n=0;n<1200;n++){original=JSON.parse(readFileSync(join(runtime,'tasks',started.taskId+'.json')));if(original.promptId==='prompt-2'||original.status==='failed')break;await sleep(50);}
  assert.equal(original.promptId,'prompt-2',JSON.stringify(original));
  process.kill(original.workerPid);await sleep(300);
  const file=join(runtime,'tasks',started.taskId+'.json');original=JSON.parse(readFileSync(file));original.heartbeat='2000-01-01T00:00:00Z';writeJson(file,original);
