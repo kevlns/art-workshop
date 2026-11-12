@@ -313,3 +313,21 @@ test("explicit generic credentials preserve gateway prefixes and never fall back
         : (process.env[key] = value);
   }
 });
+
+test("OpenAI Images plans compile wire parameters for both Packy models", () => {
+  for (const model of ["gpt-image-2.5-flare", "gpt-image-2.5-sunburst"]) {
+    for (const mode of ["generate", "edit"]) {
+      const p = plan();
+      p.backend = {credentialReference:{api:"openai-images"}};
+      p.execution.model = model;
+      p.module = mode;
+      if (mode === "edit") p.items[0].imageArgs = ["reference.png"];
+      const request = compileRemoteRequest(p, p.items[0]);
+      assert.equal(request.adapter, "openai-images");
+      assert.equal(request.count, 1);
+      assert.match(request.prompt, /text/);
+      p.execution.perValue = 2;
+      assert.throws(() => compileRemoteRequest(p,p.items[0]), /数量/);
+    }
+  }
+});

@@ -1,5 +1,11 @@
 # 更新日志
 
+## 0.6.3
+
+- GPT Image 2.5 Flare 与 Sunburst 支持 OpenAI Images 文生图与参考图编辑，图片结果支持 HTTPS 下载或 Base64 落盘。
+- Packy 全球端点为 `https://cf.api.fan`，每个请求生成一张图片。连接需使用 image 分组凭据。[接口文档](https://docs.packyapi.ai/docs/paint/GPTImage.html)
+
+
 ## 0.5.0 · 2026-10-28
 
 - 新增主体材质、资产规格光照能力与独立文字规格，区分视觉特征和画面文字。
