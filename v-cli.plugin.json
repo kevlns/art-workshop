@@ -3,7 +3,7 @@
   "package": "@kevlns/art-workshop",
   "command": "art",
   "bin": "art-workshop",
-  "description": "管理图片与视频两个独立制作通道；图片旧命令兼容，视频复用项目状态、CAS及原执行身份。",
+  "description": "管理图片、视频与 Spine 骨骼动画制作。",
   "platforms": [
     "win32",
     "linux",
@@ -6918,6 +6918,126 @@
           "保存或建任务不发起生成；版本冲突重新读取；样张仅作绘制语言参考，不能保证隔离无关特征"
         ],
         "capabilityId": "art.image-style-sample-remove"
+      },
+      {
+        "path": [
+          "spine",
+          "describe"
+        ],
+        "usage": "art-workshop spine describe",
+        "description": "读取 Spine 制作契约",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--workspace <dir>",
+            "description": "目标工程，默认当前目录"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "返回制作契约或输出文件清单"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "输入或制作失败"
+        },
+        "capabilityId": "art.spine-describe",
+        "safety": [
+          "只读工具契约。"
+        ]
+      },
+      {
+        "path": [
+          "spine",
+          "parts"
+        ],
+        "usage": "art-workshop spine parts --input <file>",
+        "description": "按母版坐标拆件、蒙版补绘与拼合检查",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--workspace <dir>",
+            "description": "目标工程，默认当前目录"
+          },
+          {
+            "flags": "--input <file>",
+            "description": "工程内 JSON 制作配方，参见 spine describe"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "返回制作契约或输出文件清单"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "输入或制作失败"
+        },
+        "capabilityId": "art.spine-parts",
+        "safety": [
+          "仅使用目标工程内输入；制作结果原子写入新目录。"
+        ]
+      },
+      {
+        "path": [
+          "spine",
+          "build"
+        ],
+        "usage": "art-workshop spine build --input <file>",
+        "description": "编译并校验骨架绑定、蒙皮、动作和图集",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--workspace <dir>",
+            "description": "目标工程，默认当前目录"
+          },
+          {
+            "flags": "--input <file>",
+            "description": "工程内 JSON 制作配方，参见 spine describe"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "返回制作契约或输出文件清单"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "输入或制作失败"
+        },
+        "capabilityId": "art.spine-build",
+        "safety": [
+          "仅使用目标工程内输入；制作结果原子写入新目录。"
+        ]
+      },
+      {
+        "path": [
+          "spine",
+          "capture"
+        ],
+        "usage": "art-workshop spine capture --input <file>",
+        "description": "使用 WebGL 取帧、生成对照图和可选 GIF",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--workspace <dir>",
+            "description": "目标工程，默认当前目录"
+          },
+          {
+            "flags": "--input <file>",
+            "description": "工程内 JSON 制作配方，参见 spine describe"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "返回制作契约或输出文件清单"
+        },
+        "exitCodes": {
+          "0": "成功",
+          "1": "输入或制作失败"
+        },
+        "capabilityId": "art.spine-capture",
+        "safety": [
+          "仅使用目标工程内输入；制作结果原子写入新目录。"
+        ]
       }
     ]
   },

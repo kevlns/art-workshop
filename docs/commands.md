@@ -3270,6 +3270,65 @@ v-cli art image style sample-remove --project ID --id STYLE --revision N --sampl
 
 - 保存或建任务不发起生成；版本冲突重新读取；样张仅作绘制语言参考，不能保证隔离无关特征
 
+### spine describe
+
+读取 Spine 制作契约
+
+```sh
+v-cli art spine describe
+```
+
+结构化能力：`art.spine-describe`。
+
+- `--workspace <dir>`：目标工程，默认当前目录
+
+- 只读工具契约。
+
+### spine parts
+
+按母版坐标拆件、蒙版补绘与拼合检查
+
+```sh
+v-cli art spine parts --input <file>
+```
+
+结构化能力：`art.spine-parts`。
+
+- `--workspace <dir>`：目标工程，默认当前目录
+- `--input <file>`：工程内 JSON 制作配方，参见 spine describe
+
+- 仅使用目标工程内输入；制作结果原子写入新目录。
+
+### spine build
+
+编译并校验骨架绑定、蒙皮、动作和图集
+
+```sh
+v-cli art spine build --input <file>
+```
+
+结构化能力：`art.spine-build`。
+
+- `--workspace <dir>`：目标工程，默认当前目录
+- `--input <file>`：工程内 JSON 制作配方，参见 spine describe
+
+- 仅使用目标工程内输入；制作结果原子写入新目录。
+
+### spine capture
+
+使用 WebGL 取帧、生成对照图和可选 GIF
+
+```sh
+v-cli art spine capture --input <file>
+```
+
+结构化能力：`art.spine-capture`。
+
+- `--workspace <dir>`：目标工程，默认当前目录
+- `--input <file>`：工程内 JSON 制作配方，参见 spine describe
+
+- 仅使用目标工程内输入；制作结果原子写入新目录。
+
 ## 结果验证
 
 按任务身份、停止证据和实际产物核验；只读检查不证明真实出图。

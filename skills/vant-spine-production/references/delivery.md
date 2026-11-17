@@ -19,15 +19,13 @@ Vanter 的实例交付 Spine 4.2 骨架 JSON、原始部件 PNG、PMA 图集、�
 
 记录调整前后的运行包大小、纹理尺寸与页数、目标端测量值，并保留同帧同尺寸的图。交付时从干净目录用实际加载入口播放一次，检查 atlas 各页和附件都能解析、大小写路径匹配、动作完成事件与循环正常。仅验证过 Unity 时，将 Web 验收标为待测，反之亦然。[Spine 性能指标](https://esotericsoftware.com/spine-metrics) · [Spine 图集打包](https://esotericsoftware.com/spine-texture-packer)
 
-## 工具与缺口
+## 工具入口
 
-以下入口由 Vant 桌面工作台提供，按当前宿主实际可用的工具选择。
+以 `v-cli art spine describe` 读取当前工具契约。各制作命令接受 `--workspace <工程目录> --input <工程内配方.json>`，产物写入配方指定的新目录。以已有产物为输入继续修订。
 
-| 当前工作 | Vant 中的可用入口与边界 |
+| 当前工作 | 入口与产物 |
 | --- | --- |
-| 制作预览与修形复核 | 图片工坊 → Spine → 接入项目资产。填项目相对的骨架路径，图集和页纹理随骨架一起读取。用部件显隐、绑定叠加、时间轴和上一版本对照检查修改；同一项目的美术讨论能读取所选动作、秒数与版本。 |
-| 画原型、重绘部件、生成替换手形 | 会话使用 `vant_art_conversation` 的 `generate` 或 `edit`，通过 `describe` 查当前输入，`wait` 取回对应结果。编辑带基准图并注明保留项。图像结果还需配准、抠取和拼回验证。 |
-| 项目风格、参考与资产 | 通过 `vant_art` 的 `describe` 查询相应操作。项目已有拆件、打包或预览脚本时，先核对输入、输出和适用角色，再复用。 |
-| Unity 实例验收、Vanter 对话里试动作 | Unity 交互复用项目配置的 `v-cli` Unity 工具，先核对目标工作区的项目路径及实例。Vanter 在桌面用 `vanter_animation` 查询和播放已装配动作。 |
-
-**目前缺少的通用制作入口**有三处：带原画坐标、轴心和遮挡元数据的拆件与精确蒙版回写；创建或编辑 Spine 骨架、网格、权重与时间线；从指定运行端批量取帧、生成对照图和 GIF 并统计导出成本。Vanter 有角色专用的构建和 Unity 预览脚本，可供项目参考。实际制作可用现有项目脚本或匹配版本的 Spine Editor；环境缺少某项时，指出受影响的产物及尚未验证的部分。
+| 原型与补绘 | 使用当前工作环境的生图、编辑工具制作原型和补绘图。用 `spine parts` 指定母版像素矩形、轴心、前后顺序与遮挡关系。蒙版接受透明度或灰度图；同比例高清替换图配准到原矩形。检查 assembled.png，采用补绘前后对照 patched.png 与原图。 |
+| 骨架与动画 | `spine build` 读取 parts.json，按轴心建立初始绑定。用 bones 按名增改骨骼，meshes 指定目标插槽、UV、三角索引、各点的骨名/骨局部坐标/权重。animations 使用 Spine 4.2 时间线。后续可传已编辑的 rig 骨架 JSON，保留其余皮肤、约束和动作。 |
+| 制作验收 | 美术工坊 → Spine 接入导出骨架。桌面对话可用 `vant_spine_preview` 打开同一资产。需要留存指定姿势或分享时，用 `spine capture` 选择动作、秒数或均匀帧数，输出逐帧 PNG、对照图及可选 GIF；需要本机 Chrome、Edge 或 Chromium。 |
+| 交付 | 核对导出的骨架、图集 PNG 与 atlas、animations.json 和 report.json。report 给出运行文件字节数、未压缩 RGBA 占用、骨骼、顶点和影响数。目标引擎的真实帧耗时需在该引擎测量。 |

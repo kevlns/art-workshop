@@ -4,11 +4,18 @@ import {readdirSync,existsSync} from 'node:fs';
 import {join,resolve} from 'node:path';
 import {readJson,writeJson} from './lib/shared.mjs';
 const args=process.argv.slice(2),pos=[],options={};
+if(args[0]==='spine'){
+  try {
+    const {spineCli}=await import('./lib/spine.mjs');
+    console.log(JSON.stringify(await spineCli(args.slice(1)),null,2));
+  } catch(error){console.log(JSON.stringify({ok:false,error:error.message}));process.exitCode=1;}
+  process.exit(process.exitCode||0);
+}
 const channel=['image','video'].includes(args[0])?args.shift():null;
 if(args.length===1&&['--version','-V'].includes(args[0])){console.log(readJson(new URL('./package.json',import.meta.url)).version);process.exit(0);}
 const imageHelp='art-workshop image: config path/show/init/validate | doctor [--backend ID] [--start] | workflow list | environment guide/list/prepare/inspect/verify/register/unregister | refs guide | agent index/docs/export | conversation start/status/cancel/resume | list | style export/import/sources/create/list/read/update/confirm/derive/discard/sample-job/sample-select/sample-remove/recover/show | generate show/plan/run | edit show/plan/run | task list/status/wait/cancel/recover/resume | shutdown | check RUN | project init/upgrade | job template/from-candidate/create/list/read/update/derive/discard/restore/analyze | reference import/list/update/remove | candidate list/favorites/favorite/finalize/delete/finalizations | compare PLAN PLAN\nrun --background 返回任务 ID；--backend 选择后端。shutdown 停止当前工作区关联任务，核验共享队列和进程身份后关闭本地服务。';
 const videoHelp='art-workshop video: describe | snapshot | settings get/save/presets h3 | runtime status/start/stop | task list/read/create/rename/archive | operation create/update/rename/derive/validate/run/resume/cancel/accept/bind | script read/update/plan/apply | film compose/refine/preview/adopt/undo | material list/import/import-file/upload/hide | image | media status | execution status\n--workspace <工程根目录> --project <项目身份，默认 project> --input <工程内 JSON 对象文件> --operation <稳定CLI操作身份>\n所有写入必须传 --operation，重复同身份只核对原回执；execution status --operation 查询意图/回执。先 describe 读取业务输入契约；写入保留 revision/expectedRevision，生成必须传稳定 requestId。unknown 只查询原运行，不换 ID 重投。读取不会启动服务，runtime start/operation run/film 操作必须显式调用。';
-const help='art-workshop: image（图片）与 video（视频）两个独立通道。图片旧根命令继续兼容。\n'+imageHelp+'\n'+videoHelp+'\n也可用 v-cli art 调用；先 v-cli agent docs art，再 v-cli agent describe art --json 查看完整参数。';
+const help='art-workshop: image（图片）、video（视频）、spine（骨骼动画）制作通道；spine describe 查看制作契约。图片旧根命令继续兼容。\n'+imageHelp+'\n'+videoHelp+'\n也可用 v-cli art 调用；先 v-cli agent docs art，再 v-cli agent describe art --json 查看完整参数。';
 if(!args.length||args.length===1&&['--help','-h','help'].includes(args[0])){console.log(channel==='video'?videoHelp:channel==='image'?imageHelp:help);process.exit(0);}
 if(channel==='video'){
   let api;

@@ -54,10 +54,11 @@ videoTest('video settings preserve CAS, safe project input paths, and structured
  const escaped=video(root,['task','create','--input','escape/request.json','--operation','escaped-one']);assert.equal(escaped.status,1);assert.equal(escaped.value.code,'path-outside-workspace');
  const unknown=video(root,['settings','get','--config',join(root,'anything')]);assert.equal(unknown.status,1);assert.equal(unknown.value.code,'video-cli-argument-invalid');
 });
-test('manifest advertises both nested channels while preserving all previous image command contracts',async()=>{
+test('manifest advertises independent production channels while preserving all previous image command contracts',async()=>{
  const manifest=JSON.parse(await readFile(new URL('../v-cli.plugin.json',import.meta.url),'utf8'));
- const legacy=manifest.agent.commands.filter(command=>!['image','video'].includes(command.path[0]));
+ const legacy=manifest.agent.commands.filter(command=>!['image','video','spine'].includes(command.path[0]));
  for(const command of legacy){const alias=manifest.agent.commands.find(row=>row.path.join(' ')==='image '+command.path.join(' '));assert.ok(alias,command.path.join(' '));assert.deepEqual(alias.options,command.options);assert.deepEqual(alias.output,command.output);}
  for(const action of actions){const command=manifest.agent.commands.find(row=>row.path.join(' ')==='video '+action.replaceAll('.',' '));assert.ok(command,action);assert.equal(command.capabilityId,'art.video-'+action.replaceAll('.','-'));assert.equal(command.output.format,'json');}
  assert.ok(manifest.agent.commands.some(row=>row.path.join(' ')==='video execution status'));
+ for(const action of ['describe','parts','build','capture'])assert.ok(manifest.agent.commands.some(row=>row.capabilityId==='art.spine-'+action));
 });
