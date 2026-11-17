@@ -1,8 +1,8 @@
 {
   "name": "@kevlns/art-workshop",
-  "version": "0.6.5",
+  "version": "0.6.6",
   "private": false,
-  "description": "统一管理图片工坊与视频工坊：项目风格、图片生成编辑、剧本镜头、视频生成与成片精修。",
+  "description": "图片、视频与 Spine 制作工具链，提供风格与素材管理、生成编辑、骨架动画编译和运行预览。",
   "type": "module",
   "exports": {
     "./video": "./lib/video.mjs",

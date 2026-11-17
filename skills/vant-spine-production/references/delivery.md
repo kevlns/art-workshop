@@ -25,7 +25,7 @@ Vanter 的实例交付 Spine 4.2 骨架 JSON、原始部件 PNG、PMA 图集、�
 
 | 当前工作 | 入口与产物 |
 | --- | --- |
-| 原型与补绘 | 使用当前工作环境的生图、编辑工具制作原型和补绘图。用 `spine parts` 指定母版像素矩形、轴心、前后顺序与遮挡关系。蒙版接受透明度或灰度图；同比例高清替换图配准到原矩形。检查 assembled.png，采用补绘前后对照 patched.png 与原图。 |
+| 原型与补绘 | 使用当前工作环境的生图、编辑工具制作原型和补绘图。用 `spine parts` 指定母版像素矩形、轴心、前后顺序与遮挡关系。蒙版接受透明度或灰度图；同比例高清替换图按原矩形配准，图集保留替换图像素尺寸。检查 assembled.png，采用补绘前后对照 patched.png 与原图。 |
 | 骨架与动画 | `spine build` 读取 parts.json，按轴心建立初始绑定。用 bones 按名增改骨骼，meshes 指定目标插槽、UV、三角索引、各点的骨名/骨局部坐标/权重。animations 使用 Spine 4.2 时间线。后续可传已编辑的 rig 骨架 JSON，保留其余皮肤、约束和动作。 |
 | 制作验收 | 美术工坊 → Spine 接入导出骨架。桌面对话可用 `vant_spine_preview` 打开同一资产。需要留存指定姿势或分享时，用 `spine capture` 选择动作、秒数或均匀帧数，输出逐帧 PNG、对照图及可选 GIF；需要本机 Chrome、Edge 或 Chromium。 |
 | 交付 | 核对导出的骨架、图集 PNG 与 atlas、animations.json 和 report.json。report 给出运行文件字节数、未压缩 RGBA 占用、骨骼、顶点和影响数。目标引擎的真实帧耗时需在该引擎测量。 |

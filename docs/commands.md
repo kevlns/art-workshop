@@ -22,7 +22,7 @@
 
 ## 执行约束
 
-`image` 与 `video` 是独立二级通道。图片可使用 `v-cli art image ...`，旧图片根命令与原 `art.*` 能力身份保留。新 SDK 暴露 `art.image-*` 和 `art.video-*`；已安装旧版 v-cli 不会自动获得新能力。
+选择 `image`、`video` 或 `spine` 通道。对应能力 ID 为 `art.image-*`、`art.video-*` 和 `art.spine-*`。Spine 制作配方和新输出目录均绑定工程，`spine describe` 提供完整示例。
 
 图片的相对计划、输入和报告路径以 workspace 为基准；运行批次以 output 为基准。参考导入的源文件建议使用绝对路径。查询与预演不初始化参考目录。
 

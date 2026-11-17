@@ -14,13 +14,14 @@ test('masked repair, weighted rig, animation index and editable export round tri
   const rect={left:18,top:10,width:64,height:39};
   await sharp(join(root,'prototype.png')).extract(rect).png().toFile(join(root,'mask.png'));
   await sharp({create:{width:128,height:78,channels:4,background:'#008baa'}}).png().toFile(join(root,'repair.png'));
-  await runSpine(root,'parts',{prototype:'prototype.png',out:'pieces',parts:[
+  await runSpine(root,'parts',{sourceImage:'prototype.png',out:'pieces',parts:[
     {name:'pole',rect:{left:14,top:8,width:4,height:82},pivot:[16,90],occludedBy:['flag']},
     {name:'flag',rect,pivot:[18,10],mask:'mask.png',replacement:'repair.png'}]});
   const pixel=async(file,left,top)=>[...await sharp(join(root,file)).extract({left,top,width:1,height:1}).ensureAlpha().raw().toBuffer()];
   assert.deepEqual(await pixel('pieces/patched.png',15,80),await pixel('prototype.png',15,80));
   assert.deepEqual(await pixel('pieces/patched.png',20,12),[0,139,170,255]);
   assert.equal((await pixel('pieces/patched.png',81,30))[3],0);
+  assert.equal((await sharp(join(root,'pieces/images/flag.png')).metadata()).width,128);
   const mesh={slot:'flag',uvs:[0,1,1,1,1,0,0,0],triangles:[0,1,2,2,3,0],points:[
     [['flag',0,-39,1]],[['flag',64,-39,0.2],['tip',0,-39,0.8]],[['tip',0,0,1]],[['flag',0,0,1]]]};
   const recipe={parts:'pieces/parts.json',out:'rig',name:'pennant',bones:[{name:'tip',parent:'flag',x:64}],

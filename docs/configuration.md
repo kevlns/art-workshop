@@ -12,7 +12,7 @@
 
 ### 配置入口
 
-本页的全局配置默认属于图片通道，`image` 前缀与旧命令使用同一份配置。视频通道显式绑定工程根目录，模型和工作流单独保存到 `.vant/config/video.json`，任务及成片保存在 `.vant/video`；不会把视频配置写入图片全局设置。详见 [图片与视频通道](channels.md)。
+本页说明图片通道的全局配置。视频设置在工程的 `.vant/config/video.json`，任务与成片位于 `.vant/video`。Spine 通过工程内的配方文件指定原型、部件、骨架、动作和输出目录，详见[美术制作通道](channels.md)。
 
 `config path/show/init/validate` 分别查询位置、生效配置、创建模板和校验。`config init` 不覆盖已有文件。查询、发现和预演不创建参考目录；`config validate` 不联网、不启动服务。
 

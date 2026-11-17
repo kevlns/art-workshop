@@ -4,11 +4,11 @@
 
 ## 功能
 
-同一个工具包提供两个独立二级通道：`image` 管理项目风格、参考图、图片生成、编辑与定版；`video` 管理剧本、镜头、视频生成、成片合成与精修。图片支持本地 ComfyUI 与远程图片模型，视频使用已配置的本机 ComfyUI 和 FFmpeg。
+`image` 管理图片风格、参考、制作与定版，`video` 管理剧本、镜头和成片，`spine` 从原画拆件、骨架蒙皮和动作配方构建 Spine 4.2 运行资源，并生成验收帧。
 
 ## 环境要求
 
-图片通道需要 Node.js 20.9 及以上；视频通道需要 Node.js 22.13 及以上及 SQLite 支持。本地生成还需工具检测通过的 Python、显卡驱动与 ComfyUI 环境；视频合成和取帧需要 FFmpeg / ffprobe。
+图片通道需要 Node.js 20.9 及以上；视频通道需要 Node.js 22.13 及以上及 SQLite 支持。本地生成还需工具检测通过的 Python、显卡驱动与 ComfyUI 环境；视频合成和取帧需要 FFmpeg / ffprobe。 Spine 拆件与编译在本地执行，WebGL 取帧需要 Chrome、Edge 或 Chromium。
 
 ## 安装
 
@@ -28,7 +28,7 @@ art-workshop image agent index
 
 ### 使用流程
 
-图片命令以 `art-workshop image` 或 `v-cli art image` 开头；原有不带 `image` 的图片命令继续兼容。视频以 `art-workshop video` 或 `v-cli art video` 开头，`--workspace` 明确指定工程根目录，不复用图片对象工作区。两条通道的模型配置、任务身份和状态分别保存。完整调用、SDK 和失败模式见 [图片与视频通道](docs/channels.md)。
+用 `v-cli art image`、`v-cli art video` 和 `v-cli art spine` 选择通道，也可直接调用 `art-workshop`。执行 `v-cli art spine describe` 读取拆件、绑定与取帧配方。工作区、输入和产物见[制作通道](docs/channels.md)。
 
 1. 创建 schemaVersion 2 工程和风格，按关注点导入分析参考；讨论后保存描述、约束和绘制规则，通过 `style confirm` 确定性编译当前风格。修改内容后需要重新确认。
 2. 用 `style sample-job` 创建仅文字打样任务，`--input` 可提交自定义主体、验证目标、尺寸和生成方案，`--count` 指定每个主体生成 1～4 张候选，配置模型、编译预案并按任务授权生成。用户认可候选后用 `style sample-select` 完成样张定版并加入当前风格的运行时参考；不合适时修改配置并重新确认，再准备新样张。

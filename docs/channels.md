@@ -1,14 +1,14 @@
-# 图片与视频通道
+# 美术制作通道
 
-`art-workshop` 是同一工具包，`image` 和 `video` 是独立二级通道。宿主可以把它们展示成相邻的“图片工坊”“视频工坊”，两者无需共用一个页面或一套任务状态。
+美术工坊提供图片、视频与 Spine 三个页签。三个通道的制作命令可单独运行。
 
-## 调用与兼容
+## 调用
 
-图片命令使用 `art-workshop image ...` 或 `v-cli art image ...`。原有 `art-workshop style ...`、`art-workshop generate ...` 及 `art.*` 结构化能力继续兼容；`art.image-*` 提供明确的图片通道能力。图片对象、计划和运行仍走原来的图片执行链路。
+- 图片使用 `v-cli art image` 或 `art-workshop image` 管理风格、参考和制作任务。
+- 视频使用 `v-cli art video` 或 `art-workshop video`。传入工程根目录和工程内请求文件，按任务身份保存剧本、镜头、运行记录和成片。
+- Spine 使用 `v-cli art spine` 或 `art-workshop spine`。`describe` 返回配方，`parts` 从原型生成可配准的部件，`build` 导出骨架与动作索引，`capture` 实绘指定动作并输出 PNG 或 GIF。SDK 入口为 `@kevlns/art-workshop/spine` 的 `spineContract` 与 `runSpine(root, action, input)`。
 
-视频命令使用 `art-workshop video ...` 或 `v-cli art video ...`，对应结构化能力为 `art.video-*`。`--workspace` 指向工程绝对根目录。请求 JSON 通过工程内 `--input` 文件传入，不把整份剧本、图片或凭据拼入命令行。具体路径与参数以 [命令参考](commands.md) 为准。
-
-视频通道处理任务、操作、剧本规划、素材、模型设置、运行时观察、成片和精修。读取、校验、规划与保存配置不会启动模型生成；只有显式运行操作才提交生成。运行继续使用原 `requestId`、`runId` 和 `upstreamId`，恢复只查询原队列或原结果。
+完整选项见[命令参考](commands.md)。
 
 ## SDK 与宿主边界
 
