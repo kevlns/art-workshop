@@ -6925,6 +6925,10 @@
     {
       "id": "art-workshop",
       "path": "skills/art-workshop/SKILL.md"
+    },
+    {
+      "id": "vant-spine-production",
+      "path": "skills/vant-spine-production/SKILL.md"
     }
   ]
 }
