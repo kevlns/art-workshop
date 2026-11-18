@@ -3316,7 +3316,7 @@ v-cli art spine build --input <file>
 
 ### spine capture
 
-使用 WebGL 取帧、生成对照图和可选 GIF
+使用 WebGL 捕获指定姿势的 PNG 和对照图
 
 ```sh
 v-cli art spine capture --input <file>

@@ -5,6 +5,8 @@ description: "处理图片、视频和 Spine 制作：图片讨论、风格、�
 
 # 美术工坊
 
+在 Vant 会话的 shell 中，示例里的 `v-cli` 代表插件入口：PowerShell 写作 `node "$env:DSH_VANT_CLI"`，sh 写作 `node "$DSH_VANT_CLI"`。
+
 制作、调整或交付 2D Spine 角色时，查阅同包技能 `vant-spine-production`，按当前阶段选择原型、拆件、绑定、动作或导出指导。在 Vant 中，用户要求将已确认的正式作品入美术仓或接入游戏时，接续工作台技能 `vant-asset-intake`。
 
 按制作对象选择 `image`、`video` 或 `spine`。图片沿用下述会话与项目管线；视频参阅[视频通道](references/video.md)，骨骼动画参阅[Spine 制作指南](../vant-spine-production/SKILL.md)。
@@ -13,9 +15,9 @@ description: "处理图片、视频和 Spine 制作：图片讨论、风格、�
 
 以用户意图为主线，让表达更清楚、专业、便于执行，允许贴合原意的适度补充。留意补充是否改变了用户的方向、程度或选择空间，尤其不要将倾向升级成硬性禁令。看图分析可以提炼可见特征；影响不大的合理细化直接处理，实质性的新设计取舍再提出建议或询问。
 
-- 整理或回填美术表述前读取 [表达规范](references/expression.md)，本会话已掌握时直接沿用。需要 Getty 核实时，先从中文意图提炼英文专业词，在一个批次中通过 art_getty 查询，再按原始上下文校验候选；失败或无匹配保留原表达，不阻塞其他内容，不重试或另找调用路径。
+- 整理或回填美术表述前读取 [表达规范](references/expression.md)，本会话已掌握时直接沿用。需要 Getty 核实时，先从中文意图提炼英文专业词，在一个批次中通过 vant_art_getty 查询，再按原始上下文校验候选；失败或无匹配保留原表达，不阻塞其他内容，不重试或另找调用路径。
 - 参考图风格讨论、分析并填写风格草稿，读取 [风格讨论与回填](references/style-discussion.md)。
-- 会话探索、新图及修改上一轮产物，读取 [会话管线](references/conversation.md)，使用 art_conversation。
-- 已有项目任务、可编辑风格规则、打样与样张定版和正式资产交付，读取 [项目管线](references/project.md)，使用 art_operation。
+- 会话探索、新图及修改上一轮产物，读取 [会话管线](references/conversation.md)，使用 vant_art_conversation。
+- 已有项目任务、可编辑风格规则、打样与样张定版和正式资产交付，读取 [项目管线](references/project.md)，使用 vant_art。
 
 同一请求只提交一次；重复调用复用请求身份。未知状态仅查询原运行，禁止更换身份重投。状态查询按工具返回的 wait/状态约束进行；到达等待上限就结束本轮并保留可恢复身份，不用修改需求或新建任务绕过失败。只有用户明确修改目标或请求新一轮生成时才创建新请求。

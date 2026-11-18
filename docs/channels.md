@@ -6,7 +6,7 @@
 
 - 图片使用 `v-cli art image` 或 `art-workshop image` 管理风格、参考和制作任务。
 - 视频使用 `v-cli art video` 或 `art-workshop video`。传入工程根目录和工程内请求文件，按任务身份保存剧本、镜头、运行记录和成片。
-- Spine 使用 `v-cli art spine` 或 `art-workshop spine`。`describe` 返回配方，`parts` 从原型生成可配准的部件，`build` 导出骨架与动作索引，`capture` 实绘指定动作并输出 PNG 或 GIF。SDK 入口为 `@kevlns/art-workshop/spine` 的 `spineContract` 与 `runSpine(root, action, input)`。
+- Spine 使用 `v-cli art spine` 或 `art-workshop spine`。`describe` 返回配方，`parts` 从原型生成可配准的部件，`build` 导出骨架与动作索引，`capture` 实绘指定动作并输出 PNG 和对照图。SDK 入口为 `@kevlns/art-workshop/spine` 的 `spineContract` 与 `runSpine(root, action, input)`。
 
 完整选项见[命令参考](commands.md)。
 

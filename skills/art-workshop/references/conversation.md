@@ -1,6 +1,6 @@
 # 会话美术管线
 
-使用 art_conversation describe 获取当前输入契约。只讨论时自然答复，不执行生成。
+使用 vant_art_conversation describe 获取当前输入契约。只讨论时自然答复，不执行生成。
 
 一次 generate 或 edit 请求绑定 requestId；相同 requestId 重复调用只返回原运行，不重发。已有产物通过 attachmentId 指定；编辑必须明确底图，引用可以分别指定主体、配色、构图、风格等用途，不把全部会话图片自动作为参考。读取像素后再解释，不能看图时使用已配置的视觉分析能力或说明限制。
 

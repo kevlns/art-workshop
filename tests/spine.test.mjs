@@ -35,9 +35,9 @@ test('masked repair, weighted rig, animation index and editable export round tri
   await assert.rejects(runSpine(root,'build',{...recipe,out:'bad',animations:{Invalid:{}}}),/动作/);
   await assert.rejects(access(join(root,'bad')));
   if(process.env.SPINE_CAPTURE_TEST==='1') {
-    const cap=await runSpine(root,'capture',{source:'rig/pennant.json',out:'review',clip:'wave_001',width:96,height:96,times:[0,.5,1],gif:true});
+    const cap=await runSpine(root,'capture',{source:'rig/pennant.json',out:'review',clip:'wave_001',width:96,height:96,times:[0,.5,1]});
     const first=await readFile(join(root,'review',cap.files[0])),last=await readFile(join(root,'review',cap.files[2]));
-    assert.notDeepEqual(first,last);assert.equal((await sharp(join(root,'review',cap.gif),{animated:true}).metadata()).pages,3);
+    assert.notDeepEqual(first,last);assert.equal(cap.files.length,3);
     assert.equal((await sharp(join(root,'review',cap.comparison)).metadata()).width,192);
   }
 });
