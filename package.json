@@ -1,6 +1,6 @@
 {
   "name": "@kevlns/art-workshop",
-  "version": "0.6.9",
+  "version": "0.6.10",
   "private": false,
   "description": "图片、视频与 Spine 制作工具链，提供风格与素材管理、生成编辑、骨架动画编译和运行预览。",
   "type": "module",
