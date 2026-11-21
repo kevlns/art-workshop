@@ -1,3 +1,5 @@
+<!-- Copyright © 2026 Vant <sl_kevln@163.com> -->
+
 # Vant 模式与调用流程
 
 ## 定位

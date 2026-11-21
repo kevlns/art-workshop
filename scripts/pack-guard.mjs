@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import {spawnSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
 const npm=process.env.npm_execpath;

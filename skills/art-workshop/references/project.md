@@ -1,3 +1,5 @@
+<!-- Copyright © 2026 Vant <sl_kevln@163.com> -->
+
 # Vant 美术工坊 Agent 规范
 
 ## 定位
@@ -113,6 +115,6 @@ job read 返回的 resolvedAsset 是只读有效资产规格，assetError 表示
 
 ## 许可与版权
 
-MIT。Copyright © 2026 Vant。
+MIT。Copyright © 2026 Vant <sl_kevln@163.com>。
 
 风格使用 style read/update 保存完整描述、约束和绘制规则。按用户要求用 style confirm 校验当前 revision 并编译契约，无需独立风格分析或回填报告。已有内容必须原样保留。修改风格内容后，重新确认才能开始新样张；历史报告、契约与运行快照保留。style recover 仅用于完成已有的中断事务。

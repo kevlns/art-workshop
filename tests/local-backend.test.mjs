@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import {startConversation,conversationStatus,controlConversation,compileConversation} from '../lib/conversation.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';

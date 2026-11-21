@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,cpSync,rmSync,readFileSync,writeFileSync,mkdirSync} from 'node:fs';

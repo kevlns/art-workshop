@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import {assertVideoRuntime} from '../lib/video/resource.mjs';
 const videoSupported=(()=>{try{assertVideoRuntime();return true;}catch{return false;}})();
 const videoTest=(name,run)=>test(name,{skip:videoSupported?false:'Video requires Node.js 22.13 or newer'},run);

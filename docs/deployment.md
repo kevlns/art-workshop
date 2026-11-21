@@ -1,3 +1,5 @@
+<!-- Copyright © 2026 Vant <sl_kevln@163.com> -->
+
 # Vant 本地模型部署
 
 ## 定位

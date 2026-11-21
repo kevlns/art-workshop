@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import {execFileSync} from 'node:child_process';
 import {mkdtempSync,rmSync,existsSync,readFileSync,mkdirSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';

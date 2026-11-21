@@ -1,3 +1,5 @@
+<!-- Copyright © 2026 Vant <sl_kevln@163.com> -->
+
 # 视频通道
 
 先用 `art-workshop video describe --workspace <工程绝对根目录>` 或 `v-cli agent describe art --json` 取得当前能力与输入契约。视频使用独立的模型、工作流和任务，不复用图片计划或图片全局配置。

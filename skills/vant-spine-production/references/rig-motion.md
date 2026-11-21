@@ -1,3 +1,5 @@
+<!-- Copyright © 2026 Vant <sl_kevln@163.com> -->
+
 # 绑定、修形与表演
 
 ## 绑定与蒙皮

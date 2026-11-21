@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import {createServer} from 'node:http';
 import sharp from 'sharp';
 const port=Number(process.argv[2]),delay=Number(process.argv[3]??50);

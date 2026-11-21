@@ -1,3 +1,5 @@
+<!-- Copyright © 2026 Vant <sl_kevln@163.com> -->
+
 # Getty AAT 查询契约
 
 ## 自动处理顺序

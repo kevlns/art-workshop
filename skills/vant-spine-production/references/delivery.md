@@ -1,3 +1,5 @@
+<!-- Copyright © 2026 Vant <sl_kevln@163.com> -->
+
 # 导出与运行验收
 
 ## 目标端与交付物

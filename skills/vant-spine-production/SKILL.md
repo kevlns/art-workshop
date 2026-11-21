@@ -2,6 +2,8 @@
 name: vant-spine-production
 description: "制作或调整 2D Spine 角色与动画时按需查阅。适用于从需求设计原型、高清拆件补绘、绑骨蒙皮、对照修形、动作与转场、运行时预览，以及 Unity 或 Web 运行资源的质量与开销调优。"
 ---
+<!-- Copyright © 2026 Vant <sl_kevln@163.com> -->
+
 
 # 2D Spine 制作指南
 

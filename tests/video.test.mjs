@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import {listenForFetch} from './video-http-helper.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';

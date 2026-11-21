@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Copyright © 2026 Vant <sl_kevln@163.com>
 """Getty AAT JSON adapter; Python 3.9+, standard library only."""
 
 import argparse

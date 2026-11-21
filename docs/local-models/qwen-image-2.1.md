@@ -1,3 +1,5 @@
+<!-- Copyright © 2026 Vant <sl_kevln@163.com> -->
+
 # Vant 本地图片模型部署指南
 
 ## 目标
@@ -28,6 +30,6 @@
 
 ## 版权
 
-Copyright © 2026 Vant。
+Copyright © 2026 Vant <sl_kevln@163.com>。
 
 长时安装和下载节点设置 timeoutMs（不超过 86400000），保持进度日志和取消能力；使用断点续传，失败只修复当前步骤，不重新下载已校验文件。

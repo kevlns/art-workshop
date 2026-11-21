@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 /** Stable image extension contracts. Runtime validation lives in model-registry. */
 export type ImageMode = "generate" | "edit";
 export type ImageParameterRule = {

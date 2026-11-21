@@ -1,3 +1,5 @@
+<!-- Copyright © 2026 Vant <sl_kevln@163.com> -->
+
 # 会话美术管线
 
 使用 vant_art_conversation describe 获取当前输入契约。只讨论时自然答复，不执行生成。

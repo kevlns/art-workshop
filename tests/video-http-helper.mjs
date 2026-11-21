@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import { once } from 'node:events';
 
 // Fetch's bad-port table, checked against the installed DSH undici

@@ -2,6 +2,8 @@
 name: art-workshop
 description: "处理图片、视频和 Spine 制作：图片讨论、风格、生成与编辑，视频剧本、镜头生成、成片与精修；按意图选择独立通道。"
 ---
+<!-- Copyright © 2026 Vant <sl_kevln@163.com> -->
+
 
 # 美术工坊
 
